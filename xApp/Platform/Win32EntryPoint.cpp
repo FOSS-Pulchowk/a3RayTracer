@@ -20,7 +20,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			pixelFormatDescriptor.cColorBits = 32;
 			pixelFormatDescriptor.cDepthBits = 24;
 			pixelFormatDescriptor.cStencilBits = 8;
-			pixelFormatDescriptor.iLayerType = PFD_MAIN_PLANE;
 
 			HDC hDC = GetDC(hWnd);
 			i32 pixelFormatIndex = ChoosePixelFormat(hDC, &pixelFormatDescriptor);
