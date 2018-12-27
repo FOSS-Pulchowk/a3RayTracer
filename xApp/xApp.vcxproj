@@ -237,13 +237,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
-    <ClCompile Include="Common\glad\glad.c" />
+    <ClCompile Include="Common\gl\glad.c" />
     <ClCompile Include="Platform\Win32EntryPoint.cpp" />
     <ClCompile Include="Platform\Win32Logger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\Core.h" />
-    <ClInclude Include="Common\glad\glad.h" />
+    <ClInclude Include="Common\gl\glad.h" />
+    <ClInclude Include="Common\gl\glExtensions.h" />
     <ClInclude Include="Common\KHR\khrplatform.h" />
     <ClInclude Include="Platform\Logger.h" />
   </ItemGroup>
