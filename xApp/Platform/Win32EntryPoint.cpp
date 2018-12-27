@@ -24,7 +24,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			HDC hDC = GetDC(hWnd);
 			i32 pixelFormatIndex = ChoosePixelFormat(hDC, &pixelFormatDescriptor);
 			xAssert(pixelFormatIndex != 0);
-			SetPixelFormat(hDC, pixelFormatIndex, &pixelFormatDescriptor);
+			PIXELFORMATDESCRIPTOR suggestedPixelFormatDescriptor = {};
+			DescribePixelFormat(hDC, pixelFormatIndex, sizeof(suggestedPixelFormatDescriptor), &suggestedPixelFormatDescriptor);
+			SetPixelFormat(hDC, pixelFormatIndex, &suggestedPixelFormatDescriptor);
 			HGLRC glContext = wglCreateContext(hDC);
 			xAssert(wglMakeCurrent(hDC, glContext));
 			ReleaseDC(hWnd, hDC);
