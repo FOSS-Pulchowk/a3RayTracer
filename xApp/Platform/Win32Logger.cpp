@@ -5,36 +5,36 @@
 
 namespace x {
 
-void Log(const char* format, ...)
+void Log(const wchar_t* format, ...)
 {
-	char buffer[500];
+	wchar_t buffer[500];
 	va_list arg;
 	va_start(arg, format);
-	vsprintf_s(buffer, 500, format, arg);
+	vswprintf_s(buffer, 500, format, arg);
 	va_end(arg);
-	OutputDebugStringA(buffer);
+	OutputDebugStringW(buffer);
 }
 
-void LogError(const char* format, ...)
+void LogError(const wchar_t* format, ...)
 {
-	char buffer[500];
+	wchar_t buffer[500];
 	va_list arg;
 	va_start(arg, format);
-	vsprintf_s(buffer, 500, format, arg);
+	vswprintf_s(buffer, 500, format, arg);
 	va_end(arg);
-	OutputDebugStringA("[ERROR]: ");
-	OutputDebugStringA(buffer);
+	OutputDebugStringW(L"[ERROR]: ");
+	OutputDebugStringW(buffer);
 }
 
-void LogWarn(const char* format, ...)
+void LogWarn(const wchar_t* format, ...)
 {
-	char buffer[500];
+	wchar_t buffer[500];
 	va_list arg;
 	va_start(arg, format);
-	vsprintf_s(buffer, 500, format, arg);
+	vswprintf_s(buffer, 500, format, arg);
 	va_end(arg);
-	OutputDebugStringA("[WARNING]: ");
-	OutputDebugStringA(buffer);
+	OutputDebugStringW(L"[WARNING]: ");
+	OutputDebugStringW(buffer);
 }
 
 }
