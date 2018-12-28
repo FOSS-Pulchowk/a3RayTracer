@@ -237,12 +237,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="Math\Matrix4.cpp" />
     <ClCompile Include="Platform\gl\glad.c" />
     <ClCompile Include="Platform\Win32EntryPoint.cpp" />
     <ClCompile Include="Platform\Win32Logger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\Core.h" />
+    <ClInclude Include="Math\Math.h" />
+    <ClInclude Include="Math\Matrix4.h" />
     <ClInclude Include="Platform\gl\glad.h" />
     <ClInclude Include="Platform\gl\glExtensions.h" />
     <ClInclude Include="Platform\KHR\khrplatform.h" />

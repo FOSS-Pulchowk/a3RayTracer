@@ -1,4 +1,5 @@
 #include "Common/Core.h"
+#include "Math/Math.h"
 #include <Windows.h>
 #include "gl/glad.h"
 #include "gl/glExtensions.h"

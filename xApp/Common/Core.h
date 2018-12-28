@@ -132,7 +132,7 @@ struct v4
 
 ////////////////// Vector 2 operations ///////////////////////////////////////////
 
-inline v2 operator-(v2& v)
+inline v2 operator-(v2 v)
 {
 	v2 result = {};
 	result.x = -v.x;
@@ -244,7 +244,7 @@ inline b32 operator!=(v2 lhs, v2 rhs)
 
 /////////////////////// Vector 3 implementation ///////////////////////////////////
 
-inline v3 operator-(v3& v)
+inline v3 operator-(v3 v)
 {
 	v3 result = {};
 	result.x = -v.x;
@@ -368,7 +368,7 @@ inline b32 operator!=(v3 lhs, v3 rhs)
 
 //////////////////////// Vector 4 implementation ///////////////////////////////////
 
-inline v4 operator-(v4& v)
+inline v4 operator-(v4 v)
 {
 	v4 result = {};
 	result.x = -v.x;
@@ -378,7 +378,7 @@ inline v4 operator-(v4& v)
 	return result;
 }
 
-inline f32 Length(v4& vec)
+inline f32 Length(v4 vec)
 {
 	return sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z + vec.w * vec.w);
 }
