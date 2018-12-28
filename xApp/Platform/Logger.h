@@ -1,8 +1,8 @@
 
 namespace x {
 
-void Log(const wchar_t*, ...);
-void LogError(const wchar_t*, ...);
-void LogWarn(const wchar_t*, ...);
+void Log(const char*, ...);
+void LogError(const char*, ...);
+void LogWarn(const char*, ...);
 
 }

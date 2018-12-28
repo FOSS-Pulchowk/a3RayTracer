@@ -79,6 +79,20 @@ typedef wchar_t utf16;
 
 typedef unsigned char uutf8;
 
+#define min_i8 INT8_MIN
+#define max_i8 INT8_MAX
+#define min_i16 INT16_MIN
+#define max_i16 INT16_MAX
+#define min_i32 INT32_MIN
+#define max_i32 INT32_MAX
+#define min_i64 INT64_MIN
+#define max_i64 INT64_MAX
+
+#define max_u8 UINT8_MAX
+#define max_u16 UINT16_MAX
+#define max_u32 UINT32_MAX
+#define max_u64 UINT64_MAX
+
 typedef const char* s8;
 typedef const wchar_t* s16;
 

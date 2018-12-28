@@ -3,38 +3,40 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#define MAX_LOG_MSG_SIZE 1024
+
 namespace x {
 
-void Log(const wchar_t* format, ...)
+void Log(const char* format, ...)
 {
-	wchar_t buffer[500];
+	char buffer[MAX_LOG_MSG_SIZE];
 	va_list arg;
 	va_start(arg, format);
-	vswprintf_s(buffer, 500, format, arg);
+	vsprintf_s(buffer, MAX_LOG_MSG_SIZE, format, arg);
 	va_end(arg);
-	OutputDebugStringW(buffer);
+	OutputDebugStringA(buffer);
 }
 
-void LogError(const wchar_t* format, ...)
+void LogError(const char* format, ...)
 {
-	wchar_t buffer[500];
+	char buffer[MAX_LOG_MSG_SIZE];
 	va_list arg;
 	va_start(arg, format);
-	vswprintf_s(buffer, 500, format, arg);
+	vsprintf_s(buffer, MAX_LOG_MSG_SIZE, format, arg);
 	va_end(arg);
-	OutputDebugStringW(L"[ERROR]: ");
-	OutputDebugStringW(buffer);
+	OutputDebugStringA("[ERROR]: ");
+	OutputDebugStringA(buffer);
 }
 
-void LogWarn(const wchar_t* format, ...)
+void LogWarn(const char* format, ...)
 {
-	wchar_t buffer[500];
+	char buffer[MAX_LOG_MSG_SIZE];
 	va_list arg;
 	va_start(arg, format);
-	vswprintf_s(buffer, 500, format, arg);
+	vsprintf_s(buffer, MAX_LOG_MSG_SIZE, format, arg);
 	va_end(arg);
-	OutputDebugStringW(L"[WARNING]: ");
-	OutputDebugStringW(buffer);
+	OutputDebugStringA("[WARNING]: ");
+	OutputDebugStringA(buffer);
 }
 
 }

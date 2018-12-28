@@ -24,7 +24,7 @@
     <ClCompile Include="Platform\Win32EntryPoint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Common\gl\glad.c">
+    <ClCompile Include="Platform\gl\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,14 +35,18 @@
     <ClInclude Include="Platform\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Common\KHR\khrplatform.h">
+    <ClInclude Include="Platform\gl\glad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Common\gl\glad.h">
+    <ClInclude Include="Platform\gl\glExtensions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Common\gl\glExtensions.h">
+    <ClInclude Include="Platform\KHR\khrplatform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Platform\sample.vert" />
+    <None Include="Platform\sample.frag" />
   </ItemGroup>
 </Project>
