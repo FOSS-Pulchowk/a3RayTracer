@@ -333,28 +333,30 @@ m4x4 m4x4::LookR(v3 from, v3 to, v3 worldUp)
 	return result;
 }
 
-m4x4 m4x4::OrthographicR(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far)
+// NOTE(Zero): Windows header file defines `far` and `near`, so not to use these as variables
+m4x4 m4x4::OrthographicR(f32 left, f32 right, f32 bottom, f32 top, f32 cNear, f32 cFar)
 {
 	m4x4 result;
 	result.elements[0 * 4 + 0] = 2.0f / (right - left);
 	result.elements[1 * 4 + 1] = 2.0f / (top - bottom);
-	result.elements[2 * 4 + 2] = -2.0f / (far - near);
+	result.elements[2 * 4 + 2] = -2.0f / (cFar - cNear);
 	result.elements[3 * 4 + 0] = -(right + left) / (right - left);
 	result.elements[3 * 4 + 1] = -(top + bottom) / (top - bottom);
-	result.elements[3 * 4 + 2] = -(far + near) / (far - near);
+	result.elements[3 * 4 + 2] = -(cFar + cNear) / (cFar - cNear);
 	result.elements[3 * 4 + 3] = 1.0f;
 	return result;
 }
 
-m4x4 m4x4::PerspectiveR(f32 fov, f32 aspectRatio, f32 near, f32 far)
+// NOTE(Zero): Windows header file defines `far` and `near`, so not to use these as variables
+m4x4 m4x4::PerspectiveR(f32 fov, f32 aspectRatio, f32 cNear, f32 cFar)
 {
 	f32 cot = 1.0f / tanf(fov * 0.5f);
 	m4x4 result;
 	result.elements[0 * 4 + 0] = cot / aspectRatio;
 	result.elements[1 * 4 + 1] = cot;
-	result.elements[2 * 4 + 2] = -(far + near) / (far - near);
+	result.elements[2 * 4 + 2] = -(cFar + cNear) / (cFar - cNear);
 	result.elements[2 * 4 + 3] = -1.0f;
-	result.elements[3 * 4 + 2] = (-2.0f * far * near) / (far - near);
+	result.elements[3 * 4 + 2] = (-2.0f * cFar * cNear) / (cFar - cNear);
 	result.elements[3 * 4 + 3] = 0.0f;
 	return result;
 }
@@ -379,12 +381,14 @@ m4x4 m4x4::LookC(v3 from, v3 to, v3 up)
 	return m4x4::Transpose(m4x4::LookR(from, to, up));
 }
 
-m4x4 m4x4::OrthographicC(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far)
+// NOTE(Zero): Windows header file defines `far` and `near`, so not to use these as variables
+m4x4 m4x4::OrthographicC(f32 left, f32 right, f32 bottom, f32 top, f32 cNear, f32 cFar)
 {
-	return m4x4::Transpose(m4x4::OrthographicR(left, right, bottom, top, near, far));
+	return m4x4::Transpose(m4x4::OrthographicR(left, right, bottom, top, cNear, cFar));
 }
 
-m4x4 m4x4::PerspectiveC(f32 fov, f32 aspectRatio, f32 near, f32 far)
+// NOTE(Zero): Windows header file defines `far` and `near`, so not to use these as variables
+m4x4 m4x4::PerspectiveC(f32 fov, f32 aspectRatio, f32 cNear, f32 cFar)
 {
-	return m4x4::Transpose(m4x4::PerspectiveR(fov, aspectRatio, near, far));
+	return m4x4::Transpose(m4x4::PerspectiveR(fov, aspectRatio, cNear, cFar));
 }

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+// TODO(Zero): Make a logger that works for any length of log message
 #define MAX_LOG_MSG_SIZE 1024
 
 namespace x {
