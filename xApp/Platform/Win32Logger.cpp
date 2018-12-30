@@ -9,11 +9,15 @@ static HANDLE s_ConsoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 namespace x {
 
+// NOTE(Zero)
+// When `display` is true, the buffer is flushed and `ch` is not displayed
+// When log buffer gets full then it is automatically flushed
 void InternalPutCharToBuffer(char ch, b32 display = false)
 {
 	static char s_LogBuffer[MAX_LOG_MSG_SIZE];
 	static u32 s_LogBufferIndex;
 
+	// Flush when true and not to display `ch`
 	if(display)
 	{
 		DWORD written;
@@ -22,6 +26,7 @@ void InternalPutCharToBuffer(char ch, b32 display = false)
 		return;
 	}
 
+	// Need to flush because buffer is full
 	if(s_LogBufferIndex == (MAX_LOG_MSG_SIZE - 2))
 	{
 		s_LogBuffer[s_LogBufferIndex + 1] = '\0';
@@ -63,6 +68,7 @@ void InternalParseAndLogUnsignedInteger(u64 n, u32 b)
 		InternalPutCharToBuffer(buffer[i]);
 }
 
+// HACK(Zero): May error when value are too large or too small
 void InternalPraseAndLogFloat(u32 num)
 {
 	u32 sign = num >> 31;

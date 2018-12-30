@@ -16,6 +16,23 @@
 	* [3 * 4 + 0] [3 * 4 + 1] [3 * 4 + 2] [3 * 4 + 3]
 	* When generating matrices the methods using row-major order are postfixed with 'R'
 	* while the methods postfixed with 'C' use column-major ordering
+
+	* USAGE(Zero) @ 12/30/2018 20:25
+	m4x4 mat; // mat is identity matrix
+	m4x4 mat1(5); // mat1 is scalar matrix with each all diagonal elements 5
+	f32 e23 = mat.elements[2 * 4 + 3]; // access element from 2nd row and 3rd column
+	// f32 e23 = mat.elements[2][3]; // alternative way for the above line
+	// +=, -=, *=, +, -, * operators are overloaded
+	m4x4 res = mat * mat1; // multiply two matrices
+
+	v3 vec{ 200, 300, 500 };
+	// v3 are transformed by m4x4 by taking last element as 1.0f
+	// if different value is required in the 4th element of vector v4 can be used
+	v3 transformed = vec * res; // `vec` to transform by `res` row-major way
+	// v3 transformed = res * vec; // here's transformation occurs in column-major way
+	m4x4 rot = m4x4::RotationR(angle, { x, y, z }); // returns rotation matrix in row-major way
+	// to get column-major matrix `RotationC` can be used
+	// this convention is followed for all matrix transformation present here
 */
 
 struct m4x4
