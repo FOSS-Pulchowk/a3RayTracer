@@ -26,26 +26,26 @@
 
 #if XDEBUG == 4
 
-#define xLog(fmt, ...)			x::Log(fmt, ##__VA_ARGS__)
-#define xLogError(fmt, ...)		x::LogError(fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)		x::LogWarn(fmt, ##__VA_ARGS__)
+#define xLog(fmt, ...)			x::Log(x::LogTypeStatus, fmt, ##__VA_ARGS__)
+#define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
+#define xLogWarn(fmt, ...)		x::Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
 
 #elif XDEBUG == 3
 
 #define xLog(fmt, ...)
-#define xLogError(fmt, ...)		x::LogError(fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)		x::LogWarn(fmt, ##__VA_ARGS__)
+#define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
+#define xLogWarn(fmt, ...)		x::Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
 
 #elif XDEBUG == 2
 #define xLog(fmt, ...)
-#define xLogError(fmt, ...)		x::LogError(fmt, ##__VA_ARGS__)
+#define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
 #define xLogWarn(fmt, ...)
 
 #elif defined (XINTERNAL)
 
-#define xLog(fmt, ...)			x::Log(fmt, ##__VA_ARGS__)
-#define xLogError(fmt, ...)		x::LogError(fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)		x::LogWarn(fmt, ##__VA_ARGS__)
+#define xLog(fmt, ...)			x::Log(x::LogTypeStatus, fmt, ##__VA_ARGS__)
+#define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
+#define xLogWarn(fmt, ...)		x::Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
 #else
 
 #define xLog(fmt, ...)

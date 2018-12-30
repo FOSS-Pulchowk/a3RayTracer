@@ -1,8 +1,9 @@
 #include "Common/Core.h"
 #include "Math/Math.h"
-#include <Windows.h>
 #include "gl/glad.h"
 #include "gl/glExtensions.h"
+#include "gl/glDebug.h"
+#include <Windows.h>
 
 #define XWNDCLASSNAME L"xWindowClass"
 #define XWIDTH 800
@@ -68,19 +69,19 @@ void FreeFileContent(file_read_info fileReadInfo)
 
 u32 CompileShader(GLenum type, s8 source)
 {
-	u32 shader = glCreateShader(type);
-	glShaderSource(shader, 1, &source, 0);
-	glCompileShader(shader);
+	xGL(u32 shader = glCreateShader(type));
+	xGL(glShaderSource(shader, 1, &source, 0));
+	xGL(glCompileShader(shader));
 	i32 result;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
+	xGL(glGetShaderiv(shader, GL_COMPILE_STATUS, &result));
 	if(result != GL_TRUE)
 	{
 		i32 len;
 		utf8 errMsg[1024];
-		glGetShaderInfoLog(shader, 1024, &len, errMsg);
-		xLogWarn("Shader source could not be compiled!\n");
+		xGL(glGetShaderInfoLog(shader, 1024, &len, errMsg));
+		xGL(xLogWarn("Shader source could not be compiled!\n"));
 		xLogWarn("Shader Compilation Error: '%s'\n", errMsg);
-		glDeleteShader(shader);
+		xGL(glDeleteShader(shader));
 		return 0;
 	}
 	return shader;
@@ -91,25 +92,24 @@ u32 LoadOpenGLShaderFromSource(s8 vSource, s8 fSource)
 	u32 vShader = CompileShader(GL_VERTEX_SHADER, vSource);
 	u32 fShader = CompileShader(GL_FRAGMENT_SHADER, fSource);
 	
-	u32 program = glCreateProgram();
-	glUseProgram(program);
-	glAttachShader(program, vShader);
-	glAttachShader(program, fShader);
-	glLinkProgram(program);
-	glDeleteShader(vShader);
-	glDeleteShader(fShader);
+	xGL(u32 program = glCreateProgram());
+	xGL(glAttachShader(program, vShader));
+	xGL(glAttachShader(program, fShader));
+	xGL(glLinkProgram(program));
+	xGL(glDeleteShader(vShader));
+	xGL(glDeleteShader(fShader));
 	i32 result;
-	glGetProgramiv(program, GL_LINK_STATUS, &result);
+	xGL(glGetProgramiv(program, GL_LINK_STATUS, &result));
 	if(result != GL_TRUE)
 	{
 		i32 len;
 		utf8 errMsg[1024];
-		glGetProgramInfoLog(program, 1024, &len, errMsg);
-		xLogWarn("Shaders could not be linked!\n");
-		glDeleteProgram(program);
+		xGL(glGetProgramInfoLog(program, 1024, &len, errMsg));
+		xGL(xLogWarn("Shaders could not be linked!\n"));
+		xGL(glDeleteProgram(program));
 		return 0;
 	}
-	glUseProgram(0);
+	xGL(glUseProgram(0));
 	return program;
 }
 
@@ -150,7 +150,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			wglCreateContextAttribsARB = (tag_wglCreateContextAttribsARB*)wglGetProcAddress("wglCreateContextAttribsARB");
 			wglChoosePixelFormatARB = (tag_wglChoosePixelFormatARB*)wglGetProcAddress("wglChoosePixelFormatARB");
 			xAssert(gladLoadGL());
-			xLog("OpenGL Version: %d.%d\n", GLVersion.major, GLVersion.minor);
+			xLog("OpenGL Version: {i}.{i}\n", GLVersion.major, GLVersion.minor);
 			wglMakeCurrent(hDummyDC, 0);
 			wglDeleteContext(dummyGLContext);
 			ReleaseDC(hDummyWnd, hDummyDC);
@@ -207,8 +207,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+#if defined(XDEBUG) || defined(XINTERNAL)
+int main()
+{
+	HINSTANCE hInstance = GetModuleHandleW(0);
+#else
 i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 {
+#endif
 	WNDCLASSEXW wndClassExW = {};
 	wndClassExW.cbSize = sizeof(wndClassExW);
 	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
@@ -239,29 +245,50 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	}
 
 	HDC hDC = GetDC(hWnd);
-	glViewport(0, 0, XWIDTH, XHEIGHT);
+	xGL(glViewport(0, 0, XWIDTH, XHEIGHT));
 
 	u32 vao;
-	glGenVertexArrays(1, &vao);
-	u32 vab;
-	glGenBuffers(1, &vab);
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vab);
+	xGL(glGenVertexArrays(1, &vao));
+	u32 vab, iab;
+	xGL(glGenBuffers(1, &vab));
+	xGL(glGenBuffers(1, &iab));
+	xGL(glBindVertexArray(vao));
+	xGL(glBindBuffer(GL_ARRAY_BUFFER, vab));
 	f32 vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f
+		200.0f, 100.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		200.0f, 500.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		600.0f, 500.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		600.0f, 100.0f, 0.0f, 1.0f, 1.0f, 1.0f
 	};
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, null);
-	glEnableVertexAttribArray(0);
-	glBindVertexArray(0);
+	xGL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
+	xGL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 6, null));
+	xGL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 6, (void*)(sizeof(f32) * 3)));
+	xGL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iab));
+	u32 indices[] = {
+		0, 1, 2,
+		0, 2, 3
+	};
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	xGL(glEnableVertexAttribArray(0));
+	xGL(glEnableVertexAttribArray(1));
+	xGL(glBindVertexArray(0));
 
 	file_read_info vSource = ReadEntireFile("Platform/sample.vert");
 	file_read_info fSource = ReadEntireFile("Platform/sample.frag");
 	u32 sProgram = LoadOpenGLShaderFromSource((s8)vSource.Buffer, (s8)fSource.Buffer);
 	FreeFileContent(vSource);
 	FreeFileContent(fSource);
+
+	m4x4 projection = m4x4::OrthographicR(0.0f, 800.0f, 0.0f, 600.0, -1.0f, 1.0f);
+	m4x4 modalview;
+	xGL(glUseProgram(sProgram));
+	xGL(u32 projLoc = glGetUniformLocation(sProgram, "Projection"));
+	xGL(glUniformMatrix4fv(projLoc, 1, GL_FALSE, projection.elements));
+	xGL(u32 mvLoc = glGetUniformLocation(sProgram, "ModalView"));
+	xGL(glUniformMatrix4fv(mvLoc, 1, GL_FALSE, modalview.elements));
+	xGL(glUseProgram(0));
+
+	f32 value = 0.0f;
 
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
@@ -281,12 +308,18 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 				DispatchMessageW(&sMsg);
 			}
 		}
-		glClearColor(0.25f, 0.5f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glBindVertexArray(vao);
-		glUseProgram(sProgram);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		xGL(glClearColor(0.25f, 0.5f, 1.0f, 1.0f));
+		xGL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		xGL(glBindVertexArray(vao));
+		xGL(glUseProgram(sProgram));
+		f32 angle = sinf(value);
+		modalview = m4x4::TranslationR({ -400.0f, -300.0f, 0.0f }) *
+			m4x4::RotationR(angle, { 0.0f, 0.0f, -1.0f }) *
+			m4x4::TranslationR({ 400.0f, 300.0f, 0.0f });
+		xGL(glUniformMatrix4fv(mvLoc, 1, GL_FALSE, modalview.elements));
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
 		SwapBuffers(hDC);
+		value += 0.01f;
 	}
 
 	return 0;

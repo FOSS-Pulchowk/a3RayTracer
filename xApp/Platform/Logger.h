@@ -1,8 +1,12 @@
+#pragma once
 
 namespace x {
 
-void Log(const char*, ...);
-void LogError(const char*, ...);
-void LogWarn(const char*, ...);
+enum LogType
+{
+	LogTypeStatus, LogTypeWarn, LogTypeError
+};
+
+void Log(LogType type, const char*, ...);
 
 }

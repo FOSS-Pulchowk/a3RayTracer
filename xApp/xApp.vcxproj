@@ -102,6 +102,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Internal|Win32'">
     <OutDir>$(SolutionDir)Build\$(Configuration)-$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)Build\$(Configuration)-$(Platform)-Int\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)Build\$(Configuration)-$(Platform)\</OutDir>
@@ -114,6 +115,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Internal|x64'">
     <OutDir>$(SolutionDir)Build\$(Configuration)-$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)Build\$(Configuration)-$(Platform)-Int\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)Build\$(Configuration)-$(Platform)\</OutDir>
@@ -132,7 +134,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Internal|Win32'">
@@ -149,10 +151,19 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <SupportJustMyCode>false</SupportJustMyCode>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -168,7 +179,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Internal|x64'">
@@ -185,10 +196,19 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <SupportJustMyCode>false</SupportJustMyCode>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -247,6 +267,7 @@
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Math\Matrix4.h" />
     <ClInclude Include="Platform\gl\glad.h" />
+    <ClInclude Include="Platform\gl\glDebug.h" />
     <ClInclude Include="Platform\gl\glExtensions.h" />
     <ClInclude Include="Platform\KHR\khrplatform.h" />
     <ClInclude Include="Platform\Logger.h" />
