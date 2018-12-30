@@ -119,6 +119,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		case WM_CREATE:
 		{
+			xLog("Initializing OpenGL context");
 			WNDCLASSEXW wndClassExW = {};
 			wndClassExW.cbSize = sizeof(wndClassExW);
 			wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
@@ -150,7 +151,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			wglCreateContextAttribsARB = (tag_wglCreateContextAttribsARB*)wglGetProcAddress("wglCreateContextAttribsARB");
 			wglChoosePixelFormatARB = (tag_wglChoosePixelFormatARB*)wglGetProcAddress("wglChoosePixelFormatARB");
 			xAssert(gladLoadGL());
-			xLog("OpenGL Version: {i}.{i}\n", GLVersion.major, GLVersion.minor);
+			xLog("OpenGL Context created. Loaded OpenGL Version: {i}.{i}", GLVersion.major, GLVersion.minor);
 			wglMakeCurrent(hDummyDC, 0);
 			wglDeleteContext(dummyGLContext);
 			ReleaseDC(hDummyWnd, hDummyDC);
@@ -191,6 +192,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		case WM_SIZE:
 		{
+			if(wParam == SIZE_MINIMIZED)
+			{
+				xLog("Window minimized");
+			}
+			else if(wParam == SIZE_RESTORED)
+			{
+				xLog("Window restored");
+				xLog("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
+			}
 			HDC hDC = GetDC(hWnd);
 			SwapBuffers(hDC);
 			ReleaseDC(hWnd, hDC);
@@ -244,6 +254,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		return 1;
 	}
 
+	xLog("Window of resolution {i} X {i} created.", XWIDTH, XHEIGHT);
 	HDC hDC = GetDC(hWnd);
 	xGL(glViewport(0, 0, XWIDTH, XHEIGHT));
 
@@ -292,6 +303,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
+	xLog("Window displayed.");
 	b32 shouldRun = true;
 	while(shouldRun)
 	{
@@ -301,6 +313,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 			if(sMsg.message == WM_QUIT)
 			{
 				shouldRun = false;
+				xLog("Quitting");
 			}
 			else
 			{
