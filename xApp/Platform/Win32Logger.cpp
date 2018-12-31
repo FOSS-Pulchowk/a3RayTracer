@@ -108,7 +108,7 @@ void Log(LogType type, const char* format, ...)
 		}
 		case x::LogTypeWarn:
 		{
-			SetConsoleTextAttribute(s_ConsoleHandle, 14);
+			SetConsoleTextAttribute(s_ConsoleHandle, FOREGROUND_RED | FOREGROUND_GREEN);
 			InternalParseAndLogString("[WARNING] ");
 			break;
 		}
@@ -116,6 +116,12 @@ void Log(LogType type, const char* format, ...)
 		{
 			SetConsoleTextAttribute(s_ConsoleHandle, FOREGROUND_RED);
 			InternalParseAndLogString("[ERROR]   ");
+			break;
+		}
+		case x::LogTypeTrace:
+		{
+			SetConsoleTextAttribute(s_ConsoleHandle, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+			InternalParseAndLogString("[TRACE]   ");
 			break;
 		}
 	}

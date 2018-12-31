@@ -187,6 +187,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			HGLRC glContext = wglCreateContextAttribsARB(hDC, 0, glVersionAttribs);
 			wglMakeCurrent(hDC, glContext);
 			ReleaseDC(hWnd, hDC);
+			SetCapture(hWnd);
 			return 0;
 		}
 

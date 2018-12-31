@@ -5,7 +5,7 @@ namespace x {
 // NOTE(Zero): These are macrofied in 'Core.h'
 enum LogType
 {
-	LogTypeStatus, LogTypeWarn, LogTypeError
+	LogTypeStatus, LogTypeWarn, LogTypeError, LogTypeTrace
 };
 
 /*

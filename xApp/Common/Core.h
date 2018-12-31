@@ -29,28 +29,33 @@
 #define xLog(fmt, ...)			x::Log(x::LogTypeStatus, fmt, ##__VA_ARGS__)
 #define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
 #define xLogWarn(fmt, ...)		x::Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
+#define xLogTrace(fmt, ...)		x::Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
 
 #elif XDEBUG == 3
 
 #define xLog(fmt, ...)
 #define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
 #define xLogWarn(fmt, ...)		x::Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
+#define xLogTrace(fmt, ...)		x::Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
 
 #elif XDEBUG == 2
 #define xLog(fmt, ...)
 #define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
 #define xLogWarn(fmt, ...)
+#define xLogTrace(fmt, ...)		x::Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
 
 #elif defined (XINTERNAL)
 
 #define xLog(fmt, ...)			x::Log(x::LogTypeStatus, fmt, ##__VA_ARGS__)
 #define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
 #define xLogWarn(fmt, ...)		x::Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
+#define xLogTrace(fmt, ...)		x::Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
 #else
 
 #define xLog(fmt, ...)
 #define xLogError(fmt, ...)
 #define xLogWarn(fmt, ...)
+#define xLogTrace(fmt, ...)
 
 #endif
 
