@@ -4,6 +4,7 @@
 #include "gl/glExtensions.h"
 #include "gl/glDebug.h"
 #include <Windows.h>
+#include <windowsx.h> // for mouse macros
 
 #define XWNDCLASSNAME L"xWindowClass"
 #define XWIDTH 800
@@ -187,8 +188,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			HGLRC glContext = wglCreateContextAttribsARB(hDC, 0, glVersionAttribs);
 			wglMakeCurrent(hDC, glContext);
 			ReleaseDC(hWnd, hDC);
-			SetCapture(hWnd);
 			return 0;
+		}
+
+		case WM_MOUSEMOVE:
+		{
+			i32 x = GET_X_LPARAM(lParam);
+			i32 y = GET_Y_LPARAM(lParam);
+			xLogTrace("Mouse moved at x:{i} y:{i}", x, y);
+			break;
+		}
+
+		case WM_LBUTTONDOWN:
+		{
+			i32 x = GET_X_LPARAM(lParam);
+			i32 y = GET_Y_LPARAM(lParam);
+			xLogTrace("Left mouse button down at x: {i} y: {i}", x, y);
+			break;
+		}
+
+		case WM_LBUTTONUP:
+		{
+			i32 x = GET_X_LPARAM(lParam);
+			i32 y = GET_Y_LPARAM(lParam);
+			xLogTrace("Left mouse button up at x: {i} y: {i}", x, y);
+			break;
+			break;
 		}
 
 		case WM_SIZE:
