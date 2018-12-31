@@ -191,6 +191,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			return 0;
 		}
 
+		// TODO(Zero): Inverse mouse Y co-ordinate?
+
 		case WM_MOUSEMOVE:
 		{
 			i32 x = GET_X_LPARAM(lParam);
@@ -213,11 +215,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 y = GET_Y_LPARAM(lParam);
 			xLogTrace("Left mouse button up at x: {i} y: {i}", x, y);
 			break;
+		}
+		
+		case WM_RBUTTONDOWN:
+		{
+			i32 x = GET_X_LPARAM(lParam);
+			i32 y = GET_Y_LPARAM(lParam);
+			xLogTrace("Right mouse button down at x: {i} y: {i}", x, y);
+			break;
+		}
+
+		case WM_RBUTTONUP:
+		{
+			i32 x = GET_X_LPARAM(lParam);
+			i32 y = GET_Y_LPARAM(lParam);
+			xLogTrace("Right mouse button up at x: {i} y: {i}", x, y);
 			break;
 		}
 
 		case WM_SIZE:
 		{
+			// TODO(Zero): This needs to handle more things then it is currently
 			if(wParam == SIZE_MINIMIZED)
 			{
 				xLog("Window minimized");
