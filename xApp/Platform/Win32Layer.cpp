@@ -7,6 +7,8 @@
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
 
+#include <stddef.h>
+
 #define XWNDCLASSNAME L"xWindowClass"
 #define XWIDTH 800
 #define XHEIGHT 600
@@ -221,11 +223,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 
 		// TODO(Zero): Inverse mouse Y co-ordinate?
-
 		case WM_MOUSEMOVE:
 		{
-			userData.inputSystem.MouseX = GET_X_LPARAM(lParam);
-			userData.inputSystem.MouseY = GET_Y_LPARAM(lParam);
+			i32 mx = GET_X_LPARAM(lParam);
+			i32 my = GET_Y_LPARAM(lParam);
+			userData.inputSystem.MouseX = mx;
+			userData.inputSystem.MouseY = XHEIGHT - my;
 			break;
 		}
 
@@ -234,7 +237,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 mx = GET_X_LPARAM(lParam);
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = my;
+			userData.inputSystem.MouseY = XHEIGHT - my;
 			userData.inputSystem.Buttons[ButtonLeft] = ButtonDown;
 			break;
 		}
@@ -244,7 +247,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 mx = GET_X_LPARAM(lParam);
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = my;
+			userData.inputSystem.MouseY = XHEIGHT - my;
 			userData.inputSystem.Buttons[ButtonLeft] = ButtonUp;
 			break;
 		}
@@ -254,7 +257,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 mx = GET_X_LPARAM(lParam);
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = my;
+			userData.inputSystem.MouseY = XHEIGHT - my;
 			userData.inputSystem.Buttons[ButtonRight] = ButtonDown;
 			break;
 		}
@@ -264,7 +267,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 mx = GET_X_LPARAM(lParam);
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = my;
+			userData.inputSystem.MouseY = XHEIGHT - my;
 			userData.inputSystem.Buttons[ButtonRight] = ButtonUp;
 			break;
 		}
@@ -274,7 +277,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 mx = GET_X_LPARAM(lParam);
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = my;
+			userData.inputSystem.MouseY = XHEIGHT - my;
 			userData.inputSystem.Buttons[ButtonMiddle] = ButtonDown;
 			break;
 		}
@@ -284,7 +287,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 mx = GET_X_LPARAM(lParam);
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = my;
+			userData.inputSystem.MouseY = XHEIGHT - my;
 			userData.inputSystem.Buttons[ButtonMiddle] = ButtonUp;
 			break;
 		}
@@ -316,6 +319,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
+
+struct vertex2d
+{
+	v3 position;
+	v3 color;
+};
+
+struct entity
+{
+	v3 position;
+	v2 dimension;
+	union 
+	{
+		v3 acolor[4];
+		struct 
+		{
+			union { v3 color; };
+			union { v3 color; };
+			union { v3 color; };
+			union { v3 color; };
+		};
+	};
+};
 
 #if defined(XDEBUG) || defined(XINTERNAL)
 int main()
@@ -365,21 +391,16 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xGL(glGenBuffers(1, &iab));
 	xGL(glBindVertexArray(vao));
 	xGL(glBindBuffer(GL_ARRAY_BUFFER, vab));
-	f32 vertices[] = {
-		200.0f, 100.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		200.0f, 500.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-		600.0f, 500.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-		600.0f, 100.0f, 0.0f, 1.0f, 1.0f, 1.0f
-	};
-	xGL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
-	xGL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 6, null));
-	xGL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 6, (void*)(sizeof(f32) * 3)));
+
+	#define XGL_MAX_VERTEX2D 50
+	#define xOffsetOf(s, m) (&(((s*)0)->m))
+
+	xGL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertex2d) * 4 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW));
+	xGL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), null));
+	xGL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(3*sizeof(float))));
+
 	xGL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iab));
-	u32 indices[] = {
-		0, 1, 2,
-		0, 2, 3
-	};
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW);
 	xGL(glEnableVertexAttribArray(0));
 	xGL(glEnableVertexAttribArray(1));
 	xGL(glBindVertexArray(0));
@@ -391,12 +412,9 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	FreeFileContent(fSource);
 
 	m4x4 projection = m4x4::OrthographicR(0.0f, 800.0f, 0.0f, 600.0, -1.0f, 1.0f);
-	m4x4 modalview;
 	xGL(glUseProgram(sProgram));
 	xGL(u32 projLoc = glGetUniformLocation(sProgram, "Projection"));
 	xGL(glUniformMatrix4fv(projLoc, 1, GL_FALSE, projection.elements));
-	xGL(u32 mvLoc = glGetUniformLocation(sProgram, "ModalView"));
-	xGL(glUniformMatrix4fv(mvLoc, 1, GL_FALSE, modalview.elements));
 	xGL(glUseProgram(0));
 
 	f32 value = 0.0f;
@@ -408,6 +426,20 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	win32_user_data userData = {};
 	SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)&userData);
 	input_system oldInput = {};
+	LARGE_INTEGER performanceFrequency;
+	xAssert(QueryPerformanceFrequency(&performanceFrequency));
+	LARGE_INTEGER performanceCounter;
+	QueryPerformanceCounter(&performanceCounter);
+
+	#define X_NUMBER_OF_ENTITIES 1
+	entity rect;
+	rect.position = { 100.0f, 100.0f, 0.0f };
+	rect.dimension = { 100.0f, 100.0f };
+	rect.color = { 1.0f, 0.0f, 0.f };
+	rect.acolor[0] = { 1.0f, 0.0f, 0.0f };
+	rect.acolor[1] = { 0.0f, 1.0f, 0.0f };
+	rect.acolor[2] = { 0.0f, 0.0f, 1.0f };
+	rect.acolor[3] = { 1.0f, 1.0f, 1.0f };
 
 	b32 shouldRun = true;
 	while(shouldRun)
@@ -429,11 +461,10 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 		input_system& input = userData.inputSystem;
 		if(oldInput.Buttons[ButtonLeft] && input.Buttons[ButtonLeft] == ButtonUp)
-			xLogTrace("Left button pressed at x:{i} y:{i}", input.MouseX, input.MouseY);
-		if(oldInput.Buttons[ButtonRight] && input.Buttons[ButtonRight] == ButtonUp)
-			xLogTrace("Right button pressed at x:{i} y:{i}", input.MouseX, input.MouseY);
-		if(oldInput.Buttons[ButtonMiddle] && input.Buttons[ButtonMiddle] == ButtonUp)
-			xLogTrace("Middle button pressed at x:{i} y:{i}", input.MouseX, input.MouseY);
+		{
+			rect.position.x = (f32)input.MouseX;
+			rect.position.y = (f32)input.MouseY;
+		}
 		oldInput = input;
 
 		xGL(glClearColor(0.25f, 0.5f, 1.0f, 1.0f));
@@ -441,13 +472,40 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		xGL(glBindVertexArray(vao));
 		xGL(glUseProgram(sProgram));
 		f32 angle = sinf(value);
-		modalview = m4x4::TranslationR({ -400.0f, -300.0f, 0.0f }) *
-			m4x4::RotationR(angle, { 0.0f, 0.0f, -1.0f }) *
-			m4x4::TranslationR({ 400.0f, 300.0f, 0.0f });
-		xGL(glUniformMatrix4fv(mvLoc, 1, GL_FALSE, modalview.elements));
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+
+		xGL(vertex2d* v = (vertex2d*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+		xGL(u32* indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+		for(i32 i = 0; i < X_NUMBER_OF_ENTITIES; ++i)
+		{
+			v2 d = rect.dimension;
+			v[i * 4 + 0].position = v3{ 0.0f, 0.0f, 0.0f } * m4x4::TranslationR(rect.position);
+			v[i * 4 + 1].position = v3{ 0.0f, d.y, 0.0f } * m4x4::TranslationR(rect.position);
+			v[i * 4 + 2].position = v3{ d.x, d.y, 0.0f } * m4x4::TranslationR(rect.position);
+			v[i * 4 + 3].position = v3{ d.x, 0.0f, 0.0f } * m4x4::TranslationR(rect.position);
+			v[i * 4 + 0].color = rect.acolor[0];
+			v[i * 4 + 1].color = rect.acolor[1];
+			v[i * 4 + 2].color = rect.acolor[2];
+			v[i * 4 + 3].color = rect.acolor[3];
+
+			indices[i * 6 + 0] = i * 4 + 0;
+			indices[i * 6 + 1] = i * 4 + 1;
+			indices[i * 6 + 2] = i * 4 + 2;
+			indices[i * 6 + 3] = i * 4 + 0;
+			indices[i * 6 + 4] = i * 4 + 2;
+			indices[i * 6 + 5] = i * 4 + 3;
+		}
+		xGL(glUnmapBuffer(GL_ARRAY_BUFFER));
+		xGL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
+		xGL(glDrawElements(GL_TRIANGLES, X_NUMBER_OF_ENTITIES * 6, GL_UNSIGNED_INT, null));
+
 		SwapBuffers(hDC);
 		value += 0.01f;
+
+		LARGE_INTEGER currentPerformanceCounter;
+		xAssert(QueryPerformanceCounter(&currentPerformanceCounter));
+		f32 dt = 1000.0f * (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
+		performanceCounter = currentPerformanceCounter;
+		//xLogTrace("FPS: {f} Time spent last frame: {f}ms", 1000.0f / dt, dt);
 	}
 
 	return 0;
