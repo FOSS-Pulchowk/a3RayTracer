@@ -16,6 +16,16 @@ inline v4 operator*(v4 vec, const m4x4& mat)
 	return result;
 }
 
+// Treats w as 1.0f
+inline v3 operator*(v3 vec, const m4x4& mat)
+{
+	v4 result;
+	result.xyz = vec;
+	result.w = 1.0f;
+	result = result * mat;
+	return result.xyz;
+}
+
 inline v4 operator*(const m4x4& mat, v4 vec)
 {
 	v4 result;
@@ -24,4 +34,14 @@ inline v4 operator*(const m4x4& mat, v4 vec)
 	result.z = Dot(mat.rows[2], vec);
 	result.w = Dot(mat.rows[3], vec);
 	return result;
+}
+
+// Treats w as 1.0f
+inline v3 operator*(const m4x4& mat, v3 vec)
+{
+	v4 result;
+	result.xyz = vec;
+	result.w = 1.0f;
+	result = mat * result;
+	return result.xyz;
 }

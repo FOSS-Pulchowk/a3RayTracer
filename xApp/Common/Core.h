@@ -79,6 +79,8 @@ struct v3
 		struct { f32 x, y, z; };
 		struct { f32 u, v, w; };
 		struct { f32 r, g, b; };
+		struct { v2 xy; f32 z; };
+		struct { f32 x; v2 yz; };
 		f32 values[3];
 	};
 };
@@ -89,6 +91,9 @@ struct v4
 	{
 		struct { f32 x, y, z, w; };
 		struct { f32 r, g, b, a; };
+		struct { v2 xy, zw; };
+		struct { v3 xyz; f32 w; };
+		struct { f32 x; v3 yzw; };
 		f32 values[4];
 	};
 };
