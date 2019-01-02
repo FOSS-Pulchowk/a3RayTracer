@@ -1,4 +1,5 @@
 #include "Common/Core.h"
+#include "Platform.h"
 #include "Math/Math.h"
 #include "gl/glad.h"
 #include "gl/glExtensions.h"
@@ -9,6 +10,33 @@
 #define XWNDCLASSNAME L"xWindowClass"
 #define XWIDTH 800
 #define XHEIGHT 600
+
+enum button
+{
+	ButtonLeft, 
+	ButtonRight, 
+	ButtonMiddle,
+
+	ButtonCount
+};
+
+enum input_state
+{
+	ButtonUp, 
+	ButtonDown
+};
+
+struct input_system
+{
+	i32 MouseX;
+	i32 MouseY;
+	input_state Buttons[ButtonCount];
+};
+
+struct win32_user_data
+{
+	input_system inputSystem;
+};
 
 struct file_read_info
 {
@@ -116,6 +144,7 @@ u32 LoadOpenGLShaderFromSource(s8 vSource, s8 fSource)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	win32_user_data& userData = *(win32_user_data*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
 	switch(msg)
 	{
 		case WM_CREATE:
@@ -195,41 +224,68 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		case WM_MOUSEMOVE:
 		{
-			i32 x = GET_X_LPARAM(lParam);
-			i32 y = GET_Y_LPARAM(lParam);
-			xLogTrace("Mouse moved at x:{i} y:{i}", x, y);
+			userData.inputSystem.MouseX = GET_X_LPARAM(lParam);
+			userData.inputSystem.MouseY = GET_Y_LPARAM(lParam);
 			break;
 		}
 
 		case WM_LBUTTONDOWN:
 		{
-			i32 x = GET_X_LPARAM(lParam);
-			i32 y = GET_Y_LPARAM(lParam);
-			xLogTrace("Left mouse button down at x: {i} y: {i}", x, y);
+			i32 mx = GET_X_LPARAM(lParam);
+			i32 my = GET_Y_LPARAM(lParam);
+			userData.inputSystem.MouseX = mx;
+			userData.inputSystem.MouseY = my;
+			userData.inputSystem.Buttons[ButtonLeft] = ButtonDown;
 			break;
 		}
 
 		case WM_LBUTTONUP:
 		{
-			i32 x = GET_X_LPARAM(lParam);
-			i32 y = GET_Y_LPARAM(lParam);
-			xLogTrace("Left mouse button up at x: {i} y: {i}", x, y);
+			i32 mx = GET_X_LPARAM(lParam);
+			i32 my = GET_Y_LPARAM(lParam);
+			userData.inputSystem.MouseX = mx;
+			userData.inputSystem.MouseY = my;
+			userData.inputSystem.Buttons[ButtonLeft] = ButtonUp;
 			break;
 		}
 		
 		case WM_RBUTTONDOWN:
 		{
-			i32 x = GET_X_LPARAM(lParam);
-			i32 y = GET_Y_LPARAM(lParam);
-			xLogTrace("Right mouse button down at x: {i} y: {i}", x, y);
+			i32 mx = GET_X_LPARAM(lParam);
+			i32 my = GET_Y_LPARAM(lParam);
+			userData.inputSystem.MouseX = mx;
+			userData.inputSystem.MouseY = my;
+			userData.inputSystem.Buttons[ButtonRight] = ButtonDown;
 			break;
 		}
 
 		case WM_RBUTTONUP:
 		{
-			i32 x = GET_X_LPARAM(lParam);
-			i32 y = GET_Y_LPARAM(lParam);
-			xLogTrace("Right mouse button up at x: {i} y: {i}", x, y);
+			i32 mx = GET_X_LPARAM(lParam);
+			i32 my = GET_Y_LPARAM(lParam);
+			userData.inputSystem.MouseX = mx;
+			userData.inputSystem.MouseY = my;
+			userData.inputSystem.Buttons[ButtonRight] = ButtonUp;
+			break;
+		}
+
+		case WM_MBUTTONDOWN:
+		{
+			i32 mx = GET_X_LPARAM(lParam);
+			i32 my = GET_Y_LPARAM(lParam);
+			userData.inputSystem.MouseX = mx;
+			userData.inputSystem.MouseY = my;
+			userData.inputSystem.Buttons[ButtonMiddle] = ButtonDown;
+			break;
+		}
+
+		case WM_MBUTTONUP:
+		{
+			i32 mx = GET_X_LPARAM(lParam);
+			i32 my = GET_Y_LPARAM(lParam);
+			userData.inputSystem.MouseX = mx;
+			userData.inputSystem.MouseY = my;
+			userData.inputSystem.Buttons[ButtonMiddle] = ButtonUp;
 			break;
 		}
 
@@ -348,6 +404,11 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
 	xLog("Window displayed.");
+
+	win32_user_data userData = {};
+	SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)&userData);
+	input_system oldInput = {};
+
 	b32 shouldRun = true;
 	while(shouldRun)
 	{
@@ -365,6 +426,16 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 				DispatchMessageW(&sMsg);
 			}
 		}
+
+		input_system& input = userData.inputSystem;
+		if(oldInput.Buttons[ButtonLeft] && input.Buttons[ButtonLeft] == ButtonUp)
+			xLogTrace("Left button pressed at x:{i} y:{i}", input.MouseX, input.MouseY);
+		if(oldInput.Buttons[ButtonRight] && input.Buttons[ButtonRight] == ButtonUp)
+			xLogTrace("Right button pressed at x:{i} y:{i}", input.MouseX, input.MouseY);
+		if(oldInput.Buttons[ButtonMiddle] && input.Buttons[ButtonMiddle] == ButtonUp)
+			xLogTrace("Middle button pressed at x:{i} y:{i}", input.MouseX, input.MouseY);
+		oldInput = input;
+
 		xGL(glClearColor(0.25f, 0.5f, 1.0f, 1.0f));
 		xGL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		xGL(glBindVertexArray(vao));

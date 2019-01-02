@@ -1,4 +1,5 @@
 #include "Common/Core.h"
+#include "Platform.h"
 #include <stdarg.h>
 
 #define MAX_LOG_MSG_SIZE 1024
@@ -12,16 +13,16 @@ namespace x {
 // NOTE(Zero)
 // When `display` is true, the buffer is flushed and `ch` is not displayed
 // When log buffer gets full then it is automatically flushed
-void InternalPutCharToBuffer(char ch, b32 display = false)
+inline void InternalPutCharToBuffer(char ch, b32 display = false)
 {
-	static char s_LogBuffer[MAX_LOG_MSG_SIZE];
+	static utf8 s_LogBuffer[MAX_LOG_MSG_SIZE];
 	static u32 s_LogBufferIndex;
 
 	// Flush when true and not to display `ch`
 	if(display)
 	{
 		DWORD written;
-		WriteConsoleA(s_ConsoleHandle, s_LogBuffer, s_LogBufferIndex * sizeof(char), &written, 0);
+		WriteConsoleA(s_ConsoleHandle, s_LogBuffer, s_LogBufferIndex * sizeof(utf8), &written, 0);
 		s_LogBufferIndex = 0;
 		return;
 	}
@@ -31,26 +32,26 @@ void InternalPutCharToBuffer(char ch, b32 display = false)
 	{
 		s_LogBuffer[s_LogBufferIndex + 1] = '\0';
 		DWORD written;
-		WriteConsoleA(s_ConsoleHandle, s_LogBuffer, s_LogBufferIndex * sizeof(char), &written, 0);
+		WriteConsoleA(s_ConsoleHandle, s_LogBuffer, s_LogBufferIndex * sizeof(utf8), &written, 0);
 		s_LogBufferIndex = 0;
 		return;
 	}
 	s_LogBuffer[s_LogBufferIndex++] = ch;
 }
 
-void InternalParseAndLogUnsignedInteger(u64 n, u32 b)
+inline void InternalParseAndLogUnsignedInteger(u64 n, u32 b)
 {
 	if(n == 0)
 	{
 		InternalPutCharToBuffer('0');
 		return;
 	}
-	char buffer[100] = {};
+	utf8 buffer[100] = {};
 	i32 bufferIndex = 0;
 	while(n != 0)
 	{
 		u64 rem = n % b;
-		buffer[bufferIndex++] = (char)((rem > 9) ? (rem - 10) + 'a' : rem + '0');
+		buffer[bufferIndex++] = (utf8)((rem > 9) ? (rem - 10) + 'a' : rem + '0');
 		xAssert(bufferIndex < 100);
 		n = n / b;
 	}
@@ -58,7 +59,7 @@ void InternalParseAndLogUnsignedInteger(u64 n, u32 b)
 	i32 end = bufferIndex - 1;
 	while(start < end)
 	{
-		char temp = buffer[start];
+		utf8 temp = buffer[start];
 		buffer[start] = buffer[end];
 		buffer[end] = temp;
 		start++;
@@ -69,7 +70,7 @@ void InternalParseAndLogUnsignedInteger(u64 n, u32 b)
 }
 
 // HACK(Zero): May error when value are too large or too small
-void InternalPraseAndLogFloat(u32 num)
+inline void InternalPraseAndLogFloat(u32 num)
 {
 	u32 sign = num >> 31;
 	u32 exp = ((num >> 23) & 0xff) - 127;
@@ -81,7 +82,7 @@ void InternalPraseAndLogFloat(u32 num)
 	InternalPutCharToBuffer('.');
 	u32 frac = man & ((1 << (23 - exp)) - 1);
 	u32 base = 1 << (23 - exp);
-	int c = 0;
+	i32 c = 0;
 	while(frac != 0 && c++ < 6)
 	{
 		frac *= 10;
@@ -90,13 +91,13 @@ void InternalPraseAndLogFloat(u32 num)
 	}
 }
 
-void InternalParseAndLogString(const char* string)
+inline void InternalParseAndLogString(s8 string)
 {
 	for(i32 si = 0; string[si] != '\0'; ++si)
 		InternalPutCharToBuffer(string[si]);
 }
 
-void Log(LogType type, const char* format, ...)
+void Log(log_type type, s8 format, ...)
 {
 	switch(type)
 	{
@@ -138,10 +139,10 @@ void Log(LogType type, const char* format, ...)
 	InternalParseAndLogUnsignedInteger(sysTime.wMilliseconds, 10);
 	InternalParseAndLogString("] [Thread:");
 	InternalParseAndLogUnsignedInteger(GetCurrentThreadId(), 10);
-	InternalParseAndLogString("] ");
+	InternalParseAndLogString("]\n");
 
 	va_list arg;
-	char* traverser;
+	utf8* traverser;
 	va_start(arg, format);
 	for(traverser = (char*)format; *traverser != '\0'; ++traverser)
 	{
@@ -153,13 +154,13 @@ void Log(LogType type, const char* format, ...)
 				{
 					case 'c': // character
 					{
-						InternalPutCharToBuffer(*traverser);
+						InternalPutCharToBuffer(va_arg(arg, utf8));
 						traverser += 2;
 						break;
 					}
 					case 's': // string
 					{
-						InternalParseAndLogString(va_arg(arg, char*));
+						InternalParseAndLogString(va_arg(arg, utf8*));
 						traverser += 2;
 						break;
 					}
@@ -287,7 +288,7 @@ void Log(LogType type, const char* format, ...)
 		}
 	}
 	va_end(arg);
-	InternalPutCharToBuffer('\n');
+	InternalParseAndLogString("\n\n");
 	InternalPutCharToBuffer(0, true);
 }
 

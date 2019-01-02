@@ -259,8 +259,8 @@
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Math\Matrix4.cpp" />
     <ClCompile Include="Platform\gl\glad.c" />
-    <ClCompile Include="Platform\Win32EntryPoint.cpp" />
-    <ClCompile Include="Platform\Win32Logger.cpp" />
+    <ClCompile Include="Platform\Win32Layer.cpp" />
+    <ClCompile Include="Platform\Win32Debug.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\Core.h" />
@@ -270,7 +270,7 @@
     <ClInclude Include="Platform\gl\glDebug.h" />
     <ClInclude Include="Platform\gl\glExtensions.h" />
     <ClInclude Include="Platform\KHR\khrplatform.h" />
-    <ClInclude Include="Platform\Logger.h" />
+    <ClInclude Include="Platform\Platform.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Platform\sample.frag" />

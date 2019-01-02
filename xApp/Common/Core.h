@@ -10,53 +10,12 @@
 #define xToggleBit(n, b)		(n ^= b)
 
 // Debug Macro
+#if defined(_MSC_VER)
+#define xAssert(x) if(!(x))		{ __debugbreak(); }
+#define xTriggerBreakPoint()	{ __debugbreak(); }
+#else // just write to nullptr to hit break
 #define xAssert(x) if(!(x))		{ *((int*)(0)) = 0; }
 #define xTriggerBreakPoint()	{ *((int*)(0)) = 0; }
-
-/*
-	* NOTE(Zero)
-	* XDEBUG = 4 : Log everything
-	* XDEBUG = 3 : Log error and warning only
-	* XDEBUG = 2 : Log errors only
-	* XDEBUG = 1 : Internal build, add tweaks here
-	* Otherwise build project as RELEASE BUILD
-*/
-
-#include "Platform/Logger.h"
-
-#if XDEBUG == 4
-
-#define xLog(fmt, ...)			x::Log(x::LogTypeStatus, fmt, ##__VA_ARGS__)
-#define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)		x::Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
-#define xLogTrace(fmt, ...)		x::Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
-
-#elif XDEBUG == 3
-
-#define xLog(fmt, ...)
-#define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)		x::Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
-#define xLogTrace(fmt, ...)		x::Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
-
-#elif XDEBUG == 2
-#define xLog(fmt, ...)
-#define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)
-#define xLogTrace(fmt, ...)		x::Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
-
-#elif defined (XINTERNAL)
-
-#define xLog(fmt, ...)			x::Log(x::LogTypeStatus, fmt, ##__VA_ARGS__)
-#define xLogError(fmt, ...)		x::Log(x::LogTypeError, fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)		x::Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
-#define xLogTrace(fmt, ...)		x::Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
-#else
-
-#define xLog(fmt, ...)
-#define xLogError(fmt, ...)
-#define xLogWarn(fmt, ...)
-#define xLogTrace(fmt, ...)
-
 #endif
 
 #include <stdint.h>
