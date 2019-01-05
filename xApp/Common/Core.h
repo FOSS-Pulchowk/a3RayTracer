@@ -17,6 +17,8 @@
 #define xPack32(a, b, c, d) (((a)<<24) | ((b)<<16) | ((c)<<8) | ((d)<<0))
 #define xConsumeBits(n, p, b) (((n) & (((1 << (b)) - 1) << (p))) >> (p))
 
+#define xArrayCount(arr) (sizeof(arr)/sizeof((arr)[0]))
+
 // Debug Macro
 #if defined(_MSC_VER)
 #define xAssert(x) if(!(x))		{ __debugbreak(); }
