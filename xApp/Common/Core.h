@@ -15,6 +15,7 @@
 #define xSwapEndian32(n) (((n)>>24) | (((n) & 0x00ff0000) >> 8) | (((n) & 0x0000ff00) << 8) | ((n)<<24))
 #endif
 #define xPack32(a, b, c, d) (((a)<<24) | ((b)<<16) | ((c)<<8) | ((d)<<0))
+#define xConsumeBits(n, p, b) (((n) & (((1 << (b)) - 1) << (p))) >> (p))
 
 // Debug Macro
 #if defined(_MSC_VER)
