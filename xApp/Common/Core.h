@@ -3,11 +3,11 @@
 #define null 0
 
 // Bit operations Macro
-#define xBit(pos)				(1 << pos)
-#define xSetBit(n, b)			(n |= b)
-#define xGetBit(n, b)			(n & b)
-#define xClearBit(n, b)			(n &= (~b))
-#define xToggleBit(n, b)		(n ^= b)
+#define xBit(pos)				(1 << (pos))
+#define xSetBit(n, b)			((n) |= (b))
+#define xGetBit(n, b)			((n) & (b))
+#define xClearBit(n, b)			((n) &= (~b))
+#define xToggleBit(n, b)		((n) ^= (b))
 
 // Debug Macro
 #if defined(_MSC_VER)
