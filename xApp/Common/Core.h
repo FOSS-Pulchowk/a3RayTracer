@@ -10,11 +10,11 @@
 #define xToggleBit(n, b)		((n) ^= (b))
 
 #ifdef XBIGENDIAN
-#define SwapEndian32(n) (n)
+#define xSwapEndian32(n) (n)
 #else
-#define SwapEndian32(n) (((n)>>24) | (((n) & 0x00ff0000) >> 8) | (((n) & 0x0000ff00) << 8) | ((n)<<24))
+#define xSwapEndian32(n) (((n)>>24) | (((n) & 0x00ff0000) >> 8) | (((n) & 0x0000ff00) << 8) | ((n)<<24))
 #endif
-#define Pack32(a, b, c, d) (((a)<<24) | ((b)<<16) | ((c)<<8) | ((d)<<0))
+#define xPack32(a, b, c, d) (((a)<<24) | ((b)<<16) | ((c)<<8) | ((d)<<0))
 
 // Debug Macro
 #if defined(_MSC_VER)
