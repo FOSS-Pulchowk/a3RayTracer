@@ -89,7 +89,7 @@ inline v3 QuatToEulerAngles(const quat &q)
 
 	ret.z = atan2f(sinr, cosr);
 	f32 sinp = 2.0f * (q.r * q.j - q.k * q.i);
-	if (fabs(sinp) >= 1.0f)
+	if(fabs(sinp) >= 1.0f)
 		ret.x = copysignf(3.141592f * 0.5f, sinp);
 	else
 		ret.x = asinf(sinp);
@@ -162,7 +162,7 @@ inline v3 operator*(const quat &lhs, v3 vec)
 	quat v(0.0f, vec.x, vec.y, vec.z);
 	quat lhsp = quat::Conjugate(lhs);
 	quat vp((lhs * v) * lhsp);
-	return v3{vp.x, vp.y, vp.z};
+	return v3{ vp.x, vp.y, vp.z };
 }
 /*
 	- Rotates Vector 3 but takes Vector 4 as paramater
@@ -174,5 +174,5 @@ inline v4 operator*(const quat &lhs, v4 vec)
 	quat v(0.0f, vec.x, vec.y, vec.z);
 	quat lhsp = quat::Conjugate(lhs);
 	quat vp((lhs * v) * lhsp);
-	return v4{vp.x, vp.y, vp.z, 1.0f};
+	return v4{ vp.x, vp.y, vp.z, 1.0f };
 }

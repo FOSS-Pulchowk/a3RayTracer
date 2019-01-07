@@ -7,16 +7,18 @@
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
 
-#include <stddef.h>
-
 #define XWNDCLASSNAME L"xWindowClass"
 #define XWIDTH 800
 #define XHEIGHT 600
 
+// NOTE(Zero): 
+// The value of this global variable is only valid on application startup
+static HMODULE g_OpenGLLibrary;
+
 enum button
 {
-	ButtonLeft, 
-	ButtonRight, 
+	ButtonLeft,
+	ButtonRight,
 	ButtonMiddle,
 
 	ButtonCount
@@ -24,7 +26,7 @@ enum button
 
 enum input_state
 {
-	ButtonUp, 
+	ButtonUp,
 	ButtonDown
 };
 
@@ -122,7 +124,7 @@ u32 LoadOpenGLShaderFromSource(s8 vSource, s8 fSource)
 {
 	u32 vShader = CompileShader(GL_VERTEX_SHADER, vSource);
 	u32 fShader = CompileShader(GL_FRAGMENT_SHADER, fSource);
-	
+
 	xGL(u32 program = glCreateProgram());
 	xGL(glAttachShader(program, vShader));
 	xGL(glAttachShader(program, fShader));
@@ -144,6 +146,93 @@ u32 LoadOpenGLShaderFromSource(s8 vSource, s8 fSource)
 	return program;
 }
 
+void* OpenGLFunctionLoader(s8 name)
+{
+	void* result = 0;
+	result = wglGetProcAddress(name);
+	if(result) return result;
+	xAssert(g_OpenGLLibrary);
+	result = GetProcAddress(g_OpenGLLibrary, name);
+	xAssert(result);
+	return result;
+}
+
+void LoadOpenGL(HWND hWnd)
+{
+	xLog("Initializing OpenGL context");
+	WNDCLASSEXW wndClassExW = {};
+	wndClassExW.cbSize = sizeof(wndClassExW);
+	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
+	wndClassExW.lpfnWndProc = DefWindowProcW;
+	wndClassExW.hInstance = GetModuleHandleW(0);
+	wndClassExW.lpszClassName = L"xDummyWindow";
+	RegisterClassExW(&wndClassExW);
+	HWND hDummyWnd = CreateWindowExW(0, L"xDummyWindow", L"xDummyWindow", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, GetModuleHandleW(0), 0);
+	HDC hDummyDC = GetDC(hDummyWnd);
+	PIXELFORMATDESCRIPTOR dummyPDF = {};
+	dummyPDF.nSize = sizeof(dummyPDF);
+	dummyPDF.nVersion = 1;
+	dummyPDF.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	dummyPDF.iPixelType = PFD_TYPE_RGBA;
+	dummyPDF.cColorBits = 32;
+	dummyPDF.cDepthBits = 24;
+	dummyPDF.cStencilBits = 8;
+	i32 pfi = ChoosePixelFormat(hDummyDC, &dummyPDF);
+	xAssert(pfi != 0);
+	PIXELFORMATDESCRIPTOR suggestedPFI;
+	DescribePixelFormat(hDummyDC, pfi, sizeof(suggestedPFI), &suggestedPFI);
+	SetPixelFormat(hDummyDC, pfi, &suggestedPFI);
+	HGLRC dummyGLContext = wglCreateContext(hDummyDC);
+	xAssert(wglMakeCurrent(hDummyDC, dummyGLContext));
+	typedef HGLRC WINAPI tag_wglCreateContextAttribsARB(HDC hdc, HGLRC hShareContext, const i32 *attribList);
+	tag_wglCreateContextAttribsARB *wglCreateContextAttribsARB;
+	typedef BOOL WINAPI tag_wglChoosePixelFormatARB(HDC hdc, const i32 *piAttribIList, const f32 *pfAttribFList, u32 nMaxFormats, i32 *piFormats, u32 *nNumFormats);
+	tag_wglChoosePixelFormatARB *wglChoosePixelFormatARB;
+	wglCreateContextAttribsARB = (tag_wglCreateContextAttribsARB*)wglGetProcAddress("wglCreateContextAttribsARB");
+	wglChoosePixelFormatARB = (tag_wglChoosePixelFormatARB*)wglGetProcAddress("wglChoosePixelFormatARB");
+	gl_version glVersion;
+	g_OpenGLLibrary = LoadLibraryW(L"opengl32.dll");
+	xAssert(GladLoadGLLoader(OpenGLFunctionLoader, &glVersion));
+	xLog("OpenGL Context created. Loaded OpenGL Version: {i}.{i}", glVersion.major, glVersion.minor);
+	FreeLibrary(g_OpenGLLibrary);
+	g_OpenGLLibrary = 0;
+	wglMakeCurrent(hDummyDC, 0);
+	wglDeleteContext(dummyGLContext);
+	ReleaseDC(hDummyWnd, hDummyDC);
+	DestroyWindow(hDummyWnd);
+
+	i32 attribList[] =
+	{
+		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+		WGL_COLOR_BITS_ARB, 32,
+		WGL_DEPTH_BITS_ARB, 24,
+		WGL_STENCIL_BITS_ARB, 8,
+		0
+	};
+
+	i32 pixelFormat;
+	u32 numFormats;
+	HDC hDC = GetDC(hWnd);
+	wglChoosePixelFormatARB(hDC, attribList, 0, 1, &pixelFormat, &numFormats);
+	xAssert(numFormats);
+	PIXELFORMATDESCRIPTOR pfd;
+	DescribePixelFormat(hDC, pixelFormat, sizeof(pfd), &pfd);
+	SetPixelFormat(hDC, pixelFormat, &pfd);
+
+	int glVersionAttribs[] = {
+		WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+		WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+		WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+		0,
+	};
+	HGLRC glContext = wglCreateContextAttribsARB(hDC, 0, glVersionAttribs);
+	wglMakeCurrent(hDC, glContext);
+	ReleaseDC(hWnd, hDC);
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	win32_user_data& userData = *(win32_user_data*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
@@ -151,74 +240,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		case WM_CREATE:
 		{
-			xLog("Initializing OpenGL context");
-			WNDCLASSEXW wndClassExW = {};
-			wndClassExW.cbSize = sizeof(wndClassExW);
-			wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
-			wndClassExW.lpfnWndProc = DefWindowProcW;
-			wndClassExW.hInstance = GetModuleHandleW(0);
-			wndClassExW.lpszClassName = L"xDummyWindow";
-			RegisterClassExW(&wndClassExW);
-			HWND hDummyWnd = CreateWindowExW(0, L"xDummyWindow", L"xDummyWindow", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, GetModuleHandleW(0), 0);
-			HDC hDummyDC = GetDC(hDummyWnd);
-			PIXELFORMATDESCRIPTOR dummyPDF = {};
-			dummyPDF.nSize = sizeof(dummyPDF);
-			dummyPDF.nVersion = 1;
-			dummyPDF.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-			dummyPDF.iPixelType = PFD_TYPE_RGBA;
-			dummyPDF.cColorBits = 32;
-			dummyPDF.cDepthBits = 24;
-			dummyPDF.cStencilBits = 8;
-			i32 pfi = ChoosePixelFormat(hDummyDC, &dummyPDF);
-			xAssert(pfi != 0);
-			PIXELFORMATDESCRIPTOR suggestedPFI;
-			DescribePixelFormat(hDummyDC, pfi, sizeof(suggestedPFI), &suggestedPFI);
-			SetPixelFormat(hDummyDC, pfi, &suggestedPFI);
-			HGLRC dummyGLContext = wglCreateContext(hDummyDC);
-			xAssert(wglMakeCurrent(hDummyDC, dummyGLContext));
-			typedef HGLRC WINAPI tag_wglCreateContextAttribsARB(HDC hdc, HGLRC hShareContext, const i32 *attribList);
-			tag_wglCreateContextAttribsARB *wglCreateContextAttribsARB;
-			typedef BOOL WINAPI tag_wglChoosePixelFormatARB(HDC hdc, const i32 *piAttribIList, const f32 *pfAttribFList, u32 nMaxFormats, i32 *piFormats, u32 *nNumFormats);
-			tag_wglChoosePixelFormatARB *wglChoosePixelFormatARB;
-			wglCreateContextAttribsARB = (tag_wglCreateContextAttribsARB*)wglGetProcAddress("wglCreateContextAttribsARB");
-			wglChoosePixelFormatARB = (tag_wglChoosePixelFormatARB*)wglGetProcAddress("wglChoosePixelFormatARB");
-			xAssert(gladLoadGL());
-			xLog("OpenGL Context created. Loaded OpenGL Version: {i}.{i}", GLVersion.major, GLVersion.minor);
-			wglMakeCurrent(hDummyDC, 0);
-			wglDeleteContext(dummyGLContext);
-			ReleaseDC(hDummyWnd, hDummyDC);
-			DestroyWindow(hDummyWnd);
-
-			i32 attribList[] =
-			{
-				WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-				WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
-				WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
-				WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-				WGL_COLOR_BITS_ARB, 32,
-				WGL_DEPTH_BITS_ARB, 24,
-				WGL_STENCIL_BITS_ARB, 8,
-				0
-			};
-
-			i32 pixelFormat;
-			u32 numFormats;
-			HDC hDC = GetDC(hWnd);
-			wglChoosePixelFormatARB(hDC, attribList, 0, 1, &pixelFormat, &numFormats);
-			xAssert(numFormats);
-			PIXELFORMATDESCRIPTOR pfd;
-			DescribePixelFormat(hDC, pixelFormat, sizeof(pfd), &pfd);
-			SetPixelFormat(hDC, pixelFormat, &pfd);
-
-			int glVersionAttribs[] = {
-				WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-				WGL_CONTEXT_MINOR_VERSION_ARB, 2,
-				WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-				0,
-			};
-			HGLRC glContext = wglCreateContextAttribsARB(hDC, 0, glVersionAttribs);
-			wglMakeCurrent(hDC, glContext);
-			ReleaseDC(hWnd, hDC);
+			LoadOpenGL(hWnd);
 			return 0;
 		}
 
@@ -251,7 +273,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			userData.inputSystem.Buttons[ButtonLeft] = ButtonUp;
 			break;
 		}
-		
+
 		case WM_RBUTTONDOWN:
 		{
 			i32 mx = GET_X_LPARAM(lParam);
@@ -330,10 +352,10 @@ struct entity
 {
 	v3 position;
 	v2 dimension;
-	union 
+	union
 	{
 		v3 acolor[4];
-		struct 
+		struct
 		{
 			union { v3 color; };
 			union { v3 color; };
@@ -347,10 +369,10 @@ struct entity
 int main()
 {
 	HINSTANCE hInstance = GetModuleHandleW(0);
-#else
+	#else
 i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 {
-#endif
+	#endif
 	WNDCLASSEXW wndClassExW = {};
 	wndClassExW.cbSize = sizeof(wndClassExW);
 	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
@@ -397,7 +419,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 	xGL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertex2d) * 4 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW));
 	xGL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), null));
-	xGL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(3*sizeof(float))));
+	xGL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(3 * sizeof(float))));
 
 	xGL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iab));
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW);
@@ -478,10 +500,10 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		for(i32 i = 0; i < X_NUMBER_OF_ENTITIES; ++i)
 		{
 			v2 d = rect.dimension;
-			v[i * 4 + 0].position = v3{ 0.0f, 0.0f, 0.0f } * m4x4::TranslationR(rect.position);
-			v[i * 4 + 1].position = v3{ 0.0f, d.y, 0.0f } * m4x4::TranslationR(rect.position);
-			v[i * 4 + 2].position = v3{ d.x, d.y, 0.0f } * m4x4::TranslationR(rect.position);
-			v[i * 4 + 3].position = v3{ d.x, 0.0f, 0.0f } * m4x4::TranslationR(rect.position);
+			v[i * 4 + 0].position = v3{ 0.0f, 0.0f, 0.0f } *m4x4::TranslationR(rect.position);
+			v[i * 4 + 1].position = v3{ 0.0f, d.y, 0.0f } *m4x4::TranslationR(rect.position);
+			v[i * 4 + 2].position = v3{ d.x, d.y, 0.0f } *m4x4::TranslationR(rect.position);
+			v[i * 4 + 3].position = v3{ d.x, 0.0f, 0.0f } *m4x4::TranslationR(rect.position);
 			v[i * 4 + 0].color = rect.acolor[0];
 			v[i * 4 + 1].color = rect.acolor[1];
 			v[i * 4 + 2].color = rect.acolor[2];

@@ -258,7 +258,8 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Math\Matrix4.cpp" />
-    <ClCompile Include="Platform\gl\glad.c" />
+    <ClCompile Include="Math\Quaterniod.cpp" />
+    <ClCompile Include="Platform\gl\Glad.cpp" />
     <ClCompile Include="Platform\Win32Layer.cpp" />
     <ClCompile Include="Platform\Win32Debug.cpp" />
   </ItemGroup>
@@ -266,10 +267,11 @@
     <ClInclude Include="Common\Core.h" />
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Math\Matrix4.h" />
-    <ClInclude Include="Platform\gl\glad.h" />
-    <ClInclude Include="Platform\gl\glDebug.h" />
-    <ClInclude Include="Platform\gl\glExtensions.h" />
-    <ClInclude Include="Platform\KHR\khrplatform.h" />
+    <ClInclude Include="Math\Quaterniod.h" />
+    <ClInclude Include="Platform\GL\Glad.h" />
+    <ClInclude Include="Platform\GL\GLDebug.h" />
+    <ClInclude Include="Platform\GL\GLExtensions.h" />
+    <ClInclude Include="Platform\GL\KHR\KHRPlatform.h" />
     <ClInclude Include="Platform\Platform.h" />
   </ItemGroup>
   <ItemGroup>
