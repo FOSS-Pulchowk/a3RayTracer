@@ -164,3 +164,15 @@ inline v3 operator*(const quat &lhs, v3 vec)
 	quat vp((lhs * v) * lhsp);
 	return v3{vp.x, vp.y, vp.z};
 }
+/*
+	- Rotates Vector 3 but takes Vector 4 as paramater
+	- Discards the `w` component of the Vector 4 while rotating
+	- When Vector 4 is returned, the `w` component will always be set to `1.0f`
+	*/
+inline v4 operator*(const quat &lhs, v4 vec)
+{
+	quat v(0.0f, vec.x, vec.y, vec.z);
+	quat lhsp = quat::Conjugate(lhs);
+	quat vp((lhs * v) * lhsp);
+	return v4{vp.x, vp.y, vp.z, 1.0f};
+}
