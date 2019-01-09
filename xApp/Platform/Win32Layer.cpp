@@ -1,11 +1,21 @@
 #include "Common/Core.h"
 #include "Platform.h"
 #include "Math/Math.h"
+#include "Graphics/Image.h"
 #include "gl/glad.h"
 #include "gl/glExtensions.h"
 #include "gl/glDebug.h"
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
+
+// undefining annoying windows macros
+// NOTE(Zero): Add every window macros that fucks up our code
+#ifdef LoadImage
+#undef LoadImage
+#endif
+#ifdef CreateWindow
+#undef CreateWindow
+#endif
 
 #define XWNDCLASSNAME L"xWindowClass"
 #define XWIDTH 800
@@ -14,6 +24,20 @@
 // NOTE(Zero): 
 // The value of this global variable is only valid on application startup
 static HMODULE g_OpenGLLibrary;
+
+#define KiloBytes(n) (sizeof(u8) * (n) * 1024u)
+#define MegaBytes(n) (KiloBytes(n) * 1024u)
+#define GigaBytes(n) (MegaBytes(n) * 1024u)
+memory_arena NewMemoryBlock(u32 size)
+{
+	memory_arena arena = {};
+	arena.memory = (u8*)VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	xAssert(arena.memory);
+	arena.current = arena.memory;
+	arena.size = size;
+	arena.allocated = 0;
+	return arena;
+}
 
 enum button
 {
@@ -346,6 +370,7 @@ struct vertex2d
 {
 	v3 position;
 	v3 color;
+	v2 texCoords;
 };
 
 struct entity
@@ -418,13 +443,15 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	#define xOffsetOf(s, m) (&(((s*)0)->m))
 
 	xGL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertex2d) * 4 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW));
-	xGL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), null));
-	xGL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(3 * sizeof(float))));
+	xGL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(xOffsetOf(vertex2d, vertex2d::position))));
+	xGL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(xOffsetOf(vertex2d, vertex2d::color))));
+	xGL(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(xOffsetOf(vertex2d, vertex2d::texCoords))));
 
 	xGL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iab));
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW);
 	xGL(glEnableVertexAttribArray(0));
 	xGL(glEnableVertexAttribArray(1));
+	xGL(glEnableVertexAttribArray(2));
 	xGL(glBindVertexArray(0));
 
 	file_read_info vSource = ReadEntireFile("Platform/sample.vert");
@@ -463,6 +490,21 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	rect.acolor[2] = { 0.0f, 0.0f, 1.0f };
 	rect.acolor[3] = { 1.0f, 1.0f, 1.0f };
 
+	memory_arena memory = NewMemoryBlock(GigaBytes(1));
+
+	x::image* testImage = x::LoadImage(memory, "Resources/BigSmile.png");
+	xAssert(testImage);
+
+	u32 texID;
+	xGL(glGenTextures(1, &texID));
+	xGL(glBindTexture(GL_TEXTURE_2D, texID));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testImage->Width, testImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, testImage->Pixels));
+	xGL(glBindTexture(GL_TEXTURE_2D, 0));
+
 	b32 shouldRun = true;
 	while(shouldRun)
 	{
@@ -491,8 +533,16 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 		xGL(glClearColor(0.25f, 0.5f, 1.0f, 1.0f));
 		xGL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		xGL(glDisable(GL_DEPTH_TEST));
+		xGL(glEnable(GL_BLEND));
+		xGL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 		xGL(glBindVertexArray(vao));
 		xGL(glUseProgram(sProgram));
+		xGL(u32 loc = glGetUniformLocation(sProgram, "Texture"));
+		xGL(glUniform1i(loc, 0));
+		xGL(glActiveTexture(GL_TEXTURE0));
+		xGL(glBindTexture(GL_TEXTURE_2D, texID));
+
 		f32 angle = sinf(value);
 
 		xGL(vertex2d* v = (vertex2d*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
@@ -500,14 +550,18 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		for(i32 i = 0; i < X_NUMBER_OF_ENTITIES; ++i)
 		{
 			v2 d = rect.dimension;
-			v[i * 4 + 0].position = v3{ 0.0f, 0.0f, 0.0f } *m4x4::TranslationR(rect.position);
-			v[i * 4 + 1].position = v3{ 0.0f, d.y, 0.0f } *m4x4::TranslationR(rect.position);
-			v[i * 4 + 2].position = v3{ d.x, d.y, 0.0f } *m4x4::TranslationR(rect.position);
-			v[i * 4 + 3].position = v3{ d.x, 0.0f, 0.0f } *m4x4::TranslationR(rect.position);
+			v[i * 4 + 0].position = v3{ 0.0f, 0.0f, 0.0f } * m4x4::TranslationR(rect.position);
+			v[i * 4 + 1].position = v3{ 0.0f, d.y, 0.0f } * m4x4::TranslationR(rect.position);
+			v[i * 4 + 2].position = v3{ d.x, d.y, 0.0f } * m4x4::TranslationR(rect.position);
+			v[i * 4 + 3].position = v3{ d.x, 0.0f, 0.0f } * m4x4::TranslationR(rect.position);
 			v[i * 4 + 0].color = rect.acolor[0];
 			v[i * 4 + 1].color = rect.acolor[1];
 			v[i * 4 + 2].color = rect.acolor[2];
 			v[i * 4 + 3].color = rect.acolor[3];
+			v[i * 4 + 0].texCoords = v2{ 0.0f, 0.0f };
+			v[i * 4 + 1].texCoords = v2{ 0.0f, 1.0f };
+			v[i * 4 + 2].texCoords = v2{ 1.0f, 1.0f };
+			v[i * 4 + 3].texCoords = v2{ 1.0f, 0.0f };
 
 			indices[i * 6 + 0] = i * 4 + 0;
 			indices[i * 6 + 1] = i * 4 + 1;

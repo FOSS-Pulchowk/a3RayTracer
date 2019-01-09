@@ -76,29 +76,21 @@ void Log(log_type type, s8 format, ...);
 #define xLogTrace(fmt, ...)
 #endif
 
-//
-//#ifndef GLAPI
-//# if defined(GLAD_GLAPI_EXPORT)
-//#  if defined(_WIN32) || defined(__CYGWIN__)
-//#   if defined(GLAD_GLAPI_EXPORT_BUILD)
-//#    if defined(__GNUC__)
-//#     define GLAPI __attribute__ ((dllexport)) extern
-//#    else
-//#     define GLAPI __declspec(dllexport) extern
-//#    endif
-//#   else
-//#    if defined(__GNUC__)
-//#     define GLAPI __attribute__ ((dllimport)) extern
-//#    else
-//#     define GLAPI __declspec(dllimport) extern
-//#    endif
-//#   endif
-//#  elif defined(__GNUC__) && defined(GLAD_GLAPI_EXPORT_BUILD)
-//#   define GLAPI __attribute__ ((visibility ("default"))) extern
-//#  else
-//#   define GLAPI extern
-//#  endif
-//# else
-//#  define GLAPI extern
-//# endif
-//#endif
+struct memory_arena
+{
+	u8* memory;
+	u32 size;
+	u8* current;
+	u32 allocated;
+};
+
+inline void* PushSize(memory_arena& arena, u32 bytes)
+{
+	xAssert(arena.size >= (arena.allocated + bytes));
+	void* result = (void*)arena.current;
+	arena.current += bytes;
+	return result;
+}
+
+#define xPush(arena, type) (type*)PushSize(arena, sizeof(type))
+#define xPushArray(arena, type, n) (type*)PushSize(arena, sizeof(type) * n)

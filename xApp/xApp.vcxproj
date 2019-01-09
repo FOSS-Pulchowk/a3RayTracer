@@ -257,6 +257,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="Graphics\Image.cpp" />
     <ClCompile Include="Math\Matrix4.cpp" />
     <ClCompile Include="Math\Quaterniod.cpp" />
     <ClCompile Include="Platform\gl\Glad.cpp" />
@@ -265,6 +266,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\Core.h" />
+    <ClInclude Include="External\STBImage.h" />
+    <ClInclude Include="External\STBImageWrite.h" />
+    <ClInclude Include="Graphics\Image.h" />
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Math\Matrix4.h" />
     <ClInclude Include="Math\Quaterniod.h" />
