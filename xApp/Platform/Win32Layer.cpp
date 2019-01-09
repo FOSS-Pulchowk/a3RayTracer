@@ -388,6 +388,9 @@ struct entity
 			union { v3 color; };
 		};
 	};
+	b32 isMoving;
+	v2 moveFinalPosition;
+	f32 moveFrameTime;
 };
 
 #if defined(XDEBUG) || defined(XINTERNAL)
@@ -481,7 +484,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	QueryPerformanceCounter(&performanceCounter);
 
 	#define X_NUMBER_OF_ENTITIES 1
-	entity rect;
+	entity rect = {};
 	rect.position = { 100.0f, 100.0f, 0.0f };
 	rect.dimension = { 100.0f, 100.0f };
 	rect.color = { 1.0f, 0.0f, 0.f };
@@ -489,6 +492,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	rect.acolor[1] = { 0.0f, 1.0f, 0.0f };
 	rect.acolor[2] = { 0.0f, 0.0f, 1.0f };
 	rect.acolor[3] = { 1.0f, 1.0f, 1.0f };
+	rect.isMoving = false;
+	rect.moveFinalPosition = v2{ 0.0f, 0.0f };
 
 	memory_arena memory = NewMemoryBlock(GigaBytes(1));
 
@@ -504,6 +509,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testImage->Width, testImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, testImage->Pixels));
 	xGL(glBindTexture(GL_TEXTURE_2D, 0));
+
+	f32 deltaTime = 0.0f;
 
 	b32 shouldRun = true;
 	while(shouldRun)
@@ -526,10 +533,27 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		input_system& input = userData.inputSystem;
 		if(oldInput.Buttons[ButtonLeft] && input.Buttons[ButtonLeft] == ButtonUp)
 		{
-			rect.position.x = (f32)input.MouseX;
-			rect.position.y = (f32)input.MouseY;
+			//rect.position.x = (f32)input.MouseX - rect.dimension.x / 2;
+			//rect.position.y = (f32)input.MouseY - rect.dimension.y / 2;
+			rect.isMoving = true;
+			rect.moveFinalPosition.x = input.MouseX - rect.dimension.x / 2;
+			rect.moveFinalPosition.y = input.MouseY - rect.dimension.y / 2;
+			rect.moveFrameTime = 0.0f;
 		}
 		oldInput = input;
+
+		if(rect.isMoving)
+		{
+			rect.position.xy += (rect.moveFrameTime * deltaTime * Normalize(rect.moveFinalPosition - rect.position.xy) * 450.0f);
+			rect.moveFrameTime += deltaTime;
+			f32 distance = fabsf(sqrtf(Distance2(rect.position.xy, rect.moveFinalPosition)));
+			if(distance < 0.01f)
+			{
+				rect.isMoving = false;
+				rect.moveFrameTime = 0.0f;
+				rect.moveFinalPosition = v2{ 0.0f, 0.0f };
+			}
+		}
 
 		xGL(glClearColor(0.25f, 0.5f, 1.0f, 1.0f));
 		xGL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -579,7 +603,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 		LARGE_INTEGER currentPerformanceCounter;
 		xAssert(QueryPerformanceCounter(&currentPerformanceCounter));
-		f32 dt = 1000.0f * (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
+		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
 		//xLogTrace("FPS: {f} Time spent last frame: {f}ms", 1000.0f / dt, dt);
 	}
