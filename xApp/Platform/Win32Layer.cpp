@@ -66,12 +66,6 @@ struct win32_user_data
 	input_system inputSystem;
 };
 
-struct file_read_info
-{
-	void* Buffer;
-	i64 Size;
-};
-
 file_read_info ReadEntireFile(s8 fileName)
 {
 	file_read_info result = {};
@@ -137,7 +131,7 @@ u32 CompileShader(GLenum type, s8 source)
 		utf8 errMsg[1024];
 		xGL(glGetShaderInfoLog(shader, 1024, &len, errMsg));
 		xGL(xLogWarn("Shader source could not be compiled!\n"));
-		xLogWarn("Shader Compilation Error: '%s'\n", errMsg);
+		xLogWarn("Shader Compilation Error: '{s}'\n", errMsg);
 		xGL(glDeleteShader(shader));
 		return 0;
 	}
@@ -373,6 +367,13 @@ struct vertex2d
 	v2 texCoords;
 };
 
+struct vertexFont
+{
+	v2 position;
+	v3 color;
+	v2 texCoords;
+};
+
 struct entity
 {
 	v3 position;
@@ -435,10 +436,11 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xGL(glViewport(0, 0, XWIDTH, XHEIGHT));
 
 	u32 vao;
-	xGL(glGenVertexArrays(1, &vao));
 	u32 vab, iab;
+	xGL(glGenVertexArrays(1, &vao));
 	xGL(glGenBuffers(1, &vab));
 	xGL(glGenBuffers(1, &iab));
+
 	xGL(glBindVertexArray(vao));
 	xGL(glBindBuffer(GL_ARRAY_BUFFER, vab));
 
@@ -451,7 +453,23 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xGL(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(xOffsetOf(vertex2d, vertex2d::texCoords))));
 
 	xGL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iab));
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW);
+	xGL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW));
+	xGL(glEnableVertexAttribArray(0));
+	xGL(glEnableVertexAttribArray(1));
+	xGL(glEnableVertexAttribArray(2));
+	xGL(glBindVertexArray(0));
+
+
+	u32 tvao;
+	u32 tvab;
+	xGL(glGenVertexArrays(1, &tvao));
+	xGL(glGenBuffers(1, &tvab));
+	xGL(glBindVertexArray(tvao));
+	xGL(glBindBuffer(GL_ARRAY_BUFFER, tvab));
+	xGL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertexFont) * 6, null, GL_STATIC_DRAW));
+	xGL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertexFont), (void*)(xOffsetOf(vertexFont, vertexFont::position))));
+	xGL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertexFont), (void*)(xOffsetOf(vertexFont, vertexFont::color))));
+	xGL(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertexFont), (void*)(xOffsetOf(vertexFont, vertexFont::texCoords))));
 	xGL(glEnableVertexAttribArray(0));
 	xGL(glEnableVertexAttribArray(1));
 	xGL(glEnableVertexAttribArray(2));
@@ -463,10 +481,21 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	FreeFileContent(vSource);
 	FreeFileContent(fSource);
 
+	file_read_info vText = ReadEntireFile("Platform/font.vert");
+	file_read_info fText = ReadEntireFile("Platform/font.frag");
+	u32 fProgram = LoadOpenGLShaderFromSource((s8)vText.Buffer, (s8)fText.Buffer);
+	FreeFileContent(vText);
+	FreeFileContent(fSource);
+
 	m4x4 projection = m4x4::OrthographicR(0.0f, 800.0f, 0.0f, 600.0, -1.0f, 1.0f);
 	xGL(glUseProgram(sProgram));
 	xGL(u32 projLoc = glGetUniformLocation(sProgram, "Projection"));
 	xGL(glUniformMatrix4fv(projLoc, 1, GL_FALSE, projection.elements));
+	xGL(glUseProgram(0));
+
+	xGL(glUseProgram(fProgram));
+	xGL(u32 aprojLoc = glGetUniformLocation(fProgram, "Projection"));
+	xGL(glUniformMatrix4fv(aprojLoc, 1, GL_FALSE, projection.elements));
 	xGL(glUseProgram(0));
 
 	f32 value = 0.0f;
@@ -500,7 +529,15 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	x::image* testImage = x::LoadImage(memory, "Resources/BigSmile.png");
 	xAssert(testImage);
 
-	u32 texID;
+	x::image* zeroImage = x::LoadImage(memory, "Resources/Zero.png");
+	xAssert(zeroImage);
+
+	x::ttfont* testFont = x::LoadTTFont(memory, "Resources/HackRegular.ttf");
+	//x::ttfont* testFont = x::LoadTTFont(memory, "c:/windows/fonts/arialbd.ttf");
+	xAssert(testFont);
+
+	u32 texID, zeroID, fontTexID;
+
 	xGL(glGenTextures(1, &texID));
 	xGL(glBindTexture(GL_TEXTURE_2D, texID));
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
@@ -508,6 +545,28 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testImage->Width, testImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, testImage->Pixels));
+	xGL(glBindTexture(GL_TEXTURE_2D, 0));
+	
+	xGL(glGenTextures(1, &zeroID));
+	xGL(glBindTexture(GL_TEXTURE_2D, zeroID));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, zeroImage->Width, zeroImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroImage->Pixels));
+	xGL(glBindTexture(GL_TEXTURE_2D, 0));
+
+	xGL(glGenTextures(1, &fontTexID));
+	xGL(glBindTexture(GL_TEXTURE_2D, fontTexID));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+#if 1
+	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testFont->Width, testFont->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, testFont->Pixels));
+#else
+	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
+#endif
 	xGL(glBindTexture(GL_TEXTURE_2D, 0));
 
 	f32 deltaTime = 0.0f;
@@ -560,12 +619,15 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		xGL(glDisable(GL_DEPTH_TEST));
 		xGL(glEnable(GL_BLEND));
 		xGL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
 		xGL(glBindVertexArray(vao));
+		xGL(glBindBuffer(GL_ARRAY_BUFFER, vab));
 		xGL(glUseProgram(sProgram));
 		xGL(u32 loc = glGetUniformLocation(sProgram, "Texture"));
 		xGL(glUniform1i(loc, 0));
 		xGL(glActiveTexture(GL_TEXTURE0));
 		xGL(glBindTexture(GL_TEXTURE_2D, texID));
+		//xGL(glBindTexture(GL_TEXTURE_2D, zeroID));
 
 		f32 angle = sinf(value);
 
@@ -598,6 +660,47 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		xGL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
 		xGL(glDrawElements(GL_TRIANGLES, X_NUMBER_OF_ENTITIES * 6, GL_UNSIGNED_INT, null));
 
+		xGL(glBindVertexArray(tvao));
+		xGL(glActiveTexture(GL_TEXTURE1));
+		xGL(glBindTexture(GL_TEXTURE_2D, fontTexID));
+		//xGL(glBindTexture(GL_TEXTURE_2D, fontTexID));
+		xGL(glUseProgram(fProgram));
+		xGL(u32 pos = glGetUniformLocation(fProgram, "Texture"));
+		xGL(glUniform1i(pos, 1));
+		xGL(glBindBuffer(GL_ARRAY_BUFFER, tvab));
+
+		vertexFont* fontVertices = (vertexFont*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+		
+		f32 x = 0.0f;
+		f32 y = 0.0f;
+		f32 w = 0.20f;
+		f32 h = 0.20f;
+
+		fontVertices[0].position = { x, y };
+		fontVertices[1].position = { x, y + h };
+		fontVertices[2].position = { x + w, y + h };
+		fontVertices[3].position = { x, y };
+		fontVertices[4].position = { x + w, y + h };
+		fontVertices[5].position = { x + w, y };
+
+		fontVertices[0].color = { 0.0f, 1.0f, 1.0f };
+		fontVertices[1].color = { 0.0f, 1.0f, 1.0f };
+		fontVertices[2].color = { 0.0f, 1.0f, 1.0f };
+		fontVertices[3].color = { 0.0f, 1.0f, 1.0f };
+		fontVertices[4].color = { 0.0f, 1.0f, 1.0f };
+		fontVertices[5].color = { 0.0f, 1.0f, 1.0f };
+
+		fontVertices[0].texCoords = { 0.0f, 0.0f };
+		fontVertices[1].texCoords = { 0.0f, 1.0f };
+		fontVertices[2].texCoords = { 1.0f, 1.0f };
+		fontVertices[3].texCoords = { 0.0f, 0.0f };
+		fontVertices[4].texCoords = { 1.0f, 1.0f };
+		fontVertices[5].texCoords = { 1.0f, 0.0f };
+
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+
+		xGL(glDrawArrays(GL_TRIANGLES, 0, 6));
+		
 		SwapBuffers(hDC);
 		value += 0.01f;
 

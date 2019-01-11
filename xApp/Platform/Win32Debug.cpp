@@ -1,5 +1,6 @@
 #include "Common/Core.h"
 #include "Platform.h"
+#include "Utility/String.h"
 #include <stdarg.h>
 
 #define MAX_LOG_MSG_SIZE 1024
@@ -13,6 +14,7 @@ namespace x {
 // NOTE(Zero)
 // When `display` is true, the buffer is flushed and `ch` is not displayed
 // When log buffer gets full then it is automatically flushed
+// This function is not Thread safe
 inline void InternalPutCharToBuffer(char ch, b32 display = false)
 {
 	static utf8 s_LogBuffer[MAX_LOG_MSG_SIZE];
@@ -37,58 +39,6 @@ inline void InternalPutCharToBuffer(char ch, b32 display = false)
 		return;
 	}
 	s_LogBuffer[s_LogBufferIndex++] = ch;
-}
-
-inline void InternalParseAndLogUnsignedInteger(u64 n, u32 b)
-{
-	if(n == 0)
-	{
-		InternalPutCharToBuffer('0');
-		return;
-	}
-	utf8 buffer[100] = {};
-	i32 bufferIndex = 0;
-	while(n != 0)
-	{
-		u64 rem = n % b;
-		buffer[bufferIndex++] = (utf8)((rem > 9) ? (rem - 10) + 'a' : rem + '0');
-		xAssert(bufferIndex < 100);
-		n = n / b;
-	}
-	i32 start = 0;
-	i32 end = bufferIndex - 1;
-	while(start < end)
-	{
-		utf8 temp = buffer[start];
-		buffer[start] = buffer[end];
-		buffer[end] = temp;
-		start++;
-		end--;
-	}
-	for(i32 i = 0; i < bufferIndex; ++i)
-		InternalPutCharToBuffer(buffer[i]);
-}
-
-// HACK(Zero): May error when value are too large or too small
-inline void InternalPraseAndLogFloat(u32 num)
-{
-	u32 sign = num >> 31;
-	u32 exp = ((num >> 23) & 0xff) - 127;
-	u32 man = num & ((1 << 23) - 1);
-	man |= 1 << 23;
-	if(sign)
-		InternalPutCharToBuffer('-');
-	InternalParseAndLogUnsignedInteger(man >> (23 - exp), 10);
-	InternalPutCharToBuffer('.');
-	u32 frac = man & ((1 << (23 - exp)) - 1);
-	u32 base = 1 << (23 - exp);
-	i32 c = 0;
-	while(frac != 0 && c++ < 6)
-	{
-		frac *= 10;
-		InternalParseAndLogUnsignedInteger((u32)(frac / base), 10);
-		frac %= base;
-	}
 }
 
 inline void InternalParseAndLogString(s8 string)
@@ -130,15 +80,21 @@ void Log(log_type type, s8 format, ...)
 	SYSTEMTIME sysTime;
 	GetLocalTime(&sysTime);
 	InternalParseAndLogString("[Time:");
-	InternalParseAndLogUnsignedInteger(sysTime.wHour, 10);
+	static utf8 temporaryBuffer[100] = {};
+	xAssert(ParseU32(temporaryBuffer, 100, sysTime.wHour, 10) > 0);
+	InternalParseAndLogString(temporaryBuffer);
 	InternalParseAndLogString(":");
-	InternalParseAndLogUnsignedInteger(sysTime.wMinute, 10);
+	xAssert(ParseU32(temporaryBuffer, 100, sysTime.wMinute, 10) > 0);
+	InternalParseAndLogString(temporaryBuffer);
 	InternalParseAndLogString(":");
-	InternalParseAndLogUnsignedInteger(sysTime.wSecond, 10);
+	xAssert(ParseU32(temporaryBuffer, 100, sysTime.wSecond, 10) > 0);
+	InternalParseAndLogString(temporaryBuffer);
 	InternalParseAndLogString(":");
-	InternalParseAndLogUnsignedInteger(sysTime.wMilliseconds, 10);
+	xAssert(ParseU32(temporaryBuffer, 100, sysTime.wMilliseconds, 10) > 0);
+	InternalParseAndLogString(temporaryBuffer);
 	InternalParseAndLogString("] [Thread:");
-	InternalParseAndLogUnsignedInteger(GetCurrentThreadId(), 10);
+	xAssert(ParseU32(temporaryBuffer, 100, GetCurrentThreadId(), 10) > 0);
+	InternalParseAndLogString(temporaryBuffer);
 	InternalParseAndLogString("]\n");
 
 	va_list arg;
@@ -173,41 +129,46 @@ void Log(log_type type, s8 format, ...)
 							InternalPutCharToBuffer('-');
 						}
 						u64 unum = (u64)num;
-						InternalParseAndLogUnsignedInteger((u64)num, 10);
+						xAssert(ParseU32(temporaryBuffer, 100, (u64)num, 10) > 0);
+						InternalParseAndLogString(temporaryBuffer);
 						traverser += 2;
 						break;
 					}
 					case 'x': // integer to hex
 					{
-						InternalParseAndLogUnsignedInteger(va_arg(arg, u32), 16);
+						xAssert(ParseU32(temporaryBuffer, 100, va_arg(arg, u32), 16) > 0);
+						InternalParseAndLogString(temporaryBuffer);
 						traverser += 2;
 						InternalPutCharToBuffer('h');
 						break;
 					}
 					case 'o': // integer to oct
 					{
-						InternalParseAndLogUnsignedInteger(va_arg(arg, u32), 8);
+						xAssert(ParseU32(temporaryBuffer, 100, va_arg(arg, u32), 8) > 0);
+						InternalParseAndLogString(temporaryBuffer);
 						traverser += 2;
 						InternalPutCharToBuffer('o');
 						break;
 					}
 					case 'b': // integer to binary
 					{
-						InternalParseAndLogUnsignedInteger(va_arg(arg, u32), 2);
+						xAssert(ParseU32(temporaryBuffer, 100, va_arg(arg, u32), 2) > 0);
+						InternalParseAndLogString(temporaryBuffer);
 						traverser += 2;
 						InternalPutCharToBuffer('b');
 						break;
 					}
 					case 'u': // unsigned integer
 					{
-						InternalParseAndLogUnsignedInteger(va_arg(arg, u32), 10);
+						xAssert(ParseU32(temporaryBuffer, 100, va_arg(arg, u32), 10) > 0);
+						InternalParseAndLogString(temporaryBuffer);
 						traverser += 2;
 						break;
 					}
 					case 'f': // floats
 					{
-						f32 num = (f32)va_arg(arg, f64);
-						InternalPraseAndLogFloat(*((u32*)&num));
+						xAssert(ParseF32(temporaryBuffer, 100, (f32)va_arg(arg, f64)) > 0);
+						InternalParseAndLogString(temporaryBuffer);
 						traverser += 2;
 						break;
 					}
@@ -228,9 +189,11 @@ void Log(log_type type, s8 format, ...)
 						{
 							v2 vec = va_arg(arg, v2);
 							InternalPutCharToBuffer('(');
-							InternalPraseAndLogFloat(*((u32*)&vec.x));
+							xAssert(ParseF32(temporaryBuffer, 100, vec.x) > 0);
+							InternalParseAndLogString(temporaryBuffer);
 							InternalPutCharToBuffer(',');
-							InternalPraseAndLogFloat(*((u32*)&vec.y));
+							xAssert(ParseF32(temporaryBuffer, 100, vec.y) > 0);
+							InternalParseAndLogString(temporaryBuffer);
 							InternalPutCharToBuffer(')');
 							traverser += 3;
 							traverser += 3;
@@ -240,11 +203,14 @@ void Log(log_type type, s8 format, ...)
 						{
 							v3 vec = va_arg(arg, v3);
 							InternalPutCharToBuffer('(');
-							InternalPraseAndLogFloat(*((u32*)&vec.x));
+							xAssert(ParseF32(temporaryBuffer, 100, vec.x) > 0);
+							InternalParseAndLogString(temporaryBuffer);
 							InternalPutCharToBuffer(',');
-							InternalPraseAndLogFloat(*((u32*)&vec.y));
+							xAssert(ParseF32(temporaryBuffer, 100, vec.y) > 0);
+							InternalParseAndLogString(temporaryBuffer);
 							InternalPutCharToBuffer(',');
-							InternalPraseAndLogFloat(*((u32*)&vec.z));
+							xAssert(ParseF32(temporaryBuffer, 100, vec.z) > 0);
+							InternalParseAndLogString(temporaryBuffer);
 							InternalPutCharToBuffer(')');
 							traverser += 3;
 							break;
@@ -253,13 +219,17 @@ void Log(log_type type, s8 format, ...)
 						{
 							v4 vec = va_arg(arg, v4);
 							InternalPutCharToBuffer('(');
-							InternalPraseAndLogFloat(*((u32*)&vec.x));
+							xAssert(ParseF32(temporaryBuffer, 100, vec.x) > 0);
+							InternalParseAndLogString(temporaryBuffer);
 							InternalPutCharToBuffer(',');
-							InternalPraseAndLogFloat(*((u32*)&vec.y));
+							xAssert(ParseF32(temporaryBuffer, 100, vec.y) > 0);
+							InternalParseAndLogString(temporaryBuffer);
 							InternalPutCharToBuffer(',');
-							InternalPraseAndLogFloat(*((u32*)&vec.z));
+							xAssert(ParseF32(temporaryBuffer, 100, vec.z) > 0);
+							InternalParseAndLogString(temporaryBuffer);
 							InternalPutCharToBuffer(',');
-							InternalPraseAndLogFloat(*((u32*)&vec.w));
+							xAssert(ParseF32(temporaryBuffer, 100, vec.w) > 0);
+							InternalParseAndLogString(temporaryBuffer);
 							InternalPutCharToBuffer(')');
 							traverser += 3;
 							traverser += 3;

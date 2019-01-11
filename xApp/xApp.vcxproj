@@ -268,6 +268,7 @@
     <ClInclude Include="Common\Core.h" />
     <ClInclude Include="External\STBImage.h" />
     <ClInclude Include="External\STBImageWrite.h" />
+    <ClInclude Include="External\STBTrueType.h" />
     <ClInclude Include="Graphics\Image.h" />
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Math\Matrix4.h" />
@@ -277,10 +278,19 @@
     <ClInclude Include="Platform\GL\GLExtensions.h" />
     <ClInclude Include="Platform\GL\KHR\KHRPlatform.h" />
     <ClInclude Include="Platform\Platform.h" />
+    <ClInclude Include="Utility\String.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Platform\font.frag" />
+    <None Include="Platform\font.vert" />
     <None Include="Platform\sample.frag" />
     <None Include="Platform\sample.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\BigSmile.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Resources\HackRegular.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

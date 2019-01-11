@@ -94,3 +94,12 @@ inline void* PushSize(memory_arena& arena, u32 bytes)
 
 #define xPush(arena, type) (type*)PushSize(arena, sizeof(type))
 #define xPushArray(arena, type, n) (type*)PushSize(arena, sizeof(type) * n)
+
+struct file_read_info
+{
+	void* Buffer;
+	i64 Size;
+};
+
+file_read_info ReadEntireFile(s8 fileName);
+void FreeFileContent(file_read_info fileReadInfo);

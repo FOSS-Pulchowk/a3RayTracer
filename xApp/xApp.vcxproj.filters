@@ -74,9 +74,25 @@
     <ClInclude Include="External\STBImage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="External\STBTrueType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\String.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Platform\sample.vert" />
     <None Include="Platform\sample.frag" />
+    <None Include="Platform\font.vert" />
+    <None Include="Platform\font.frag" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\BigSmile.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Resources\HackRegular.ttf" />
   </ItemGroup>
 </Project>
