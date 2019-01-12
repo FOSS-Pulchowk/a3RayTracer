@@ -1,5 +1,6 @@
 #pragma once
 #include "Common/Core.h"
+#include "Platform/Platform.h"
 #include "Glad.h"
 
 #if defined(XDEBUG) || defined(XINTERNAL)

@@ -1,4 +1,5 @@
 #include "Image.h"
+#include "Platform/Platform.h"
 
 #include <iostream>
 
@@ -10,7 +11,7 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "External/STBTrueType.h"
 
-x::image* x::LoadImage(memory_arena& arena, s8 file)
+x::image* x::LoadPNGImage(memory_arena& arena, s8 file)
 {
 	int x, y, n;
 	stbi_set_flip_vertically_on_load(1);
@@ -33,7 +34,7 @@ x::image* x::LoadImage(memory_arena& arena, s8 file)
 x::ttfont* x::LoadTTFont(memory_arena& stack, s8 fileName)
 {
 	i32 width, height, xoffset, yoffset;
-	file_read_info file = ReadEntireFile(fileName);
+	x::file_content file = x::Platform.LoadFileContent(fileName);
 	if(file.Buffer)
 	{
 		stbtt_fontinfo fontInfo;
@@ -59,7 +60,7 @@ x::ttfont* x::LoadTTFont(memory_arena& stack, s8 fileName)
 			destRow -= width * 4;
 		}
 #else
-		result->Pixels = xPushArray(arena, u8, width * height);
+		result->Pixels = xPushArray(stack, u8, width * height);
 		u8* destRow = result->Pixels + width * height - width;
 		u8* source = bitmap;
 		for (i32 y = 0; y < height; ++y)
@@ -78,7 +79,7 @@ x::ttfont* x::LoadTTFont(memory_arena& stack, s8 fileName)
 		result->Height = height;
 		result->XOffset = xoffset;
 		result->YOffset = yoffset;
-		FreeFileContent(file);
+		x::Platform.FreeFileContent(file);
 
 		return result;
 	}

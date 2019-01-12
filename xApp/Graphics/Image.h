@@ -20,7 +20,7 @@ struct ttfont
 	i32 YOffset;
 };
 
-image* LoadImage(memory_arena& arena, s8 file);
+image* LoadPNGImage(memory_arena& arena, s8 file);
 ttfont* LoadTTFont(memory_arena& arena, s8 file);
 
 }

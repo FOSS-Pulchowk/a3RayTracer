@@ -1,10 +1,15 @@
 #include "Common/Core.h"
 #include "Platform.h"
+#include "GL/LoadOpenGL.h"
+
+#include "GL/GLDebug.h"
+
+#include "GlShader.h"
+#include "GlRenderer.h"
+
 #include "Math/Math.h"
 #include "Graphics/Image.h"
-#include "gl/glad.h"
-#include "gl/glExtensions.h"
-#include "gl/glDebug.h"
+
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
 
@@ -17,76 +22,30 @@
 #undef CreateWindow
 #endif
 
-#define XWNDCLASSNAME L"xWindowClass"
-#define XWIDTH 800
-#define XHEIGHT 600
-
-// NOTE(Zero): 
-// The value of this global variable is only valid on application startup
-static HMODULE g_OpenGLLibrary;
-
-#define KiloBytes(n) (sizeof(u8) * (n) * 1024u)
-#define MegaBytes(n) (KiloBytes(n) * 1024u)
-#define GigaBytes(n) (MegaBytes(n) * 1024u)
-memory_arena NewMemoryBlock(u32 size)
-{
-	memory_arena arena = {};
-	arena.memory = (u8*)VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-	xAssert(arena.memory);
-	arena.current = arena.memory;
-	arena.size = size;
-	arena.allocated = 0;
-	return arena;
+namespace x {
+	const x_platform Platform;
 }
 
-enum button
+const x::file_content x_platform::LoadFileContent(s8 fileName) const
 {
-	ButtonLeft,
-	ButtonRight,
-	ButtonMiddle,
-
-	ButtonCount
-};
-
-enum input_state
-{
-	ButtonUp,
-	ButtonDown
-};
-
-struct input_system
-{
-	i32 MouseX;
-	i32 MouseY;
-	input_state Buttons[ButtonCount];
-};
-
-struct win32_user_data
-{
-	input_system inputSystem;
-};
-
-file_read_info ReadEntireFile(s8 fileName)
-{
-	file_read_info result = {};
+	x::file_content result = {};
 	HANDLE hFile = CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	if(hFile == INVALID_HANDLE_VALUE)
+	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		return result;
 	}
 	LARGE_INTEGER fileSize;
 	xAssert(GetFileSizeEx(hFile, &fileSize));
 	result.Size = fileSize.QuadPart;
-	// TODO(Zero): Memory Manager
 	void* buffer = VirtualAlloc(0, result.Size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	i64 totalBytesRead = 0;
 	DWORD bytesRead = 0;
 	u8* readingPtr = (u8*)buffer;
-	while(totalBytesRead < result.Size)
+	while (totalBytesRead < result.Size)
 	{
-		if(!ReadFile(hFile, readingPtr, (DWORD)result.Size, &bytesRead, NULL))
+		if (!ReadFile(hFile, readingPtr, (DWORD)result.Size, &bytesRead, NULL))
 		{
-			if(GetLastError())
+			if (GetLastError())
 			{
 				VirtualFree(buffer, result.Size, MEM_RELEASE);
 				CloseHandle(hFile);
@@ -110,146 +69,32 @@ file_read_info ReadEntireFile(s8 fileName)
 	return result;
 }
 
-void FreeFileContent(file_read_info fileReadInfo)
+void x_platform::FreeFileContent(x::file_content fileReadInfo) const
 {
-	if(fileReadInfo.Buffer)
+	if (fileReadInfo.Buffer)
 	{
 		VirtualFree(fileReadInfo.Buffer, fileReadInfo.Size, MEM_RELEASE);
 	}
 }
 
-u32 CompileShader(GLenum type, s8 source)
+#define XWIDTH 800
+#define XHEIGHT 600
+
+memory_arena NewMemoryBlock(u32 size)
 {
-	xGL(u32 shader = glCreateShader(type));
-	xGL(glShaderSource(shader, 1, &source, 0));
-	xGL(glCompileShader(shader));
-	i32 result;
-	xGL(glGetShaderiv(shader, GL_COMPILE_STATUS, &result));
-	if(result != GL_TRUE)
-	{
-		i32 len;
-		utf8 errMsg[1024];
-		xGL(glGetShaderInfoLog(shader, 1024, &len, errMsg));
-		xGL(xLogWarn("Shader source could not be compiled!\n"));
-		xLogWarn("Shader Compilation Error: '{s}'\n", errMsg);
-		xGL(glDeleteShader(shader));
-		return 0;
-	}
-	return shader;
+	memory_arena arena = {};
+	arena.Memory = (u8*)VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	xAssert(arena.Memory);
+	arena.Current = arena.Memory;
+	arena.Capacity = size;
+	arena.Consumed = 0;
+	return arena;
 }
 
-u32 LoadOpenGLShaderFromSource(s8 vSource, s8 fSource)
+struct win32_user_data
 {
-	u32 vShader = CompileShader(GL_VERTEX_SHADER, vSource);
-	u32 fShader = CompileShader(GL_FRAGMENT_SHADER, fSource);
-
-	xGL(u32 program = glCreateProgram());
-	xGL(glAttachShader(program, vShader));
-	xGL(glAttachShader(program, fShader));
-	xGL(glLinkProgram(program));
-	xGL(glDeleteShader(vShader));
-	xGL(glDeleteShader(fShader));
-	i32 result;
-	xGL(glGetProgramiv(program, GL_LINK_STATUS, &result));
-	if(result != GL_TRUE)
-	{
-		i32 len;
-		utf8 errMsg[1024];
-		xGL(glGetProgramInfoLog(program, 1024, &len, errMsg));
-		xGL(xLogWarn("Shaders could not be linked!\n"));
-		xGL(glDeleteProgram(program));
-		return 0;
-	}
-	xGL(glUseProgram(0));
-	return program;
-}
-
-void* OpenGLFunctionLoader(s8 name)
-{
-	void* result = 0;
-	result = wglGetProcAddress(name);
-	if(result) return result;
-	xAssert(g_OpenGLLibrary);
-	result = GetProcAddress(g_OpenGLLibrary, name);
-	xAssert(result);
-	return result;
-}
-
-void LoadOpenGL(HWND hWnd)
-{
-	xLog("Initializing OpenGL context");
-	WNDCLASSEXW wndClassExW = {};
-	wndClassExW.cbSize = sizeof(wndClassExW);
-	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
-	wndClassExW.lpfnWndProc = DefWindowProcW;
-	wndClassExW.hInstance = GetModuleHandleW(0);
-	wndClassExW.lpszClassName = L"xDummyWindow";
-	RegisterClassExW(&wndClassExW);
-	HWND hDummyWnd = CreateWindowExW(0, L"xDummyWindow", L"xDummyWindow", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, GetModuleHandleW(0), 0);
-	HDC hDummyDC = GetDC(hDummyWnd);
-	PIXELFORMATDESCRIPTOR dummyPDF = {};
-	dummyPDF.nSize = sizeof(dummyPDF);
-	dummyPDF.nVersion = 1;
-	dummyPDF.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	dummyPDF.iPixelType = PFD_TYPE_RGBA;
-	dummyPDF.cColorBits = 32;
-	dummyPDF.cDepthBits = 24;
-	dummyPDF.cStencilBits = 8;
-	i32 pfi = ChoosePixelFormat(hDummyDC, &dummyPDF);
-	xAssert(pfi != 0);
-	PIXELFORMATDESCRIPTOR suggestedPFI;
-	DescribePixelFormat(hDummyDC, pfi, sizeof(suggestedPFI), &suggestedPFI);
-	SetPixelFormat(hDummyDC, pfi, &suggestedPFI);
-	HGLRC dummyGLContext = wglCreateContext(hDummyDC);
-	xAssert(wglMakeCurrent(hDummyDC, dummyGLContext));
-	typedef HGLRC WINAPI tag_wglCreateContextAttribsARB(HDC hdc, HGLRC hShareContext, const i32 *attribList);
-	tag_wglCreateContextAttribsARB *wglCreateContextAttribsARB;
-	typedef BOOL WINAPI tag_wglChoosePixelFormatARB(HDC hdc, const i32 *piAttribIList, const f32 *pfAttribFList, u32 nMaxFormats, i32 *piFormats, u32 *nNumFormats);
-	tag_wglChoosePixelFormatARB *wglChoosePixelFormatARB;
-	wglCreateContextAttribsARB = (tag_wglCreateContextAttribsARB*)wglGetProcAddress("wglCreateContextAttribsARB");
-	wglChoosePixelFormatARB = (tag_wglChoosePixelFormatARB*)wglGetProcAddress("wglChoosePixelFormatARB");
-	gl_version glVersion;
-	g_OpenGLLibrary = LoadLibraryW(L"opengl32.dll");
-	xAssert(GladLoadGLLoader(OpenGLFunctionLoader, &glVersion));
-	xLog("OpenGL Context created. Loaded OpenGL Version: {i}.{i}", glVersion.major, glVersion.minor);
-	FreeLibrary(g_OpenGLLibrary);
-	g_OpenGLLibrary = 0;
-	wglMakeCurrent(hDummyDC, 0);
-	wglDeleteContext(dummyGLContext);
-	ReleaseDC(hDummyWnd, hDummyDC);
-	DestroyWindow(hDummyWnd);
-
-	i32 attribList[] =
-	{
-		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
-		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
-		WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-		WGL_COLOR_BITS_ARB, 32,
-		WGL_DEPTH_BITS_ARB, 24,
-		WGL_STENCIL_BITS_ARB, 8,
-		0
-	};
-
-	i32 pixelFormat;
-	u32 numFormats;
-	HDC hDC = GetDC(hWnd);
-	wglChoosePixelFormatARB(hDC, attribList, 0, 1, &pixelFormat, &numFormats);
-	xAssert(numFormats);
-	PIXELFORMATDESCRIPTOR pfd;
-	DescribePixelFormat(hDC, pixelFormat, sizeof(pfd), &pfd);
-	SetPixelFormat(hDC, pixelFormat, &pfd);
-
-	int glVersionAttribs[] = {
-		WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-		WGL_CONTEXT_MINOR_VERSION_ARB, 2,
-		WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-		0,
-	};
-	HGLRC glContext = wglCreateContextAttribsARB(hDC, 0, glVersionAttribs);
-	wglMakeCurrent(hDC, glContext);
-	ReleaseDC(hWnd, hDC);
-}
+	x_input_system inputSystem;
+};
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -258,7 +103,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		case WM_CREATE:
 		{
-			LoadOpenGL(hWnd);
+			GLLoad(hWnd);
 			return 0;
 		}
 
@@ -278,7 +123,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[ButtonLeft] = ButtonDown;
+			userData.inputSystem.Buttons[x::ButtonLeft] = x::ButtonDown;
 			break;
 		}
 
@@ -288,7 +133,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[ButtonLeft] = ButtonUp;
+			userData.inputSystem.Buttons[x::ButtonLeft] = x::ButtonUp;
 			break;
 		}
 
@@ -298,7 +143,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[ButtonRight] = ButtonDown;
+			userData.inputSystem.Buttons[x::ButtonRight] = x::ButtonDown;
 			break;
 		}
 
@@ -308,7 +153,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[ButtonRight] = ButtonUp;
+			userData.inputSystem.Buttons[x::ButtonRight] = x::ButtonUp;
 			break;
 		}
 
@@ -318,7 +163,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[ButtonMiddle] = ButtonDown;
+			userData.inputSystem.Buttons[x::ButtonMiddle] = x::ButtonDown;
 			break;
 		}
 
@@ -328,7 +173,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[ButtonMiddle] = ButtonUp;
+			userData.inputSystem.Buttons[x::ButtonMiddle] = x::ButtonUp;
 			break;
 		}
 
@@ -360,19 +205,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-struct vertex2d
-{
-	v3 position;
-	v3 color;
-	v2 texCoords;
-};
-
-struct vertexFont
-{
-	v2 position;
-	v3 color;
-	v2 texCoords;
-};
+//struct vertex2d
+//{
+//	v3 position;
+//	v3 color;
+//	v2 texCoords;
+//};
+//
+//struct vertexFont
+//{
+//	v2 position;
+//	v3 color;
+//	v2 texCoords;
+//};
 
 struct entity
 {
@@ -394,6 +239,7 @@ struct entity
 	f32 moveFrameTime;
 };
 
+#define XWNDCLASSNAME L"xWindowClass"
 #if defined(XDEBUG) || defined(XINTERNAL)
 int main()
 {
@@ -434,7 +280,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xLog("Window of resolution {i} X {i} created.", XWIDTH, XHEIGHT);
 	HDC hDC = GetDC(hWnd);
 	xGL(glViewport(0, 0, XWIDTH, XHEIGHT));
-
+#if 0
 	u32 vao;
 	u32 vab, iab;
 	xGL(glGenVertexArrays(1, &vao));
@@ -445,7 +291,6 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xGL(glBindBuffer(GL_ARRAY_BUFFER, vab));
 
 	#define XGL_MAX_VERTEX2D 50
-	#define xOffsetOf(s, m) (&(((s*)0)->m))
 
 	xGL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertex2d) * 4 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW));
 	xGL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(xOffsetOf(vertex2d, vertex2d::position))));
@@ -474,29 +319,33 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xGL(glEnableVertexAttribArray(1));
 	xGL(glEnableVertexAttribArray(2));
 	xGL(glBindVertexArray(0));
+#endif
 
-	file_read_info vSource = ReadEntireFile("Platform/sample.vert");
-	file_read_info fSource = ReadEntireFile("Platform/sample.frag");
-	u32 sProgram = LoadOpenGLShaderFromSource((s8)vSource.Buffer, (s8)fSource.Buffer);
-	FreeFileContent(vSource);
-	FreeFileContent(fSource);
+	x::file_content vSource = x::Platform.LoadFileContent("Platform/sample.vert");
+	x::file_content fSource = x::Platform.LoadFileContent("Platform/sample.frag");
+	u32 sProgram = GLCreateShaderProgramFromFile((s8)vSource.Buffer, (s8)fSource.Buffer);
+	x::Platform.FreeFileContent(vSource);
+	x::Platform.FreeFileContent(fSource);
 
-	file_read_info vText = ReadEntireFile("Platform/font.vert");
-	file_read_info fText = ReadEntireFile("Platform/font.frag");
-	u32 fProgram = LoadOpenGLShaderFromSource((s8)vText.Buffer, (s8)fText.Buffer);
-	FreeFileContent(vText);
-	FreeFileContent(fSource);
+	x::file_content vText = x::Platform.LoadFileContent("Platform/font.vert");
+	x::file_content fText = x::Platform.LoadFileContent("Platform/font.frag");
+	u32 fProgram = GLCreateShaderProgramFromFile((s8)vText.Buffer, (s8)fText.Buffer);
+	x::Platform.FreeFileContent(vText);
+	x::Platform.FreeFileContent(fSource);
 
 	m4x4 projection = m4x4::OrthographicR(0.0f, 800.0f, 0.0f, 600.0, -1.0f, 1.0f);
 	xGL(glUseProgram(sProgram));
-	xGL(u32 projLoc = glGetUniformLocation(sProgram, "Projection"));
+	xGL(u32 projLoc = glGetUniformLocation(sProgram, "u_Projection"));
 	xGL(glUniformMatrix4fv(projLoc, 1, GL_FALSE, projection.elements));
 	xGL(glUseProgram(0));
 
 	xGL(glUseProgram(fProgram));
-	xGL(u32 aprojLoc = glGetUniformLocation(fProgram, "Projection"));
+	xGL(u32 aprojLoc = glGetUniformLocation(fProgram, "u_Projection"));
 	xGL(glUniformMatrix4fv(aprojLoc, 1, GL_FALSE, projection.elements));
 	xGL(glUseProgram(0));
+
+	x::renderer2d renderer2d = x::CreateBatchRenderer2D(sProgram);
+	x::renderer_font fontRenderer = x::CreateFontRenderer(fProgram);
 
 	f32 value = 0.0f;
 
@@ -506,7 +355,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 	win32_user_data userData = {};
 	SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)&userData);
-	input_system oldInput = {};
+	x_input_system oldInput = {};
 	LARGE_INTEGER performanceFrequency;
 	xAssert(QueryPerformanceFrequency(&performanceFrequency));
 	LARGE_INTEGER performanceCounter;
@@ -524,12 +373,12 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	rect.isMoving = false;
 	rect.moveFinalPosition = v2{ 0.0f, 0.0f };
 
-	memory_arena memory = NewMemoryBlock(GigaBytes(1));
+	memory_arena memory = NewMemoryBlock(xGigaBytes(1));
 
-	x::image* testImage = x::LoadImage(memory, "Resources/BigSmile.png");
+	x::image* testImage = x::LoadPNGImage(memory, "Resources/BigSmile.png");
 	xAssert(testImage);
 
-	x::image* zeroImage = x::LoadImage(memory, "Resources/Zero.png");
+	x::image* zeroImage = x::LoadPNGImage(memory, "Resources/Zero.png");
 	xAssert(zeroImage);
 
 	x::ttfont* testFont = x::LoadTTFont(memory, "Resources/HackRegular.ttf");
@@ -553,7 +402,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, zeroImage->Width, zeroImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroImage->Pixels));
+	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, zeroImage->Width, zeroImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroImage->Pixels));
 	xGL(glBindTexture(GL_TEXTURE_2D, 0));
 
 	xGL(glGenTextures(1, &fontTexID));
@@ -562,10 +411,11 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	// NOTE(Zero): Should we pack bytes and use single channel for the fonts or should we use all 4 channels for the fonts
 #if 1
 	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testFont->Width, testFont->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, testFont->Pixels));
 #else
-	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
+	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
 #endif
 	xGL(glBindTexture(GL_TEXTURE_2D, 0));
 
@@ -589,8 +439,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 			}
 		}
 
-		input_system& input = userData.inputSystem;
-		if(oldInput.Buttons[ButtonLeft] && input.Buttons[ButtonLeft] == ButtonUp)
+		x_input_system& input = userData.inputSystem;
+		if(oldInput.Buttons[x::ButtonLeft] && input.Buttons[x::ButtonLeft] == x::ButtonUp)
 		{
 			//rect.position.x = (f32)input.MouseX - rect.dimension.x / 2;
 			//rect.position.y = (f32)input.MouseY - rect.dimension.y / 2;
@@ -620,18 +470,18 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		xGL(glEnable(GL_BLEND));
 		xGL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-		xGL(glBindVertexArray(vao));
-		xGL(glBindBuffer(GL_ARRAY_BUFFER, vab));
-		xGL(glUseProgram(sProgram));
-		xGL(u32 loc = glGetUniformLocation(sProgram, "Texture"));
+		xGL(glBindVertexArray(renderer2d.VertexBufferObject));
+		xGL(glBindBuffer(GL_ARRAY_BUFFER, renderer2d.VertexArrayBuffer));
+		xGL(glUseProgram(renderer2d.ShaderProgram));
+		xGL(u32 loc = glGetUniformLocation(renderer2d.ShaderProgram, "u_Texture"));
 		xGL(glUniform1i(loc, 0));
 		xGL(glActiveTexture(GL_TEXTURE0));
 		xGL(glBindTexture(GL_TEXTURE_2D, texID));
 		//xGL(glBindTexture(GL_TEXTURE_2D, zeroID));
 
 		f32 angle = sinf(value);
-
-		xGL(vertex2d* v = (vertex2d*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+		
+		xGL(x_v2d* v = (x_v2d*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 		xGL(u32* indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
 		for(i32 i = 0; i < X_NUMBER_OF_ENTITIES; ++i)
 		{
@@ -660,44 +510,37 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		xGL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
 		xGL(glDrawElements(GL_TRIANGLES, X_NUMBER_OF_ENTITIES * 6, GL_UNSIGNED_INT, null));
 
-		xGL(glBindVertexArray(tvao));
+		xGL(glBindVertexArray(fontRenderer.VertexBufferObject));
 		xGL(glActiveTexture(GL_TEXTURE1));
 		xGL(glBindTexture(GL_TEXTURE_2D, fontTexID));
 		//xGL(glBindTexture(GL_TEXTURE_2D, fontTexID));
-		xGL(glUseProgram(fProgram));
-		xGL(u32 pos = glGetUniformLocation(fProgram, "Texture"));
+		xGL(glUseProgram(fontRenderer.ShaderProgram));
+		xGL(u32 pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Texture"));
 		xGL(glUniform1i(pos, 1));
-		xGL(glBindBuffer(GL_ARRAY_BUFFER, tvab));
-
-		vertexFont* fontVertices = (vertexFont*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 		
-		f32 x = 0.0f;
-		f32 y = 0.0f;
-		f32 w = 0.20f;
-		f32 h = 0.20f;
+		v3 fontColor = { 1,0,0 };
+		xGL(pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Color"));
+		xGL(glUniform3fv(pos, 1, fontColor.values));
 
-		fontVertices[0].position = { x, y };
-		fontVertices[1].position = { x, y + h };
-		fontVertices[2].position = { x + w, y + h };
-		fontVertices[3].position = { x, y };
-		fontVertices[4].position = { x + w, y + h };
-		fontVertices[5].position = { x + w, y };
+		xGL(pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Projection"));
+		xGL(glUniformMatrix4fv(pos, 1, GL_FALSE, projection.elements));
 
-		fontVertices[0].color = { 0.0f, 1.0f, 1.0f };
-		fontVertices[1].color = { 0.0f, 1.0f, 1.0f };
-		fontVertices[2].color = { 0.0f, 1.0f, 1.0f };
-		fontVertices[3].color = { 0.0f, 1.0f, 1.0f };
-		fontVertices[4].color = { 0.0f, 1.0f, 1.0f };
-		fontVertices[5].color = { 0.0f, 1.0f, 1.0f };
+		xGL(glBindBuffer(GL_ARRAY_BUFFER, fontRenderer.VertexArrayBuffer));
+		xGL(x_vfont* fontVertices = (x_vfont*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+		
+		f32 x = 200.0f;
+		f32 y = 200.0f;
+		f32 w = 50.0f;
+		f32 h = 50.0f;
 
-		fontVertices[0].texCoords = { 0.0f, 0.0f };
-		fontVertices[1].texCoords = { 0.0f, 1.0f };
-		fontVertices[2].texCoords = { 1.0f, 1.0f };
-		fontVertices[3].texCoords = { 0.0f, 0.0f };
-		fontVertices[4].texCoords = { 1.0f, 1.0f };
-		fontVertices[5].texCoords = { 1.0f, 0.0f };
+		fontVertices[0].positionTexCoords = { x, y, 0, 0 };
+		fontVertices[1].positionTexCoords = { x, y + h, 0, 1 };
+		fontVertices[2].positionTexCoords = { x + w, y + h, 1, 1 };
+		fontVertices[3].positionTexCoords = { x, y, 0, 0 };
+		fontVertices[4].positionTexCoords = { x + w, y + h, 1, 1 };
+		fontVertices[5].positionTexCoords = { x + w, y, 1, 0 };
 
-		glUnmapBuffer(GL_ARRAY_BUFFER);
+		xGL(glUnmapBuffer(GL_ARRAY_BUFFER));
 
 		xGL(glDrawArrays(GL_TRIANGLES, 0, 6));
 		

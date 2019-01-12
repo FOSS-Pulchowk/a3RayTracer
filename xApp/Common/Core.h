@@ -18,6 +18,11 @@
 #define xConsumeBits(n, p, b) (((n) & (((1 << (b)) - 1) << (p))) >> (p))
 
 #define xArrayCount(arr) (sizeof(arr)/sizeof((arr)[0]))
+#define xOffsetOf(s, m) (&(((s*)0)->m))
+
+#define xKiloBytes(n) (sizeof(u8) * (n) * 1024u)
+#define xMegaBytes(n) (xKiloBytes(n) * 1024u)
+#define xGigaBytes(n) (xMegaBytes(n) * 1024u)
 
 // Debug Macro
 #if defined(_MSC_VER)
