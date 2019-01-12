@@ -82,8 +82,7 @@ inline f32 xSqrtf(f32 x)
 {
 	__m128 mx = _mm_set_ps(0, 0, 0, x);
 	mx = _mm_sqrt_ps(mx);
-	_mm_store1_ps(&x, mx);
-	return x;
+	return _mm_cvtss_f32(mx);
 }
 
 inline f32 xPowf(f32 n, f32 p, f32 precision = 0.000001f)
