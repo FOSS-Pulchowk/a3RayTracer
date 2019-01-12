@@ -4,8 +4,8 @@
 #include "Quaterniod.h"
 
 #define xPi32 3.1415926535f
-#define xToRadians(deg) ((deg)*MathPi / 180)
-#define xToDegrees(rad) ((rad)*180 / MathPi)
+#define xToRadians(deg) ((deg)*xPi32 / 180)
+#define xToDegrees(rad) ((rad)*180 / xPi32)
 
 ////////////////////// Matrix Vector operations ///////////////////////////////////////
 
