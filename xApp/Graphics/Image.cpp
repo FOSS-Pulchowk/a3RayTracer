@@ -1,9 +1,9 @@
 #include "Image.h"
 #include "Platform/Platform.h"
 
-#include <iostream>
-
 // TODO(Zero): Remove dependencies
+#define STBI_NO_STDIO
+#define STBI_NO_GIF
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_PNG // We will only be implementing PNG when we remove STB image
 #include "External/STBImage.h"
@@ -17,9 +17,13 @@
 
 x::image* x::LoadPNGImage(memory_arena& arena, s8 file)
 {
-	int x, y, n;
+	i32 x, y, n;
 	stbi_set_flip_vertically_on_load(1);
-	u8* pixels = stbi_load(file, &x, &y, &n, 4);
+	x::file_content fc = Platform.LoadFileContent(file);
+	if (!fc.Buffer) return 0;
+	// TODO(Zero): Be careful need to assert here for the size
+	u8* pixels = stbi_load_from_memory((u8*)fc.Buffer, (i32)fc.Size, &x, &y, &n, 4);
+	Platform.FreeFileContent(fc);
 	if(!pixels) return null;
 
 	x::image* img = xPush(arena, x::image);
@@ -42,62 +46,24 @@ x::ttf* x::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 	{
 		stbtt_fontinfo fontInfo;
 		stbtt_InitFont(&fontInfo, (u8*)file.Buffer, stbtt_GetFontOffsetForIndex((u8*)file.Buffer, 0));
+
+		i32 x0, y0, x1, y1;
+		f32 scale_y = stbtt_ScaleForPixelHeight(&fontInfo, scale);
+		stbtt_GetCodepointBitmapBox(&fontInfo, 'A', 1, 1, &x0, &y0, &x1, &y1);
+		i32 w = x1 - x0;
+		i32 h = y1 - y0;
+		x::ttf* ret = xPush(stack, x::ttf);
+		u8* result = xPushArray(stack, u8, w * h);
+		stbtt_MakeCodepointBitmap(&fontInfo, result, w, h, 1, 1, 1, 'A');
+		ret->Width = w;
+		ret->Height = h;
+		ret->Pixels = result;
+		stbi_write_png("output.png", ret->Width, ret->Height, 1, ret->Pixels, 1);
+		return ret;
+
 		//u8* bitmap = stbtt_GetCodepointBitmap(&fontInfo, 0, stbtt_ScaleForPixelHeight(&fontInfo, 100), 'A', &width, &height, &xoffset, &yoffset);
 		//xAssert(bitmap);
 		//stbtt_FreeBitmap(bitmap, 0);
-
-		x::ttf* result = xPush(stack, x::ttf);
-		result->Pixels = stack.Current;
-		result->Width = 0;
-		result->Height = (u32)ceilf(scale);
-
-		i32 width, height, xoffset, yoffset;
-		for (i32 codepoint = 1; codepoint < xArrayCount(result->Glyphs); ++codepoint)
-		{
-			u8* bitmap = stbtt_GetCodepointBitmap(&fontInfo, 0, stbtt_ScaleForPixelHeight(&fontInfo, scale), codepoint, &width, &height, &xoffset, &yoffset);
-			if (!bitmap)
-			{
-				result->Glyphs[codepoint].Height = 0;
-				result->Glyphs[codepoint].Width = 0;
-				result->Glyphs[codepoint].XOffset = 0;
-				result->Glyphs[codepoint].YOffset = 0;
-				result->Glyphs[codepoint].Position = 0;
-				continue;
-			}
-			u8* current = xPushArray(stack, u8, width * height);
-			result->Width += width;
-			u8* destRow = current + width * height - width;
-			u8* source = bitmap;
-			i32 y = 0;
-			for (; y < height; ++y)
-			{
-				u8* dest = destRow;
-				for (i32 x = 0; x < width; ++x)
-				{
-					*dest++ = *source++;
-				}
-				destRow -= width;
-			}
-			destRow = current + width * result->Height - width;
-			xAssert(result->Height > height);
-			for (; y < result->Height; ++y)
-			{
-				u8* dest = destRow;
-				for (i32 x = 0; x < width; ++x)
-				{
-					*dest++ = 0;
-				}
-				destRow -= width;
-			}
-			result->Glyphs[codepoint-1].Width = width;
-			result->Glyphs[codepoint-1].Height = height;
-			result->Glyphs[codepoint-1].XOffset = xoffset;
-			result->Glyphs[codepoint-1].YOffset = yoffset;
-			result->Glyphs[codepoint-1].Position = result->Width - width;
-			stbtt_FreeBitmap(bitmap, 0);
-		}
-
-
 #if 0
 		result->Pixels = xPushArray(stack, u8, width * height * 4);
 		u8* destRow = (u8*)((u32*)result->Pixels + width * height - width);
@@ -133,9 +99,8 @@ x::ttf* x::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 		x::Platform.FreeFileContent(file);
 #endif
 
-		stbi_write_png("output.png", result->Width, result->Height, 1, result->Pixels, 1);
 
-		return result;
+		//return result;
 	}
 	return 0;
 }

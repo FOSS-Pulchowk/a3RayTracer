@@ -101,6 +101,7 @@ struct memory_arena
 
 inline void* PushSize(memory_arena& arena, u32 bytes)
 {
+	xAssert(bytes != 0);
 	xAssert(arena.Capacity >= (arena.Consumed + bytes));
 	void* result = (void*)arena.Current;
 	arena.Current += bytes;

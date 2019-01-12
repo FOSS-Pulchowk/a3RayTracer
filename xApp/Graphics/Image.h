@@ -23,7 +23,6 @@ struct ttf_glyph
 struct ttf
 {
 	u8* Pixels;
-	ttf_glyph Glyphs[256];
 	i32 Width;
 	i32 Height;
 };

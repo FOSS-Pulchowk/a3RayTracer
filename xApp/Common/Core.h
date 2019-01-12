@@ -34,8 +34,6 @@
 #endif
 
 #include <stdint.h>
-// TODO(Zero): Make our own
-#include <math.h>
 
 typedef int8_t i8;
 typedef int16_t i16;
@@ -75,6 +73,73 @@ typedef unsigned char uutf8;
 typedef const char* s8;
 typedef const wchar_t* s16;
 
+#ifndef XSTDLIB
+#include <xmmintrin.h>
+// TODO(Zero): Remove this, self implement
+#include <math.h>
+
+inline f32 xSqrtf(f32 x)
+{
+	__m128 mx = _mm_set_ps(0, 0, 0, x);
+	mx = _mm_sqrt_ps(mx);
+	_mm_store1_ps(&x, mx);
+	return x;
+}
+
+inline f32 xPowf(f32 n, f32 p, f32 precision = 0.000001f)
+{
+	if (p < 0) return 1 / xPowf(n, -p);
+	if (p >= 10) return xSqrtf(xPowf(n, p / 2, precision / 2));
+	if (p >= 1) return (n * xPowf(n, p - 1, precision));
+	if (precision >= 1) return xSqrtf(n);
+	return xSqrtf(xPowf(n, p * 2, precision * 2));
+}
+
+inline f32 xSquaref(f32 n)
+{
+	return (n * n);
+}
+
+inline f32 xSinf(f32 n)
+{
+	return sinf(n);
+}
+
+inline f32 xCosf(f32 n)
+{
+	return cosf(n);
+}
+
+inline f32 xTanf(f32 n)
+{
+	return tanf(n);
+}
+
+inline f32 xFAbsf(f32 n)
+{
+	return fabsf(n);
+}
+
+inline f32 xASinf(f32 n)
+{
+	return asinf(n);
+}
+
+inline f32 xATan2f(f32 y, f32 x)
+{
+	return atan2f(y, x);
+}
+
+inline f32 xCopySignf(f32 a, f32 b)
+{
+	if (b > 0.0f) return (a > 0.0f) ? a : -a;
+	return (a > 0.0f) ? -a : a;
+}
+
+#else
+#include <math.h>
+#define xSqrtf(x) sqrtf((x))
+#endif
 // v2, v3 and v4 data types are treated as basic types
 
 struct v2
@@ -126,12 +191,12 @@ inline v2 operator-(v2 v)
 
 inline f32 Length(v2 vec)
 {
-	return sqrtf(vec.x * vec.x + vec.y * vec.y);
+	return xSqrtf(vec.x * vec.x + vec.y * vec.y);
 }
 
 inline f32 Distance2(v2 lhs, v2 rhs)
 {
-	return powf(lhs.x - rhs.x, 2.0f) + powf(lhs.y - rhs.y, 2.0f);
+	return xSquaref(lhs.x - rhs.x) + xSquaref(lhs.y - rhs.y);
 }
 
 inline f32 Dot(v2 lhs, v2 rhs)
@@ -239,12 +304,12 @@ inline v3 operator-(v3 v)
 
 inline f32 Length(v3 vec)
 {
-	return sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+	return xSqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 }
 
 inline f32 Distance2(v3 lhs, v3 rhs)
 {
-	return powf(lhs.x - rhs.x, 2.0f) + powf(lhs.y - rhs.y, 2.0f) + powf(lhs.z - rhs.z, 2.0f);
+	return xSquaref(lhs.x - rhs.x) + xSquaref(lhs.y - rhs.y) + xSquaref(lhs.z - rhs.z);
 }
 
 inline f32 Dot(v3 lhs, v3 rhs)
@@ -364,12 +429,12 @@ inline v4 operator-(v4 v)
 
 inline f32 Length(v4 vec)
 {
-	return sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z + vec.w * vec.w);
+	return xSqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z + vec.w * vec.w);
 }
 
 inline f32 Distance2(v4 lhs, v4 rhs)
 {
-	return powf(lhs.x - rhs.x, 2.0f) + powf(lhs.y - rhs.y, 2.0f) + powf(lhs.z - rhs.z, 2.0f) + powf(lhs.w - rhs.w, 2.0f);
+	return xSquaref(lhs.x - rhs.x) + xSquaref(lhs.y - rhs.y) + xSquaref(lhs.z - rhs.z) + xSquaref(lhs.w - rhs.w);
 }
 
 inline v3 GetXYZ(v4 vec)

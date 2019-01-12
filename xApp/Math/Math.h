@@ -61,12 +61,12 @@ inline v3 operator*(const m4x4 &mat, v3 vec)
 inline quat EulerAnglesToQuat(v3 eulerAngles)
 {
 	quat q;
-	f32 cy = cosf(-eulerAngles.y * 0.5f);
-	f32 sy = sinf(-eulerAngles.y * 0.5f);
-	f32 cr = cosf(eulerAngles.z * 0.5f);
-	f32 sr = sinf(eulerAngles.z * 0.5f);
-	f32 cp = cosf(eulerAngles.x * 0.5f);
-	f32 sp = sinf(eulerAngles.x * 0.5f);
+	f32 cy = xCosf(-eulerAngles.y * 0.5f);
+	f32 sy = xSinf(-eulerAngles.y * 0.5f);
+	f32 cr = xCosf(eulerAngles.z * 0.5f);
+	f32 sr = xSinf(eulerAngles.z * 0.5f);
+	f32 cp = xCosf(eulerAngles.x * 0.5f);
+	f32 sp = xSinf(eulerAngles.x * 0.5f);
 	q.r = cy * cr * cp + sy * sr * sp;
 	q.i = cy * sr * cp - sy * cr * sp;
 	q.j = cy * cr * sp + sy * sr * cp;
@@ -87,15 +87,15 @@ inline v3 QuatToEulerAngles(const quat &q)
 	f32 sinr = 2.0f * (q.r * q.i + q.j * q.k);
 	f32 cosr = 1.0f - 2.0f * (q.i * q.i + q.j * q.j);
 
-	ret.z = atan2f(sinr, cosr);
+	ret.z = xATan2f(sinr, cosr);
 	f32 sinp = 2.0f * (q.r * q.j - q.k * q.i);
-	if(fabs(sinp) >= 1.0f)
-		ret.x = copysignf(3.141592f * 0.5f, sinp);
+	if(xFAbsf(sinp) >= 1.0f)
+		ret.x = xCopySignf(3.141592f * 0.5f, sinp);
 	else
-		ret.x = asinf(sinp);
+		ret.x = xASinf(sinp);
 	f32 siny = 2.0f * (q.r * q.k + q.i * q.j);
 	f32 cosy = 1.0f - 2.0f * (q.j * q.j + q.k * q.k);
-	ret.y = atan2f(siny, cosy);
+	ret.y = xATan2f(siny, cosy);
 
 	return ret;
 }
@@ -127,8 +127,8 @@ inline m4x4 QuatMat4x4C(const quat &q)
 inline quat AngleAxisToQuat(f32 angle, v3 axis)
 {
 	quat q;
-	q.r = cosf(angle * 0.5f);
-	f32 s = sinf(angle * 0.5f);
+	q.r = xCosf(angle * 0.5f);
+	f32 s = xSinf(angle * 0.5f);
 	q.i = s * axis.x;
 	q.j = s * axis.y;
 	q.k = s * axis.z;
@@ -145,7 +145,7 @@ inline quat AngleAxisToQuat(f32 angle, v3 axis)
 inline void QuatToAngleAxis(const quat &q, f32 *angle, v3 *axis)
 {
 	f32 len = q.i * q.i + q.j * q.j + q.k * q.k;
-	*angle = 2.0f * atan2f(len, q.r);
+	*angle = 2.0f * xATan2f(len, q.r);
 	len = 1.0f / len;
 	axis->x = q.i * len;
 	axis->y = q.j * len;
