@@ -137,9 +137,62 @@ inline f32 xCopySignf(f32 a, f32 b)
 }
 
 #else
+
 #include <math.h>
-#define xSqrtf(x) sqrtf((x))
+
+inline f32 xSqrtf(f32 x)
+{
+	return sqrtf(x);
+}
+
+inline f32 xPowf(f32 n, f32 p, f32 precision = 0.000001f)
+{
+	return powf(n, p);
+}
+
+inline f32 xSquaref(f32 n)
+{
+	return powf(n, 2.0f);
+}
+
+inline f32 xSinf(f32 n)
+{
+	return sinf(n);
+}
+
+inline f32 xCosf(f32 n)
+{
+	return cosf(n);
+}
+
+inline f32 xTanf(f32 n)
+{
+	return tanf(n);
+}
+
+inline f32 xFAbsf(f32 n)
+{
+	return fabsf(n);
+}
+
+inline f32 xASinf(f32 n)
+{
+	return asinf(n);
+}
+
+inline f32 xATan2f(f32 y, f32 x)
+{
+	return atan2f(y, x);
+}
+
+inline f32 xCopySignf(f32 a, f32 b)
+{
+	return copysignf(a, b);
+}
+
 #endif
+
+
 // v2, v3 and v4 data types are treated as basic types
 
 struct v2
