@@ -11,16 +11,24 @@ struct image
 	i32 Channels;
 };
 
-struct ttfont
+struct ttf_glyph
 {
-	u8* Pixels;
 	i32 Width;
 	i32 Height;
 	i32 XOffset;
 	i32 YOffset;
+	i32 Position;
+};
+
+struct ttf
+{
+	u8* Pixels;
+	ttf_glyph Glyphs[256];
+	i32 Width;
+	i32 Height;
 };
 
 image* LoadPNGImage(memory_arena& arena, s8 file);
-ttfont* LoadTTFont(memory_arena& arena, s8 file);
+ttf* LoadTTFont(memory_arena& arena, s8 file, f32 scale);
 
 }

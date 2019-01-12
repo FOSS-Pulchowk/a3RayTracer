@@ -381,7 +381,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	x::image* zeroImage = x::LoadPNGImage(memory, "Resources/Zero.png");
 	xAssert(zeroImage);
 
-	x::ttfont* testFont = x::LoadTTFont(memory, "Resources/HackRegular.ttf");
+	x::ttf* testFont = x::LoadTTFont(memory, "Resources/HackRegular.ttf", 100);
 	//x::ttfont* testFont = x::LoadTTFont(memory, "c:/windows/fonts/arialbd.ttf");
 	xAssert(testFont);
 
@@ -413,7 +413,9 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 	// NOTE(Zero): Should we pack bytes and use single channel for the fonts or should we use all 4 channels for the fonts
 #if 1
-	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testFont->Width, testFont->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, testFont->Pixels));
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 #else
 	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
 #endif
@@ -528,17 +530,22 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		xGL(glBindBuffer(GL_ARRAY_BUFFER, fontRenderer.VertexArrayBuffer));
 		xGL(x_vfont* fontVertices = (x_vfont*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 		
-		f32 x = 200.0f;
-		f32 y = 200.0f;
-		f32 w = 50.0f;
-		f32 h = 50.0f;
+		f32 x = 50;
+		f32 y = 50;
+		f32 w = 100.0f;
+		f32 h = 100.0f;
 
-		fontVertices[0].positionTexCoords = { x, y, 0, 0 };
-		fontVertices[1].positionTexCoords = { x, y + h, 0, 1 };
-		fontVertices[2].positionTexCoords = { x + w, y + h, 1, 1 };
-		fontVertices[3].positionTexCoords = { x, y, 0, 0 };
-		fontVertices[4].positionTexCoords = { x + w, y + h, 1, 1 };
-		fontVertices[5].positionTexCoords = { x + w, y, 1, 0 };
+		f32 tsx = (f32)testFont->Glyphs['A'].Position / (f32)testFont->Width;
+		f32 tsy = 0.0f;
+		f32 tex = (f32)(testFont->Glyphs['A'].Position + testFont->Glyphs['A'].Width) / (f32)testFont->Width;
+		f32 tey = 1.0f; // (f32)testFont->Glyphs['A'].Height / (f32)testFont->Height;
+
+		fontVertices[0].positionTexCoords = { x, y, tsx, tsy };
+		fontVertices[1].positionTexCoords = { x, y + h, tsx, tey };
+		fontVertices[2].positionTexCoords = { x + w, y + h, tex, tey };
+		fontVertices[3].positionTexCoords = { x, y, tsx, tsy };
+		fontVertices[4].positionTexCoords = { x + w, y + h, tex, tey };
+		fontVertices[5].positionTexCoords = { x + w, y, tex, tsy };
 
 		xGL(glUnmapBuffer(GL_ARRAY_BUFFER));
 
