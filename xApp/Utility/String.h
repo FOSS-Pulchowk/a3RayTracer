@@ -1,12 +1,12 @@
 #pragma once
 #include "Common/Core.h"
 
-namespace x {
+namespace a3 {
 
 inline i32 ParseU32(utf8* buffer, u32 length, u32 number, u32 base)
 {
-	xAssert(length > 0);
-	xAssert(base == 2 || base == 8 || base == 16 || base == 10);
+	a3Assert(length > 0);
+	a3Assert(base == 2 || base == 8 || base == 16 || base == 10);
 	if(number == 0)
 	{
 		buffer[0] = '0';
@@ -39,7 +39,7 @@ inline i32 ParseU32(utf8* buffer, u32 length, u32 number, u32 base)
 
 inline i32 ParseF32(utf8* buffer, u32 length, f32 number)
 {
-	xAssert(length > 0);
+	a3Assert(length > 0);
 	u32 num = *((u32*)(&number));
 
 	u32 sign = num >> 31;
@@ -81,6 +81,39 @@ inline i32 ParseF32(utf8* buffer, u32 length, f32 number)
 	buffer[bufferIndex] = 0;
 
 	return bufferIndex;
+}
+
+inline u64 GetStringLength(s8 s)
+{
+	u64 len = 0;
+	for (utf8 c = s[0]; c != '\0'; ++c)
+		len++;
+	return (len + 1);
+}
+
+inline void MemoryCopy(void* dst, const void* src, u64 size)
+{
+	u8* pd = (u8*)dst;
+	u8* sp = (u8*)src;
+	for (u64 i = 0; i < size; ++i)
+		*pd++ = *sp++;
+}
+
+inline void* MemoryMove(void* dst, const void* src, u64 size)
+{
+	u8* pd = (u8*)dst;
+	u8* sp = (u8*)src;
+	for (u64 i = 0; i < size; ++i)
+		*pd++ = *sp++;
+	return dst;
+}
+
+inline void* MemorySet(void* dst, i32 val, u64 size)
+{
+	u8* p = (u8*)dst;
+	for (u64 i = 0; i < size; ++i)
+		*p++ = val;
+	return dst;
 }
 
 }

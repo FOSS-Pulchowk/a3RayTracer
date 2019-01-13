@@ -127,7 +127,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <PreprocessorDefinitions>XDEBUG=4;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>A3DEBUG=4;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
@@ -147,7 +147,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <PreprocessorDefinitions>XINTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>A3INTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
@@ -172,7 +172,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <PreprocessorDefinitions>XDEBUG=4;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>A3DEBUG=4;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
@@ -192,7 +192,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <PreprocessorDefinitions>XINTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>A3INTERNAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
@@ -221,7 +221,7 @@
       <ConformanceMode>true</ConformanceMode>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <PreprocessorDefinitions>XRELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>A3RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
@@ -243,7 +243,7 @@
       <ConformanceMode>true</ConformanceMode>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <PreprocessorDefinitions>XRELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>A3RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AssemblerOutput>AssemblyCode</AssemblerOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)\</AdditionalIncludeDirectories>
@@ -271,6 +271,7 @@
     <ClInclude Include="External\STBImageWrite.h" />
     <ClInclude Include="External\STBTrueType.h" />
     <ClInclude Include="Graphics\Image.h" />
+    <ClInclude Include="Graphics\STBImplementation.h" />
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Math\Matrix4.h" />
     <ClInclude Include="Math\Quaterniod.h" />

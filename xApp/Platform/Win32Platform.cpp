@@ -25,47 +25,59 @@
 //
 // Globals
 //
-namespace x {
-	const x_platform Platform;
+namespace a3 {
+	const a3_platform Platform;
 }
 
-static const HANDLE s_HeapHandle = GetProcessHeap();
+static const HANDLE s_HeapHandle = HeapCreate(0, a3MegaBytes(500), 0);
 
-#if defined(XDEBUG) || defined(XINTERNAL)
+#if !defined(A3DEBUG) || defined(A3INTERNAL)
 static u64 s_TotalHeapAllocated;
 static u64 s_TotalHeapFreed;
 #define xInternalAllocationSize(x) ((x) + sizeof(u64))
-#define xInternalFreePtr(p) ((void*)((u8*)(p) - sizeof(u64)))
+#define xInternalGetActualPtr(p) ((void*)((u8*)(p) - sizeof(u64)))
 #define xInternalHeapAllocation(x) x;\
 			 if(ptr) { \
-				if(size > xMegaBytes(1)) \
-					xLogWarn("Large Heap Allocation {u}", size); \
+				if(size > a3MegaBytes(1)) \
+					a3LogWarn("Large Heap Allocation of {u} bytes", size); \
 				s_TotalHeapAllocated += size;\
 				u64* loc = (u64*)ptr; \
 				*loc = size; \
-				ptr = (u8*)loc + sizeof(u64); \
+				ptr = ((u8*)loc + sizeof(u64)); \
 			}
-#define xInternalHeapFree(x) x;\
+#define xInternalHeapReAllocation(x) x;\
+			i32 err = GetLastError(); \
+			 if(ptr) { \
+				if(size > a3MegaBytes(1)) \
+					a3LogWarn("Large Heap Re Allocation of {u} bytes", size); \
+				s_TotalHeapAllocated += (size - *(u64*)ptr);\
+				u64* loc = (u64*)ptr; \
+				*loc = size; \
+				ptr = ((u8*)loc + sizeof(u64)); \
+			}
+#define xInternalHeapFree(x) u64 freed = *(u64*)ptr; \
+			x;\
 			if(result) { \
-				s_TotalHeapFreed += *(u64*)ptr; \
+				s_TotalHeapFreed += freed; \
 			}
 #else
 #define xInternalAllocationSize(x) (x)
-#define xInternalFreePtr(p) (p)
+#define xInternalGetActualPtr(p) (p)
 #define xInternalHeapAllocation(x) x;
+#define xInternalHeapReAllocation(x) x;
 #define xInternalHeapFree(x) x;
 #endif
 
-const x::file_content x_platform::LoadFileContent(s8 fileName) const
+const a3::file_content a3_platform::LoadFileContent(s8 fileName) const
 {
-	x::file_content result = {};
+	a3::file_content result = {};
 	HANDLE hFile = CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		return result;
 	}
 	LARGE_INTEGER fileSize;
-	xAssert(GetFileSizeEx(hFile, &fileSize));
+	a3Assert(GetFileSizeEx(hFile, &fileSize));
 	result.Size = fileSize.QuadPart;
 	void* buffer = VirtualAlloc(0, result.Size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	i64 totalBytesRead = 0;
@@ -99,7 +111,7 @@ const x::file_content x_platform::LoadFileContent(s8 fileName) const
 	return result;
 }
 
-void x_platform::FreeFileContent(x::file_content fileReadInfo) const
+void a3_platform::FreeFileContent(a3::file_content fileReadInfo) const
 {
 	if (fileReadInfo.Buffer)
 	{
@@ -107,7 +119,7 @@ void x_platform::FreeFileContent(x::file_content fileReadInfo) const
 	}
 }
 
-void* x_platform::Malloc(u64 size) const
+void* a3_platform::Malloc(u64 size) const
 {
 	xInternalHeapAllocation(
 		void* ptr = HeapAlloc(s_HeapHandle, 0, xInternalAllocationSize(size))
@@ -115,47 +127,51 @@ void* x_platform::Malloc(u64 size) const
 	return ptr;
 }
 
-void* x_platform::Calloc(u64 size) const
+void* a3_platform::Calloc(u64 size) const
 {
 	xInternalHeapAllocation(
-		void* ptr = HeapAlloc(s_HeapHandle, 0, xInternalAllocationSize(size))
+		void* ptr = HeapAlloc(s_HeapHandle, HEAP_ZERO_MEMORY, xInternalAllocationSize(size))
 	);
 	return ptr;
 }
 
-void* x_platform::Realloc(void* usrPtr, u64 size) const
+void* a3_platform::Realloc(void* usrPtr, u64 size) const
 {
-	xInternalHeapAllocation(
-		void* ptr = HeapReAlloc(s_HeapHandle, 0, usrPtr, xInternalAllocationSize(size))
+	xInternalHeapReAllocation(
+		void* ptr = HeapReAlloc(s_HeapHandle, 0, xInternalGetActualPtr(usrPtr), xInternalAllocationSize(size))
 	);
 	return ptr;
 }
 
-b32 x_platform::Free(void* ptr) const
+b32 a3_platform::Free(void* ptr) const
 {
-	xInternalHeapFree(b32 result = (b32)HeapFree(s_HeapHandle, 0, xInternalFreePtr(ptr)));
-	return result;
+	if (ptr)
+	{
+		xInternalHeapFree(b32 result = (b32)HeapFree(s_HeapHandle, 0, xInternalGetActualPtr(ptr)));
+		return result;
+	}
+	return false;
 }
 
-#if defined(XDEBUG) || defined(XINTERNAL)
-u64 x_platform::GetTotalHeapAllocated() const
-{
-	return s_TotalHeapAllocated;
-}
-u64 x_platform::GetTotalHeapFreed() const
-{
-	return s_TotalHeapFreed;
-}
-#endif
+//#if defined(A3DEBUG) || defined(A3INTERNAL)
+//u64 a3_platform::GetTotalHeapAllocated() const
+//{
+//	return s_TotalHeapAllocated;
+//}
+//u64 a3_platform::GetTotalHeapFreed() const
+//{
+//	return s_TotalHeapFreed;
+//}
+//#endif
 
 void* operator new(u64 size)
 {
-	return x::Platform.Malloc(size);
+	return a3::Platform.Malloc(size);
 }
 
 void operator delete(void* ptr)
 {
-	x::Platform.Free(ptr);
+	a3::Platform.Free(ptr);
 }
 
 #define XWIDTH 800
@@ -165,7 +181,7 @@ memory_arena NewMemoryBlock(u32 size)
 {
 	memory_arena arena = {};
 	arena.Memory = (u8*)VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-	xAssert(arena.Memory);
+	a3Assert(arena.Memory);
 	arena.Current = arena.Memory;
 	arena.Capacity = size;
 	arena.Consumed = 0;
@@ -174,7 +190,7 @@ memory_arena NewMemoryBlock(u32 size)
 
 struct win32_user_data
 {
-	x_input_system inputSystem;
+	a3_input_system inputSystem;
 };
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -204,7 +220,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[x::ButtonLeft] = x::ButtonDown;
+			userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonDown;
 			break;
 		}
 
@@ -214,7 +230,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[x::ButtonLeft] = x::ButtonUp;
+			userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonUp;
 			break;
 		}
 
@@ -224,7 +240,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[x::ButtonRight] = x::ButtonDown;
+			userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonDown;
 			break;
 		}
 
@@ -234,7 +250,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[x::ButtonRight] = x::ButtonUp;
+			userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonUp;
 			break;
 		}
 
@@ -244,7 +260,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[x::ButtonMiddle] = x::ButtonDown;
+			userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonDown;
 			break;
 		}
 
@@ -254,7 +270,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			i32 my = GET_Y_LPARAM(lParam);
 			userData.inputSystem.MouseX = mx;
 			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[x::ButtonMiddle] = x::ButtonUp;
+			userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonUp;
 			break;
 		}
 
@@ -263,12 +279,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// TODO(Zero): This needs to handle more things then it is currently
 			if(wParam == SIZE_MINIMIZED)
 			{
-				xLog("Window minimized");
+				a3Log("Window minimized");
 			}
 			else if(wParam == SIZE_RESTORED)
 			{
-				xLog("Window restored");
-				xLog("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
+				a3Log("Window restored");
+				a3Log("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
 			}
 			HDC hDC = GetDC(hWnd);
 			SwapBuffers(hDC);
@@ -307,7 +323,7 @@ struct entity
 };
 
 #define XWNDCLASSNAME L"xWindowClass"
-#if defined(XDEBUG) || defined(XINTERNAL)
+#if defined(A3DEBUG) || defined(A3INTERNAL)
 int main()
 {
 	HINSTANCE hInstance = GetModuleHandleW(0);
@@ -340,91 +356,50 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 	if(!hWnd)
 	{
-		xLogError("Window could not be created!");
+		a3LogError("Window could not be created!");
 		return 1;
 	}
-
-	xLog("Window of resolution {i} X {i} created.", XWIDTH, XHEIGHT);
+	a3Log("Window of resolution {i} X {i} created.", XWIDTH, XHEIGHT);
 	HDC hDC = GetDC(hWnd);
-	xGL(glViewport(0, 0, XWIDTH, XHEIGHT));
-#if 0
-	u32 vao;
-	u32 vab, iab;
-	xGL(glGenVertexArrays(1, &vao));
-	xGL(glGenBuffers(1, &vab));
-	xGL(glGenBuffers(1, &iab));
+	a3GL(glViewport(0, 0, XWIDTH, XHEIGHT));
 
-	xGL(glBindVertexArray(vao));
-	xGL(glBindBuffer(GL_ARRAY_BUFFER, vab));
-
-	#define XGL_MAX_VERTEX2D 50
-
-	xGL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertex2d) * 4 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW));
-	xGL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(xOffsetOf(vertex2d, vertex2d::position))));
-	xGL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(xOffsetOf(vertex2d, vertex2d::color))));
-	xGL(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)(xOffsetOf(vertex2d, vertex2d::texCoords))));
-
-	xGL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iab));
-	xGL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * XGL_MAX_VERTEX2D, null, GL_STATIC_DRAW));
-	xGL(glEnableVertexAttribArray(0));
-	xGL(glEnableVertexAttribArray(1));
-	xGL(glEnableVertexAttribArray(2));
-	xGL(glBindVertexArray(0));
-
-
-	u32 tvao;
-	u32 tvab;
-	xGL(glGenVertexArrays(1, &tvao));
-	xGL(glGenBuffers(1, &tvab));
-	xGL(glBindVertexArray(tvao));
-	xGL(glBindBuffer(GL_ARRAY_BUFFER, tvab));
-	xGL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertexFont) * 6, null, GL_STATIC_DRAW));
-	xGL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertexFont), (void*)(xOffsetOf(vertexFont, vertexFont::position))));
-	xGL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertexFont), (void*)(xOffsetOf(vertexFont, vertexFont::color))));
-	xGL(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertexFont), (void*)(xOffsetOf(vertexFont, vertexFont::texCoords))));
-	xGL(glEnableVertexAttribArray(0));
-	xGL(glEnableVertexAttribArray(1));
-	xGL(glEnableVertexAttribArray(2));
-	xGL(glBindVertexArray(0));
-#endif
-
-	x::file_content vSource = x::Platform.LoadFileContent("Platform/sample.vert");
-	x::file_content fSource = x::Platform.LoadFileContent("Platform/sample.frag");
+	a3::file_content vSource = a3::Platform.LoadFileContent("Platform/sample.vert");
+	a3::file_content fSource = a3::Platform.LoadFileContent("Platform/sample.frag");
 	u32 sProgram = GLCreateShaderProgramFromFile((s8)vSource.Buffer, (s8)fSource.Buffer);
-	x::Platform.FreeFileContent(vSource);
-	x::Platform.FreeFileContent(fSource);
+	a3::Platform.FreeFileContent(vSource);
+	a3::Platform.FreeFileContent(fSource);
 
-	x::file_content vText = x::Platform.LoadFileContent("Platform/font.vert");
-	x::file_content fText = x::Platform.LoadFileContent("Platform/font.frag");
+	a3::file_content vText = a3::Platform.LoadFileContent("Platform/font.vert");
+	a3::file_content fText = a3::Platform.LoadFileContent("Platform/font.frag");
 	u32 fProgram = GLCreateShaderProgramFromFile((s8)vText.Buffer, (s8)fText.Buffer);
-	x::Platform.FreeFileContent(vText);
-	x::Platform.FreeFileContent(fSource);
+	a3::Platform.FreeFileContent(vText);
+	a3::Platform.FreeFileContent(fSource);
 
 	m4x4 projection = m4x4::OrthographicR(0.0f, 800.0f, 0.0f, 600.0, -1.0f, 1.0f);
-	xGL(glUseProgram(sProgram));
-	xGL(u32 projLoc = glGetUniformLocation(sProgram, "u_Projection"));
-	xGL(glUniformMatrix4fv(projLoc, 1, GL_FALSE, projection.elements));
-	xGL(glUseProgram(0));
+	a3GL(glUseProgram(sProgram));
+	a3GL(u32 projLoc = glGetUniformLocation(sProgram, "u_Projection"));
+	a3GL(glUniformMatrix4fv(projLoc, 1, GL_FALSE, projection.elements));
+	a3GL(glUseProgram(0));
 
-	xGL(glUseProgram(fProgram));
-	xGL(u32 aprojLoc = glGetUniformLocation(fProgram, "u_Projection"));
-	xGL(glUniformMatrix4fv(aprojLoc, 1, GL_FALSE, projection.elements));
-	xGL(glUseProgram(0));
+	a3GL(glUseProgram(fProgram));
+	a3GL(u32 aprojLoc = glGetUniformLocation(fProgram, "u_Projection"));
+	a3GL(glUniformMatrix4fv(aprojLoc, 1, GL_FALSE, projection.elements));
+	a3GL(glUseProgram(0));
 
-	x::renderer2d renderer2d = x::CreateBatchRenderer2D(sProgram);
-	x::renderer_font fontRenderer = x::CreateFontRenderer(fProgram);
+	a3::renderer2d renderer2d = a3::CreateBatchRenderer2D(sProgram);
+	a3::renderer_font fontRenderer = a3::CreateFontRenderer(fProgram);
 
 	f32 value = 0.0f;
 
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
-	xLog("Window displayed.");
+	a3Log("Window displayed.");
 
 	win32_user_data userData = {};
 	SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)&userData);
-	x_input_system oldInput = {};
+	a3_input_system oldInput = {};
 	LARGE_INTEGER performanceFrequency;
-	xAssert(QueryPerformanceFrequency(&performanceFrequency));
+	a3Assert(QueryPerformanceFrequency(&performanceFrequency));
 	LARGE_INTEGER performanceCounter;
 	QueryPerformanceCounter(&performanceCounter);
 
@@ -440,53 +415,54 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	rect.isMoving = false;
 	rect.moveFinalPosition = v2{ 0.0f, 0.0f };
 
-	memory_arena memory = NewMemoryBlock(xGigaBytes(1));
+	memory_arena memory = NewMemoryBlock(a3GigaBytes(1));
 
-	x::image* testImage = x::LoadPNGImage(memory, "Resources/BigSmile.png");
-	xAssert(testImage);
+	a3::image* testImage = a3::LoadPNGImage(memory, "Resources/BigSmile.png");
+	i32 err = GetLastError();
+	a3Assert(testImage);
 
-	x::image* zeroImage = x::LoadPNGImage(memory, "Resources/Zero.png");
-	xAssert(zeroImage);
+	a3::image* zeroImage = a3::LoadPNGImage(memory, "Resources/Zero.png");
+	a3Assert(zeroImage);
 
-	x::ttf* testFont = x::LoadTTFont(memory, "Resources/HackRegular.ttf", 100);
+	a3::ttf* testFont = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 100);
 	//x::ttfont* testFont = x::LoadTTFont(memory, "c:/windows/fonts/arialbd.ttf");
-	xAssert(testFont);
+	a3Assert(testFont);
 
 	u32 texID, zeroID, fontTexID;
 
-	xGL(glGenTextures(1, &texID));
-	xGL(glBindTexture(GL_TEXTURE_2D, texID));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testImage->Width, testImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, testImage->Pixels));
-	xGL(glBindTexture(GL_TEXTURE_2D, 0));
+	a3GL(glGenTextures(1, &texID));
+	a3GL(glBindTexture(GL_TEXTURE_2D, texID));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testImage->Width, testImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, testImage->Pixels));
+	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
 	
-	xGL(glGenTextures(1, &zeroID));
-	xGL(glBindTexture(GL_TEXTURE_2D, zeroID));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, zeroImage->Width, zeroImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroImage->Pixels));
-	xGL(glBindTexture(GL_TEXTURE_2D, 0));
+	a3GL(glGenTextures(1, &zeroID));
+	a3GL(glBindTexture(GL_TEXTURE_2D, zeroID));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, zeroImage->Width, zeroImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroImage->Pixels));
+	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
 
-	xGL(glGenTextures(1, &fontTexID));
-	xGL(glBindTexture(GL_TEXTURE_2D, fontTexID));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-	xGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	a3GL(glGenTextures(1, &fontTexID));
+	a3GL(glBindTexture(GL_TEXTURE_2D, fontTexID));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 	// NOTE(Zero): Should we pack bytes and use single channel for the fonts or should we use all 4 channels for the fonts
 #if 1
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
+	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 #else
 	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
 #endif
-	xGL(glBindTexture(GL_TEXTURE_2D, 0));
+	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
 
 	f32 deltaTime = 0.0f;
 
@@ -499,7 +475,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 			if(sMsg.message == WM_QUIT)
 			{
 				shouldRun = false;
-				xLog("Quitting");
+				a3Log("Quitting");
 			}
 			else
 			{
@@ -508,8 +484,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 			}
 		}
 
-		x_input_system& input = userData.inputSystem;
-		if(oldInput.Buttons[x::ButtonLeft] && input.Buttons[x::ButtonLeft] == x::ButtonUp)
+		a3_input_system& input = userData.inputSystem;
+		if(oldInput.Buttons[a3::ButtonLeft] && input.Buttons[a3::ButtonLeft] == a3::ButtonUp)
 		{
 			//rect.position.x = (f32)input.MouseX - rect.dimension.x / 2;
 			//rect.position.y = (f32)input.MouseY - rect.dimension.y / 2;
@@ -524,7 +500,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		{
 			rect.position.xy += (rect.moveFrameTime * deltaTime * Normalize(rect.moveFinalPosition - rect.position.xy) * 450.0f);
 			rect.moveFrameTime += deltaTime;
-			f32 distance = xFAbsf(xSqrtf(Distance2(rect.position.xy, rect.moveFinalPosition)));
+			f32 distance = a3FAbsf(a3Sqrtf(Distance2(rect.position.xy, rect.moveFinalPosition)));
 			if(distance < 0.01f)
 			{
 				rect.isMoving = false;
@@ -533,25 +509,25 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 			}
 		}
 
-		xGL(glClearColor(0.25f, 0.5f, 1.0f, 1.0f));
-		xGL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		xGL(glDisable(GL_DEPTH_TEST));
-		xGL(glEnable(GL_BLEND));
-		xGL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+		a3GL(glClearColor(0.25f, 0.5f, 1.0f, 1.0f));
+		a3GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		a3GL(glDisable(GL_DEPTH_TEST));
+		a3GL(glEnable(GL_BLEND));
+		a3GL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-		xGL(glBindVertexArray(renderer2d.VertexBufferObject));
-		xGL(glBindBuffer(GL_ARRAY_BUFFER, renderer2d.VertexArrayBuffer));
-		xGL(glUseProgram(renderer2d.ShaderProgram));
-		xGL(u32 loc = glGetUniformLocation(renderer2d.ShaderProgram, "u_Texture"));
-		xGL(glUniform1i(loc, 0));
-		xGL(glActiveTexture(GL_TEXTURE0));
-		xGL(glBindTexture(GL_TEXTURE_2D, texID));
+		a3GL(glBindVertexArray(renderer2d.VertexBufferObject));
+		a3GL(glBindBuffer(GL_ARRAY_BUFFER, renderer2d.VertexArrayBuffer));
+		a3GL(glUseProgram(renderer2d.ShaderProgram));
+		a3GL(u32 loc = glGetUniformLocation(renderer2d.ShaderProgram, "u_Texture"));
+		a3GL(glUniform1i(loc, 0));
+		a3GL(glActiveTexture(GL_TEXTURE0));
+		a3GL(glBindTexture(GL_TEXTURE_2D, texID));
 		//xGL(glBindTexture(GL_TEXTURE_2D, zeroID));
 
-		f32 angle = xSinf(value);
+		f32 angle = a3Sinf(value);
 		
-		xGL(x_v2d* v = (x_v2d*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-		xGL(u32* indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+		a3GL(x_v2d* v = (x_v2d*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+		a3GL(u32* indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
 		for(i32 i = 0; i < X_NUMBER_OF_ENTITIES; ++i)
 		{
 			v2 d = rect.dimension;
@@ -575,27 +551,27 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 			indices[i * 6 + 4] = i * 4 + 2;
 			indices[i * 6 + 5] = i * 4 + 3;
 		}
-		xGL(glUnmapBuffer(GL_ARRAY_BUFFER));
-		xGL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
-		xGL(glDrawElements(GL_TRIANGLES, X_NUMBER_OF_ENTITIES * 6, GL_UNSIGNED_INT, null));
+		a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
+		a3GL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
+		a3GL(glDrawElements(GL_TRIANGLES, X_NUMBER_OF_ENTITIES * 6, GL_UNSIGNED_INT, null));
 
-		xGL(glBindVertexArray(fontRenderer.VertexBufferObject));
-		xGL(glActiveTexture(GL_TEXTURE1));
-		xGL(glBindTexture(GL_TEXTURE_2D, fontTexID));
+		a3GL(glBindVertexArray(fontRenderer.VertexBufferObject));
+		a3GL(glActiveTexture(GL_TEXTURE1));
+		a3GL(glBindTexture(GL_TEXTURE_2D, fontTexID));
 		//xGL(glBindTexture(GL_TEXTURE_2D, fontTexID));
-		xGL(glUseProgram(fontRenderer.ShaderProgram));
-		xGL(u32 pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Texture"));
-		xGL(glUniform1i(pos, 1));
+		a3GL(glUseProgram(fontRenderer.ShaderProgram));
+		a3GL(u32 pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Texture"));
+		a3GL(glUniform1i(pos, 1));
 		
 		v3 fontColor = { 1,0,0 };
-		xGL(pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Color"));
-		xGL(glUniform3fv(pos, 1, fontColor.values));
+		a3GL(pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Color"));
+		a3GL(glUniform3fv(pos, 1, fontColor.values));
 
-		xGL(pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Projection"));
-		xGL(glUniformMatrix4fv(pos, 1, GL_FALSE, projection.elements));
+		a3GL(pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Projection"));
+		a3GL(glUniformMatrix4fv(pos, 1, GL_FALSE, projection.elements));
 
-		xGL(glBindBuffer(GL_ARRAY_BUFFER, fontRenderer.VertexArrayBuffer));
-		xGL(x_vfont* fontVertices = (x_vfont*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+		a3GL(glBindBuffer(GL_ARRAY_BUFFER, fontRenderer.VertexArrayBuffer));
+		a3GL(x_vfont* fontVertices = (x_vfont*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 		
 		f32 x = 50;
 		f32 y = 50;
@@ -614,15 +590,15 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		fontVertices[4].positionTexCoords = { x + w, y + h, tex, tey };
 		fontVertices[5].positionTexCoords = { x + w, y, tex, tsy };
 
-		xGL(glUnmapBuffer(GL_ARRAY_BUFFER));
+		a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
 
-		xGL(glDrawArrays(GL_TRIANGLES, 0, 6));
+		a3GL(glDrawArrays(GL_TRIANGLES, 0, 6));
 		
 		SwapBuffers(hDC);
 		value += 0.01f;
 
 		LARGE_INTEGER currentPerformanceCounter;
-		xAssert(QueryPerformanceCounter(&currentPerformanceCounter));
+		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
 		//xLogTrace("FPS: {f} Time spent last frame: {f}ms", 1000.0f / dt, dt);

@@ -92,6 +92,9 @@
     <ClInclude Include="Platform\GlRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\STBImplementation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Platform\sample.vert" />

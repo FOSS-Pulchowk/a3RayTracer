@@ -3,34 +3,34 @@
 #define null 0
 
 // Bit operations Macro
-#define xBit(pos)				(1 << (pos))
-#define xSetBit(n, b)			((n) |= (b))
-#define xGetBit(n, b)			((n) & (b))
-#define xClearBit(n, b)			((n) &= (~b))
-#define xToggleBit(n, b)		((n) ^= (b))
+#define a3Bit(pos)				(1 << (pos))
+#define a3SetBit(n, b)			((n) |= (b))
+#define a3GetBit(n, b)			((n) & (b))
+#define a3ClearBit(n, b)			((n) &= (~b))
+#define a3ToggleBit(n, b)		((n) ^= (b))
 
 #ifdef XBIGENDIAN
-#define xSwapEndian32(n) (n)
+#define a3SwapEndian32(n) (n)
 #else
-#define xSwapEndian32(n) (((n)>>24) | (((n) & 0x00ff0000) >> 8) | (((n) & 0x0000ff00) << 8) | ((n)<<24))
+#define a3SwapEndian32(n) (((n)>>24) | (((n) & 0x00ff0000) >> 8) | (((n) & 0x0000ff00) << 8) | ((n)<<24))
 #endif
-#define xPack32(a, b, c, d) (((a)<<24) | ((b)<<16) | ((c)<<8) | ((d)<<0))
-#define xConsumeBits(n, p, b) (((n) & (((1 << (b)) - 1) << (p))) >> (p))
+#define a3Pack32(a, b, c, d) (((a)<<24) | ((b)<<16) | ((c)<<8) | ((d)<<0))
+#define a3ConsumeBits(n, p, b) (((n) & (((1 << (b)) - 1) << (p))) >> (p))
 
-#define xArrayCount(arr) (sizeof(arr)/sizeof((arr)[0]))
-#define xOffsetOf(s, m) (&(((s*)0)->m))
+#define a3ArrayCount(arr) (sizeof(arr)/sizeof((arr)[0]))
+#define a3OffsetOf(s, m) (&(((s*)0)->m))
 
-#define xKiloBytes(n) (sizeof(u8) * (n) * 1024u)
-#define xMegaBytes(n) (xKiloBytes(n) * 1024u)
-#define xGigaBytes(n) (xMegaBytes(n) * 1024u)
+#define a3KiloBytes(n) (sizeof(u8) * (n) * 1024u)
+#define a3MegaBytes(n) (a3KiloBytes(n) * 1024u)
+#define a3GigaBytes(n) (a3MegaBytes(n) * 1024u)
 
 // Debug Macro
 #if defined(_MSC_VER)
-#define xAssert(x) if(!(x))		{ __debugbreak(); }
-#define xTriggerBreakPoint()	{ __debugbreak(); }
+#define a3Assert(x) if(!(x))		{ __debugbreak(); }
+#define a3TriggerBreakPoint()		{ __debugbreak(); }
 #else // just write to nullptr to hit break
-#define xAssert(x) if(!(x))		{ *((int*)(0)) = 0; }
-#define xTriggerBreakPoint()	{ *((int*)(0)) = 0; }
+#define a3Assert(x) if(!(x))		{ *((int*)(0)) = 0; }
+#define a3TriggerBreakPoint()	{ *((int*)(0)) = 0; }
 #endif
 
 #include <stdint.h>
@@ -73,63 +73,83 @@ typedef unsigned char uutf8;
 typedef const char* s8;
 typedef const wchar_t* s16;
 
-#ifndef XSTDLIB
+#ifndef A3STDLIB
 #include <xmmintrin.h>
 // TODO(Zero): Remove this, self implement
 #include <math.h>
 
-inline f32 xSqrtf(f32 x)
+inline f32 a3Sqrtf(f32 x)
 {
 	__m128 mx = _mm_set_ps(0, 0, 0, x);
 	mx = _mm_sqrt_ps(mx);
 	return _mm_cvtss_f32(mx);
 }
 
-inline f32 xPowf(f32 n, f32 p, f32 precision = 0.000001f)
+inline f32 a3Powf(f32 n, f32 p, f32 precision = 0.000001f)
 {
-	if (p < 0) return 1 / xPowf(n, -p);
-	if (p >= 10) return xSqrtf(xPowf(n, p / 2, precision / 2));
-	if (p >= 1) return (n * xPowf(n, p - 1, precision));
-	if (precision >= 1) return xSqrtf(n);
-	return xSqrtf(xPowf(n, p * 2, precision * 2));
+	if (p < 0) return 1 / a3Powf(n, -p);
+	if (p >= 10) return a3Sqrtf(a3Powf(n, p / 2, precision / 2));
+	if (p >= 1) return (n * a3Powf(n, p - 1, precision));
+	if (precision >= 1) return a3Sqrtf(n);
+	return a3Sqrtf(a3Powf(n, p * 2, precision * 2));
 }
 
-inline f32 xSquaref(f32 n)
+inline f32 a3Floorf(f32 f)
+{
+	return floorf(f);
+}
+
+inline f32 a3Ceilf(f32 f)
+{
+	return ceilf(f);
+}
+
+inline f32 a3FModf(f32 y, f32 x)
+{
+	return fmodf(y, x);
+}
+
+inline f32 a3Squaref(f32 n)
 {
 	return (n * n);
 }
 
-inline f32 xSinf(f32 n)
+inline f32 a3Sinf(f32 n)
 {
 	return sinf(n);
 }
 
-inline f32 xCosf(f32 n)
+inline f32 a3Cosf(f32 n)
 {
 	return cosf(n);
 }
 
-inline f32 xTanf(f32 n)
+inline f32 a3Tanf(f32 n)
 {
 	return tanf(n);
 }
 
-inline f32 xFAbsf(f32 n)
+inline f32 a3FAbsf(f32 n)
 {
 	return fabsf(n);
 }
 
-inline f32 xASinf(f32 n)
+inline f32 a3ASinf(f32 n)
 {
 	return asinf(n);
 }
 
-inline f32 xATan2f(f32 y, f32 x)
+inline f32 a3ACosf(f32 f)
+{
+	return acosf(f);
+}
+
+inline f32 a3ATan2f(f32 y, f32 x)
 {
 	return atan2f(y, x);
 }
 
-inline f32 xCopySignf(f32 a, f32 b)
+inline f32 a3CopySignf(f32 a, f32 b)
 {
 	if (b > 0.0f) return (a > 0.0f) ? a : -a;
 	return (a > 0.0f) ? -a : a;
@@ -139,52 +159,52 @@ inline f32 xCopySignf(f32 a, f32 b)
 
 #include <math.h>
 
-inline f32 xSqrtf(f32 x)
+inline f32 a3Sqrtf(f32 x)
 {
 	return sqrtf(x);
 }
 
-inline f32 xPowf(f32 n, f32 p, f32 precision = 0.000001f)
+inline f32 a3Powf(f32 n, f32 p, f32 precision = 0.000001f)
 {
 	return powf(n, p);
 }
 
-inline f32 xSquaref(f32 n)
+inline f32 a3Squaref(f32 n)
 {
 	return powf(n, 2.0f);
 }
 
-inline f32 xSinf(f32 n)
+inline f32 a3Sinf(f32 n)
 {
 	return sinf(n);
 }
 
-inline f32 xCosf(f32 n)
+inline f32 a3Cosf(f32 n)
 {
 	return cosf(n);
 }
 
-inline f32 xTanf(f32 n)
+inline f32 a3Tanf(f32 n)
 {
 	return tanf(n);
 }
 
-inline f32 xFAbsf(f32 n)
+inline f32 a3FAbsf(f32 n)
 {
 	return fabsf(n);
 }
 
-inline f32 xASinf(f32 n)
+inline f32 a3ASinf(f32 n)
 {
 	return asinf(n);
 }
 
-inline f32 xATan2f(f32 y, f32 x)
+inline f32 a3ATan2f(f32 y, f32 x)
 {
 	return atan2f(y, x);
 }
 
-inline f32 xCopySignf(f32 a, f32 b)
+inline f32 a3CopySignf(f32 a, f32 b)
 {
 	return copysignf(a, b);
 }
@@ -243,12 +263,12 @@ inline v2 operator-(v2 v)
 
 inline f32 Length(v2 vec)
 {
-	return xSqrtf(vec.x * vec.x + vec.y * vec.y);
+	return a3Sqrtf(vec.x * vec.x + vec.y * vec.y);
 }
 
 inline f32 Distance2(v2 lhs, v2 rhs)
 {
-	return xSquaref(lhs.x - rhs.x) + xSquaref(lhs.y - rhs.y);
+	return a3Squaref(lhs.x - rhs.x) + a3Squaref(lhs.y - rhs.y);
 }
 
 inline f32 Dot(v2 lhs, v2 rhs)
@@ -356,12 +376,12 @@ inline v3 operator-(v3 v)
 
 inline f32 Length(v3 vec)
 {
-	return xSqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+	return a3Sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 }
 
 inline f32 Distance2(v3 lhs, v3 rhs)
 {
-	return xSquaref(lhs.x - rhs.x) + xSquaref(lhs.y - rhs.y) + xSquaref(lhs.z - rhs.z);
+	return a3Squaref(lhs.x - rhs.x) + a3Squaref(lhs.y - rhs.y) + a3Squaref(lhs.z - rhs.z);
 }
 
 inline f32 Dot(v3 lhs, v3 rhs)
@@ -481,12 +501,12 @@ inline v4 operator-(v4 v)
 
 inline f32 Length(v4 vec)
 {
-	return xSqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z + vec.w * vec.w);
+	return a3Sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z + vec.w * vec.w);
 }
 
 inline f32 Distance2(v4 lhs, v4 rhs)
 {
-	return xSquaref(lhs.x - rhs.x) + xSquaref(lhs.y - rhs.y) + xSquaref(lhs.z - rhs.z) + xSquaref(lhs.w - rhs.w);
+	return a3Squaref(lhs.x - rhs.x) + a3Squaref(lhs.y - rhs.y) + a3Squaref(lhs.z - rhs.z) + a3Squaref(lhs.w - rhs.w);
 }
 
 inline v3 GetXYZ(v4 vec)

@@ -3,8 +3,8 @@
 #include "Platform/Platform.h"
 #include "Glad.h"
 
-#if defined(XDEBUG) || defined(XINTERNAL)
-inline s8 glGetErrorString(u32 errorCode)
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+inline s8 InternalGLGetErrorString(u32 errorCode)
 {
 	switch(errorCode)
 	{
@@ -18,18 +18,18 @@ inline s8 glGetErrorString(u32 errorCode)
 }
 #endif
 
-#if defined(XDEBUG) || defined(XINTERNAL)
-#define xGL(x) \
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+#define a3GL(x) \
 x;\
 {\
 GLenum error = glGetError();\
 while (error != GL_NO_ERROR)\
 {\
-	xLogError("OpenGL Call[{u}]: {s}, File: {s}, Line: {i}", error, glGetErrorString(error), __FILE__, __LINE__);\
-	xAssert(error == GL_NO_ERROR);\
+	a3LogError("OpenGL Call[{u}]: {s}", error, InternalGLGetErrorString(error));\
+	a3Assert(error == GL_NO_ERROR);\
 	error = glGetError();\
 }\
 }
 #else
-#define xGL(x) x
+#define a3GL(x) x
 #endif

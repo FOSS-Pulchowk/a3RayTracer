@@ -597,7 +597,7 @@ extern "C" {
 	STBTT_DEF void stbtt_PackEnd(stbtt_pack_context *spc);
 	// Cleans up the packing context and frees all memory.
 
-	#define STBTT_POINT_SIZE(x)   (-(x))
+	#define STBTT_POINT_SIZE(x)   (-(a3))
 
 	STBTT_DEF int  stbtt_PackFontRange(stbtt_pack_context *spc, const unsigned char *fontdata, int font_index, float font_size,
 									   int first_unicode_char_in_range, int num_chars_in_range, stbtt_packedchar *chardata_for_range);
@@ -3114,16 +3114,26 @@ static void stbtt__handle_clipped_edge(float *scanline, int x, stbtt__active_edg
 		y1 = e->ey;
 	}
 
-	if(x0 == x)
+	if (x0 == x)
+	{
 		STBTT_assert(x1 <= x + 1);
-	else if(x0 == x + 1)
+	}
+	else if (x0 == x + 1)
+	{
 		STBTT_assert(x1 >= x);
-	else if(x0 <= x)
+	}
+	else if (x0 <= x)
+	{
 		STBTT_assert(x1 <= x);
-	else if(x0 >= x + 1)
+	}
+	else if (x0 >= x + 1)
+	{
 		STBTT_assert(x1 >= x + 1);
+	}
 	else
+	{
 		STBTT_assert(x1 >= x && x1 <= x + 1);
+	}
 
 	if(x0 <= x && x1 <= x)
 		scanline[x] += e->direction * (y1 - y0);
@@ -4652,7 +4662,7 @@ static int stbtt__solve_cubic(float a, float b, float c, float* r)
 		float u = (float)STBTT_sqrt(-p / 3);
 		float v = (float)STBTT_acos(-STBTT_sqrt(-27 / p3) * q / 2) / 3; // p3 must be negative, since d is negative
 		float m = (float)STBTT_cos(v);
-		float n = (float)STBTT_cos(v - 3.141592 / 2)*1.732050808f;
+		float n = (float)STBTT_cos(v - 3.141592f / 2)*1.732050808f;
 		r[0] = s + u * 2 * m;
 		r[1] = s - u * (m + n);
 		r[2] = s - u * (m - n);

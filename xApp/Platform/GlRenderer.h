@@ -21,7 +21,7 @@ struct x_vfont
 	v4 positionTexCoords;
 };
 
-namespace x {
+namespace a3 {
 
 	typedef u32 shader_program;
 

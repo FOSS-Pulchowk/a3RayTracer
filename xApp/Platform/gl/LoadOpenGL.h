@@ -4,7 +4,7 @@
 #include "Glad.h"
 #include "GLExtensions.h"
 
-#ifdef XOSWINDOWS
+#ifdef A3OSWINDOWS
 
 #include <Windows.h>
 #include <wingdi.h>
@@ -18,15 +18,15 @@ inline void* GLFunctionLoader(s8 name)
 	void* result = 0;
 	result = wglGetProcAddress(name);
 	if (result) return result;
-	xAssert(g_OpenGLLibrary);
+	a3Assert(g_OpenGLLibrary);
 	result = GetProcAddress(g_OpenGLLibrary, name);
-	xAssert(result);
+	a3Assert(result);
 	return result;
 }
 
 inline void GLLoad(HWND hWnd)
 {
-	xLog("Initializing OpenGL context");
+	a3Log("Initializing OpenGL context");
 	WNDCLASSEXW wndClassExW = {};
 	wndClassExW.cbSize = sizeof(wndClassExW);
 	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
@@ -45,12 +45,12 @@ inline void GLLoad(HWND hWnd)
 	dummyPDF.cDepthBits = 24;
 	dummyPDF.cStencilBits = 8;
 	i32 pfi = ChoosePixelFormat(hDummyDC, &dummyPDF);
-	xAssert(pfi != 0);
+	a3Assert(pfi != 0);
 	PIXELFORMATDESCRIPTOR suggestedPFI;
 	DescribePixelFormat(hDummyDC, pfi, sizeof(suggestedPFI), &suggestedPFI);
 	SetPixelFormat(hDummyDC, pfi, &suggestedPFI);
 	HGLRC dummyGLContext = wglCreateContext(hDummyDC);
-	xAssert(wglMakeCurrent(hDummyDC, dummyGLContext));
+	a3Assert(wglMakeCurrent(hDummyDC, dummyGLContext));
 	typedef HGLRC WINAPI tag_wglCreateContextAttribsARB(HDC hdc, HGLRC hShareContext, const i32 *attribList);
 	tag_wglCreateContextAttribsARB *wglCreateContextAttribsARB;
 	typedef BOOL WINAPI tag_wglChoosePixelFormatARB(HDC hdc, const i32 *piAttribIList, const f32 *pfAttribFList, u32 nMaxFormats, i32 *piFormats, u32 *nNumFormats);
@@ -59,8 +59,8 @@ inline void GLLoad(HWND hWnd)
 	wglChoosePixelFormatARB = (tag_wglChoosePixelFormatARB*)wglGetProcAddress("wglChoosePixelFormatARB");
 	gl_version glVersion;
 	g_OpenGLLibrary = LoadLibraryW(L"opengl32.dll");
-	xAssert(GladLoadGLLoader(GLFunctionLoader, &glVersion));
-	xLog("OpenGL Context created. Loaded OpenGL Version: {i}.{i}", glVersion.major, glVersion.minor);
+	a3Assert(GladLoadGLLoader(GLFunctionLoader, &glVersion));
+	a3Log("OpenGL Context created. Loaded OpenGL Version: {i}.{i}", glVersion.major, glVersion.minor);
 	FreeLibrary(g_OpenGLLibrary);
 	g_OpenGLLibrary = 0;
 	wglMakeCurrent(hDummyDC, 0);
@@ -84,7 +84,7 @@ inline void GLLoad(HWND hWnd)
 	u32 numFormats;
 	HDC hDC = GetDC(hWnd);
 	wglChoosePixelFormatARB(hDC, attribList, 0, 1, &pixelFormat, &numFormats);
-	xAssert(numFormats);
+	a3Assert(numFormats);
 	PIXELFORMATDESCRIPTOR pfd;
 	DescribePixelFormat(hDC, pixelFormat, sizeof(pfd), &pfd);
 	SetPixelFormat(hDC, pixelFormat, &pfd);

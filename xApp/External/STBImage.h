@@ -564,7 +564,7 @@ typedef unsigned char validate_uint32[sizeof(stbi__uint32) == 4 ? 1 : -1];
 #endif
 
 #ifdef STBI_HAS_LROTL
-#define stbi_lrot(x,y)  _lrotl(x,y)
+#define stbi_lrot(x,y)  _lrotl(a3,y)
 #else
 #define stbi_lrot(x,y)  (((x) << (y)) | ((x) >> (32 - (y))))
 #endif

@@ -54,7 +54,7 @@ quat &quat::operator*=(const quat &q)
 
 f32 quat::Length(const quat &q)
 {
-	return xSqrtf(q.r * q.r + q.i * q.i + q.j * q.j + q.k * q.k);
+	return a3Sqrtf(q.r * q.r + q.i * q.i + q.j * q.j + q.k * q.k);
 }
 
 quat quat::Conjugate(const quat &q)
@@ -64,7 +64,7 @@ quat quat::Conjugate(const quat &q)
 
 quat quat::Normalize(const quat &q)
 {
-	f32 len = xSqrtf(q.r * q.r + q.i * q.i + q.j * q.j + q.k * q.k);
+	f32 len = a3Sqrtf(q.r * q.r + q.i * q.i + q.j * q.j + q.k * q.k);
 	len = 1.0f / len;
 	return quat(q.r * len, q.i * len, q.j * len, q.k * len);
 }

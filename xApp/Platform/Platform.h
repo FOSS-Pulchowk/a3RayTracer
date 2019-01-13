@@ -11,7 +11,7 @@
 //
 // CONTAINS: Logging macros
 //
-namespace x {
+namespace a3 {
 	enum log_type
 	{
 		LogTypeStatus, LogTypeWarn, LogTypeError, LogTypeTrace
@@ -40,7 +40,7 @@ namespace x {
 	xLogWarn("This vec {v2} may cause errors!", { 5, 6, 7 });
 #endif
 }
-void x_Log(x::log_type type, s8 format, ...);
+void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...);
 
 
 //
@@ -54,31 +54,31 @@ void x_Log(x::log_type type, s8 format, ...);
 	* XDEBUG = 1 : Internal build, add tweaks here
 	* Otherwise build project as RELEASE BUILD
 */
-#if XDEBUG == 4
-#define xLog(fmt, ...)			x_Log(x::LogTypeStatus, fmt, ##__VA_ARGS__)
-#define xLogError(fmt, ...)		x_Log(x::LogTypeError, fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)		x_Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
-#define xLogTrace(fmt, ...)		x_Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
-#elif XDEBUG == 3
-#define xLog(fmt, ...)
-#define xLogError(fmt, ...)		x_Log(x::LogTypeError, fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)		x_Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
-#define xLogTrace(fmt, ...)		x_Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
-#elif XDEBUG == 2
-#define xLog(fmt, ...)
-#define xLogError(fmt, ...)		x_Log(x::LogTypeError, fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)
-#define xLogTrace(fmt, ...)		x_Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
-#elif defined (XINTERNAL)
-#define xLog(fmt, ...)			x_Log(x::LogTypeStatus, fmt, ##__VA_ARGS__)
-#define xLogError(fmt, ...)		x_Log(x::LogTypeError, fmt, ##__VA_ARGS__)
-#define xLogWarn(fmt, ...)		x_Log(x::LogTypeWarn, fmt, ##__VA_ARGS__)
-#define xLogTrace(fmt, ...)		x_Log(x::LogTypeTrace, fmt, ##__VA_ARGS__)
+#if A3DEBUG == 4
+#define a3Log(fmt, ...)			a3_Log(__FILE__, __LINE__, a3::LogTypeStatus, fmt, ##__VA_ARGS__)
+#define a3LogError(fmt, ...)	a3_Log(__FILE__, __LINE__, a3::LogTypeError, fmt, ##__VA_ARGS__)
+#define a3LogWarn(fmt, ...)		a3_Log(__FILE__, __LINE__, a3::LogTypeWarn, fmt, ##__VA_ARGS__)
+#define a3LogTrace(fmt, ...)	a3_Log(__FILE__, __LINE__, a3::LogTypeTrace, fmt, ##__VA_ARGS__)
+#elif A3DEBUG == 3
+#define a3Log(fmt, ...)
+#define a3LogError(fmt, ...)	a3_Log(__FILE__, __LINE__, a3::LogTypeError, fmt, ##__VA_ARGS__)
+#define a3LogWarn(fmt, ...)		a3_Log(__FILE__, __LINE__, a3::LogTypeWarn, fmt, ##__VA_ARGS__)
+#define a3LogTrace(fmt, ...)	a3_Log(__FILE__, __LINE__, a3::LogTypeTrace, fmt, ##__VA_ARGS__)
+#elif A3DEBUG == 2
+#define a3Log(fmt, ...)
+#define a3LogError(fmt, ...)	a3_Log(__FILE__, __LINE__, a3::LogTypeError, fmt, ##__VA_ARGS__)
+#define a3LogWarn(fmt, ...)
+#define a3LogTrace(fmt, ...)	a3_Log(__FILE__, __LINE__, a3::LogTypeTrace, fmt, ##__VA_ARGS__)
+#elif defined (A3INTERNAL)
+#define a3Log(fmt, ...)			a3_Log(__FILE__, __LINE__, a3::LogTypeStatus, fmt, ##__VA_ARGS__)
+#define a3LogError(fmt, ...)	a3_Log(__FILE__, __LINE__, a3::LogTypeError, fmt, ##__VA_ARGS__)
+#define a3LogWarn(fmt, ...)		a3_Log(__FILE__, __LINE__, a3::LogTypeWarn, fmt, ##__VA_ARGS__)
+#define a3LogTrace(fmt, ...)	a3_Log(__FILE__, __LINE__, a3::LogTypeTrace, fmt, ##__VA_ARGS__)
 #else
-#define xLog(fmt, ...)
-#define xLogError(fmt, ...)
-#define xLogWarn(fmt, ...)
-#define xLogTrace(fmt, ...)
+#define a3Log(fmt, ...)
+#define a3LogError(fmt, ...)
+#define a3LogWarn(fmt, ...)
+#define a3LogTrace(fmt, ...)
 #endif
 
 //
@@ -86,7 +86,7 @@ void x_Log(x::log_type type, s8 format, ...);
 //
 #ifdef _WIN64
 
-#define XOSWINDOWS
+#define A3OSWINDOWS
 
 #endif
 
@@ -101,20 +101,20 @@ struct memory_arena
 
 inline void* PushSize(memory_arena& arena, u32 bytes)
 {
-	xAssert(bytes != 0);
-	xAssert(arena.Capacity >= (arena.Consumed + bytes));
+	a3Assert(bytes != 0);
+	a3Assert(arena.Capacity >= (arena.Consumed + bytes));
 	void* result = (void*)arena.Current;
 	arena.Current += bytes;
 	return result;
 }
 
-#define xPush(arena, type) (type*)PushSize(arena, sizeof(type))
-#define xPushArray(arena, type, n) (type*)PushSize(arena, sizeof(type) * n)
+#define a3Push(arena, type) (type*)PushSize(arena, sizeof(type))
+#define a3PushArray(arena, type, n) (type*)PushSize(arena, sizeof(type) * n)
 
 //
 // CONTAINS: Platform specific stuffs
 //
-namespace x {
+namespace a3 {
 	struct file_content
 	{
 		void* Buffer;
@@ -122,21 +122,21 @@ namespace x {
 	};
 }
 
-struct x_platform
+struct a3_platform
 {
-	const x::file_content LoadFileContent(s8 fileName) const;
-	void FreeFileContent(x::file_content fileReadInfo) const;
+	const a3::file_content LoadFileContent(s8 fileName) const;
+	void FreeFileContent(a3::file_content fileReadInfo) const;
 	void* Malloc(u64 size) const;
 	void* Calloc(u64 size) const;
 	void* Realloc(void* ptr, u64 size) const;
 	b32 Free(void* size) const;
-#if defined(XDEBUG) || defined(XINTERNAL)
+#if defined(A3DEBUG) || defined(A3INTERNAL)
 	u64 GetTotalHeapAllocated() const;
 	u64 GetTotalHeapFreed() const;
 #endif
 };
-namespace x {
-	extern const x_platform Platform;
+namespace a3 {
+	extern const a3_platform Platform;
 }
 
 //
@@ -147,7 +147,7 @@ namespace x {
 void* operator new(u64 size);
 void operator delete(void* ptr);
 
-namespace x {
+namespace a3 {
 	enum button
 	{
 		ButtonLeft,
@@ -164,9 +164,9 @@ namespace x {
 	};
 }
 
-struct x_input_system
+struct a3_input_system
 {
 	i32 MouseX;
 	i32 MouseY;
-	x::state Buttons[x::ButtonCount];
+	a3::state Buttons[a3::ButtonCount];
 };
