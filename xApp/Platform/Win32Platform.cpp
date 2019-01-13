@@ -31,7 +31,7 @@ namespace a3 {
 
 static const HANDLE s_HeapHandle = HeapCreate(0, a3MegaBytes(500), 0);
 
-#if !defined(A3DEBUG) || defined(A3INTERNAL)
+#if defined(A3DEBUG) || defined(A3INTERNAL)
 static u64 s_TotalHeapAllocated;
 static u64 s_TotalHeapFreed;
 #define xInternalAllocationSize(x) ((x) + sizeof(u64))
@@ -153,16 +153,16 @@ b32 a3_platform::Free(void* ptr) const
 	return false;
 }
 
-//#if defined(A3DEBUG) || defined(A3INTERNAL)
-//u64 a3_platform::GetTotalHeapAllocated() const
-//{
-//	return s_TotalHeapAllocated;
-//}
-//u64 a3_platform::GetTotalHeapFreed() const
-//{
-//	return s_TotalHeapFreed;
-//}
-//#endif
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+u64 a3_platform::GetTotalHeapAllocated() const
+{
+	return s_TotalHeapAllocated;
+}
+u64 a3_platform::GetTotalHeapFreed() const
+{
+	return s_TotalHeapFreed;
+}
+#endif
 
 void* operator new(u64 size)
 {
