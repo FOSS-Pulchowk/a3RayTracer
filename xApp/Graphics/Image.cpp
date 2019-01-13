@@ -2,22 +2,26 @@
 #include "Platform/Platform.h"
 #include "STBImplementation.h"
 
-x::image* x::LoadPNGImage(memory_arena& arena, s8 file)
+a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 {
 	i32 x, y, n;
 	stbi_set_flip_vertically_on_load(1);
-	x::file_content fc = Platform.LoadFileContent(file);
+	a3::file_content fc = Platform.LoadFileContent(file);
 	if (!fc.Buffer) return 0;
-	// TODO(Zero): Be careful need to assert here for the size
+	a3Assert(fc.Size < (u64)max_i32);
 	u8* pixels = stbi_load_from_memory((u8*)fc.Buffer, (i32)fc.Size, &x, &y, &n, 4);
 	Platform.FreeFileContent(fc);
-	if(!pixels) return null;
+	if (!pixels)
+	{
+		a3LogWarn("{s} Image not loaded {s}", file, stbi_failure_reason());
+		return null;
+	}
 
-	x::image* img = xPush(arena, x::image);
+	a3::image* img = a3Push(arena, a3::image);
 	img->Width = x;
 	img->Height = y;
 	img->Channels = n;
-	img->Pixels = xPushArray(arena, u8, x * y * n);
+	img->Pixels = a3PushArray(arena, u8, x * y * n);
 
 	for(i32 i = 0; i < x*y*n; ++i)
 		img->Pixels[i] = pixels[i];
@@ -26,9 +30,9 @@ x::image* x::LoadPNGImage(memory_arena& arena, s8 file)
 	return img;
 }
 
-x::ttf* x::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
+a3::ttf* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 {
-	x::file_content file = x::Platform.LoadFileContent(fileName);
+	a3::file_content file = a3::Platform.LoadFileContent(fileName);
 	if(file.Buffer)
 	{
 		stbtt_fontinfo fontInfo;
@@ -39,13 +43,12 @@ x::ttf* x::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 		stbtt_GetCodepointBitmapBox(&fontInfo, 'A', 1, 1, &x0, &y0, &x1, &y1);
 		i32 w = x1 - x0;
 		i32 h = y1 - y0;
-		x::ttf* ret = xPush(stack, x::ttf);
-		u8* result = xPushArray(stack, u8, w * h);
+		a3::ttf* ret = a3Push(stack, a3::ttf);
+		u8* result = a3PushArray(stack, u8, w * h);
 		stbtt_MakeCodepointBitmap(&fontInfo, result, w, h, 1, 1, 1, 'A');
 		ret->Width = w;
 		ret->Height = h;
 		ret->Pixels = result;
-		stbi_write_png("output.png", ret->Width, ret->Height, 1, ret->Pixels, 1);
 		return ret;
 
 		//u8* bitmap = stbtt_GetCodepointBitmap(&fontInfo, 0, stbtt_ScaleForPixelHeight(&fontInfo, 100), 'A', &width, &height, &xoffset, &yoffset);

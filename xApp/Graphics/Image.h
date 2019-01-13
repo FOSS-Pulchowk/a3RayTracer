@@ -1,7 +1,7 @@
 #include "Common/Core.h"
 #include "Platform/Platform.h"
 
-namespace x {
+namespace a3 {
 
 struct image
 {
