@@ -125,10 +125,26 @@ struct x_platform
 {
 	const x::file_content LoadFileContent(s8 fileName) const;
 	void FreeFileContent(x::file_content fileReadInfo) const;
+	void* Malloc(u64 size) const;
+	void* Calloc(u64 size) const;
+	void* Realloc(void* ptr, u64 size) const;
+	b32 Free(void* size) const;
+#if defined(XDEBUG) || defined(XINTERNAL)
+	u64 GetTotalHeapAllocated() const;
+	u64 GetTotalHeapFreed() const;
+#endif
 };
 namespace x {
 	extern const x_platform Platform;
 }
+
+//
+// NOTE(Zero):
+// C++ new and delete operator override
+// Should be defined in platform layer
+//
+void* operator new(u64 size);
+void operator delete(void* ptr);
 
 namespace x {
 	enum button

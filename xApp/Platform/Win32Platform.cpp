@@ -22,9 +22,39 @@
 #undef CreateWindow
 #endif
 
+//
+// Globals
+//
 namespace x {
 	const x_platform Platform;
 }
+
+static const HANDLE s_HeapHandle = GetProcessHeap();
+
+#if defined(XDEBUG) || defined(XINTERNAL)
+static u64 s_TotalHeapAllocated;
+static u64 s_TotalHeapFreed;
+#define xInternalAllocationSize(x) ((x) + sizeof(u64))
+#define xInternalFreePtr(p) ((void*)((u8*)(p) - sizeof(u64)))
+#define xInternalHeapAllocation(x) x;\
+			 if(ptr) { \
+				if(size > xMegaBytes(1)) \
+					xLogWarn("Large Heap Allocation {u}", size); \
+				s_TotalHeapAllocated += size;\
+				u64* loc = (u64*)ptr; \
+				*loc = size; \
+				ptr = (u8*)loc + sizeof(u64); \
+			}
+#define xInternalHeapFree(x) x;\
+			if(result) { \
+				s_TotalHeapFreed += *(u64*)ptr; \
+			}
+#else
+#define xInternalAllocationSize(x) (x)
+#define xInternalFreePtr(p) (p)
+#define xInternalHeapAllocation(x) x;
+#define xInternalHeapFree(x) x;
+#endif
 
 const x::file_content x_platform::LoadFileContent(s8 fileName) const
 {
@@ -75,6 +105,57 @@ void x_platform::FreeFileContent(x::file_content fileReadInfo) const
 	{
 		VirtualFree(fileReadInfo.Buffer, fileReadInfo.Size, MEM_RELEASE);
 	}
+}
+
+void* x_platform::Malloc(u64 size) const
+{
+	xInternalHeapAllocation(
+		void* ptr = HeapAlloc(s_HeapHandle, 0, xInternalAllocationSize(size))
+	);
+	return ptr;
+}
+
+void* x_platform::Calloc(u64 size) const
+{
+	xInternalHeapAllocation(
+		void* ptr = HeapAlloc(s_HeapHandle, 0, xInternalAllocationSize(size))
+	);
+	return ptr;
+}
+
+void* x_platform::Realloc(void* usrPtr, u64 size) const
+{
+	xInternalHeapAllocation(
+		void* ptr = HeapReAlloc(s_HeapHandle, 0, usrPtr, xInternalAllocationSize(size))
+	);
+	return ptr;
+}
+
+b32 x_platform::Free(void* ptr) const
+{
+	xInternalHeapFree(b32 result = (b32)HeapFree(s_HeapHandle, 0, xInternalFreePtr(ptr)));
+	return result;
+}
+
+#if defined(XDEBUG) || defined(XINTERNAL)
+u64 x_platform::GetTotalHeapAllocated() const
+{
+	return s_TotalHeapAllocated;
+}
+u64 x_platform::GetTotalHeapFreed() const
+{
+	return s_TotalHeapFreed;
+}
+#endif
+
+void* operator new(u64 size)
+{
+	return x::Platform.Malloc(size);
+}
+
+void operator delete(void* ptr)
+{
+	x::Platform.Free(ptr);
 }
 
 #define XWIDTH 800
@@ -204,20 +285,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
-
-//struct vertex2d
-//{
-//	v3 position;
-//	v3 color;
-//	v2 texCoords;
-//};
-//
-//struct vertexFont
-//{
-//	v2 position;
-//	v3 color;
-//	v2 texCoords;
-//};
 
 struct entity
 {
