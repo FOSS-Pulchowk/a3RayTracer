@@ -296,8 +296,8 @@ m4x4 m4x4::TranslationR(v3 vec)
 
 m4x4 m4x4::RotationR(f32 angle, v3 axis)
 {
-	f32 c = cosf(angle);
-	f32 s = sinf(angle);
+	f32 c = xCosf(angle);
+	f32 s = xSinf(angle);
 
 	f32 x2 = axis.x * axis.x;
 	f32 xy = axis.x * axis.y;
@@ -350,7 +350,7 @@ m4x4 m4x4::OrthographicR(f32 left, f32 right, f32 bottom, f32 top, f32 cNear, f3
 // NOTE(Zero): Windows header file defines `far` and `near`, so not to use these as variables
 m4x4 m4x4::PerspectiveR(f32 fov, f32 aspectRatio, f32 cNear, f32 cFar)
 {
-	f32 cot = 1.0f / tanf(fov * 0.5f);
+	f32 cot = 1.0f / xTanf(fov * 0.5f);
 	m4x4 result;
 	result.elements[0 * 4 + 0] = cot / aspectRatio;
 	result.elements[1 * 4 + 1] = cot;

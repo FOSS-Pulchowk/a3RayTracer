@@ -524,7 +524,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		{
 			rect.position.xy += (rect.moveFrameTime * deltaTime * Normalize(rect.moveFinalPosition - rect.position.xy) * 450.0f);
 			rect.moveFrameTime += deltaTime;
-			f32 distance = fabsf(sqrtf(Distance2(rect.position.xy, rect.moveFinalPosition)));
+			f32 distance = xFAbsf(xSqrtf(Distance2(rect.position.xy, rect.moveFinalPosition)));
 			if(distance < 0.01f)
 			{
 				rect.isMoving = false;
@@ -548,7 +548,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		xGL(glBindTexture(GL_TEXTURE_2D, texID));
 		//xGL(glBindTexture(GL_TEXTURE_2D, zeroID));
 
-		f32 angle = sinf(value);
+		f32 angle = xSinf(value);
 		
 		xGL(x_v2d* v = (x_v2d*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 		xGL(u32* indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
@@ -602,10 +602,10 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		f32 w = 100.0f;
 		f32 h = 100.0f;
 
-		f32 tsx = (f32)testFont->Glyphs['A'].Position / (f32)testFont->Width;
+		f32 tsx = 0.0f;
 		f32 tsy = 0.0f;
-		f32 tex = (f32)(testFont->Glyphs['A'].Position + testFont->Glyphs['A'].Width) / (f32)testFont->Width;
-		f32 tey = 1.0f; // (f32)testFont->Glyphs['A'].Height / (f32)testFont->Height;
+		f32 tex = 1.0f;
+		f32 tey = 1.0f;
 
 		fontVertices[0].positionTexCoords = { x, y, tsx, tsy };
 		fontVertices[1].positionTexCoords = { x, y + h, tsx, tey };
