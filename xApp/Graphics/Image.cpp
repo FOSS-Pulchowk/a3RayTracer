@@ -12,19 +12,22 @@ static inline void InternalSTBWriteCallback(void* context, void* data, i32 size)
 	fc->Buffer = new u8[size];
 	if (fc->Buffer)
 	{
+		fc->Size = size;
 		a3::MemoryCopy(fc->Buffer, data, size);
 	}
 }
 
 a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 {
-	i32 x, y, n;
 	stbi_set_flip_vertically_on_load(1);
+	i32 x, y, n;
 	a3::file_content fc = Platform.LoadFileContent(file);
 	if (!fc.Buffer) return 0;
 	a3Assert(fc.Size < (u64)max_i32);
 	u8* pixels = stbi_load_from_memory((u8*)fc.Buffer, (i32)fc.Size, &x, &y, &n, 4);
 	Platform.FreeFileContent(fc);
+
+	if (!pixels) return null;
 
 	a3::image* img = a3Push(arena, a3::image);
 	img->Width = x;
@@ -39,14 +42,18 @@ a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 	return img;
 }
 
-b32 a3::WritePNGImage(s8 file, i32 width, i32 height, i32 channels, void* pixels)
+b32 a3::WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels)
 {
+	stbi_flip_vertically_on_write(1);
 	a3::file_content fc = {};
-	if (stbi_write_png_to_func(InternalSTBWriteCallback, &fc, width, height, channels, pixels, sizeof(u8)))
+	i32 stride = 4 * ((width * bytesPerPixel + 3) / 4);
+	if (stbi_write_png_to_func(InternalSTBWriteCallback, &fc, width, height, channels, pixels, stride))
 	{
-		i32 res = a3::Platform.WriteFileContent(file, fc);
-		if (fc.Buffer)
-			delete[] fc.Buffer;
+		// HACK(Zero): Should we directly replace the file?
+		b32 res = a3::Platform.WriteFileContent(file, fc);
+		if (!res)
+			res = a3::Platform.ReplaceFileContent(file, fc);
+		delete[] fc.Buffer;
 		return res;
 	}
 	return false;
@@ -84,7 +91,7 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 			stbtt_MakeGlyphBitmap(&fontInfo, glyphs[cp].pixels, w, h, sizeof(u8), scaleX, scaleY, glyphCode);
 			atlasWidth += glyphs[cp].width;
 			output[17] = glyphIndex;
-			WritePNGImage("test_image.png", w, h, 1, glyphs[64 - 32].pixels);
+			WritePNGImage("test_image.png", w, h, 1, 1, glyphs[cp].pixels);
 			//stbi_write_png(output, w, h, 1, glyphs[cp].pixels, 1);
 		}
 		return glyphs;

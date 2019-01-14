@@ -118,7 +118,7 @@ namespace a3 {
 	struct file_content
 	{
 		void* Buffer;
-		i64 Size;
+		u64 Size;
 	};
 }
 

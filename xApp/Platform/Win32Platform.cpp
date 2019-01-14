@@ -46,7 +46,6 @@ static u64 s_TotalHeapFreed;
 				ptr = ((u8*)loc + sizeof(u64)); \
 			}
 #define xInternalHeapReAllocation(x) x;\
-			i32 err = GetLastError(); \
 			 if(ptr) { \
 				if(size > a3MegaBytes(1)) \
 					a3LogWarn("Large Heap Re Allocation of {u} bytes", size); \
@@ -80,7 +79,7 @@ const a3::file_content a3_platform::LoadFileContent(s8 fileName) const
 	a3Assert(GetFileSizeEx(hFile, &fileSize));
 	result.Size = fileSize.QuadPart;
 	void* buffer = VirtualAlloc(0, result.Size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	i64 totalBytesRead = 0;
+	u64 totalBytesRead = 0;
 	DWORD bytesRead = 0;
 	u8* readingPtr = (u8*)buffer;
 	while (totalBytesRead < result.Size)
@@ -126,19 +125,18 @@ b32 a3_platform::WriteFileContent(s8 fileName, const a3::file_content & file) co
 	{
 		return false;
 	}
-	DWORD numOfBytesToWrite = file.Size;
+	a3Assert(file.Size < (u64)max_u32);
+	DWORD numOfBytesToWrite = (u32)file.Size;
 	DWORD numOfBytesWritten = 0;
-	while (numOfBytesWritten < numOfBytesToWrite)
+	if (!WriteFile(hFile, file.Buffer, numOfBytesToWrite, &numOfBytesWritten, NULL))
 	{
-		void* buffer = ((u8*)file.Buffer + numOfBytesWritten);
-		if (!WriteFile(hFile, buffer, numOfBytesToWrite, &numOfBytesWritten, NULL))
-		{
-			CloseHandle(hFile);
-			return false;
-		}
+		CloseHandle(hFile);
+		return false;
 	}
+	// NOTE(Zero): Synchronous way writes all data at once
+	b32 result = (numOfBytesToWrite == numOfBytesWritten);
 	CloseHandle(hFile);
-	return true;
+	return result;
 }
 
 b32 a3_platform::ReplaceFileContent(s8 fileName, const a3::file_content & file) const
@@ -148,19 +146,18 @@ b32 a3_platform::ReplaceFileContent(s8 fileName, const a3::file_content & file) 
 	{
 		return false;
 	}
-	DWORD numOfBytesToWrite = file.Size;
+	a3Assert(file.Size < (u64)max_u32);
+	DWORD numOfBytesToWrite = (u32)file.Size;
 	DWORD numOfBytesWritten = 0;
-	while (numOfBytesWritten < numOfBytesToWrite)
+	if (!WriteFile(hFile, file.Buffer, numOfBytesToWrite, &numOfBytesWritten, NULL))
 	{
-		void* buffer = ((u8*)file.Buffer + numOfBytesWritten);
-		if (!WriteFile(hFile, buffer, numOfBytesToWrite, &numOfBytesWritten, NULL))
-		{
-			CloseHandle(hFile);
-			return false;
-		}
+		CloseHandle(hFile);
+		return false;
 	}
+	// NOTE(Zero): Synchronous way writes all data at once
+	b32 result = (numOfBytesToWrite == numOfBytesWritten);
 	CloseHandle(hFile);
-	return true;
+	return result;
 }
 
 void* a3_platform::Malloc(u64 size) const
@@ -250,107 +247,107 @@ struct win32_user_data
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	win32_user_data& userData = *(win32_user_data*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
-	switch(msg)
+	switch (msg)
 	{
-		case WM_CREATE:
-		{
-			GLLoad(hWnd);
-			return 0;
-		}
+	case WM_CREATE:
+	{
+		GLLoad(hWnd);
+		return 0;
+	}
 
-		// TODO(Zero): Inverse mouse Y co-ordinate?
-		case WM_MOUSEMOVE:
-		{
-			i32 mx = GET_X_LPARAM(lParam);
-			i32 my = GET_Y_LPARAM(lParam);
-			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = XHEIGHT - my;
-			break;
-		}
+	// TODO(Zero): Inverse mouse Y co-ordinate?
+	case WM_MOUSEMOVE:
+	{
+		i32 mx = GET_X_LPARAM(lParam);
+		i32 my = GET_Y_LPARAM(lParam);
+		userData.inputSystem.MouseX = mx;
+		userData.inputSystem.MouseY = XHEIGHT - my;
+		break;
+	}
 
-		case WM_LBUTTONDOWN:
-		{
-			i32 mx = GET_X_LPARAM(lParam);
-			i32 my = GET_Y_LPARAM(lParam);
-			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonDown;
-			break;
-		}
+	case WM_LBUTTONDOWN:
+	{
+		i32 mx = GET_X_LPARAM(lParam);
+		i32 my = GET_Y_LPARAM(lParam);
+		userData.inputSystem.MouseX = mx;
+		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonDown;
+		break;
+	}
 
-		case WM_LBUTTONUP:
-		{
-			i32 mx = GET_X_LPARAM(lParam);
-			i32 my = GET_Y_LPARAM(lParam);
-			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonUp;
-			break;
-		}
+	case WM_LBUTTONUP:
+	{
+		i32 mx = GET_X_LPARAM(lParam);
+		i32 my = GET_Y_LPARAM(lParam);
+		userData.inputSystem.MouseX = mx;
+		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonUp;
+		break;
+	}
 
-		case WM_RBUTTONDOWN:
-		{
-			i32 mx = GET_X_LPARAM(lParam);
-			i32 my = GET_Y_LPARAM(lParam);
-			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonDown;
-			break;
-		}
+	case WM_RBUTTONDOWN:
+	{
+		i32 mx = GET_X_LPARAM(lParam);
+		i32 my = GET_Y_LPARAM(lParam);
+		userData.inputSystem.MouseX = mx;
+		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonDown;
+		break;
+	}
 
-		case WM_RBUTTONUP:
-		{
-			i32 mx = GET_X_LPARAM(lParam);
-			i32 my = GET_Y_LPARAM(lParam);
-			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonUp;
-			break;
-		}
+	case WM_RBUTTONUP:
+	{
+		i32 mx = GET_X_LPARAM(lParam);
+		i32 my = GET_Y_LPARAM(lParam);
+		userData.inputSystem.MouseX = mx;
+		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonUp;
+		break;
+	}
 
-		case WM_MBUTTONDOWN:
-		{
-			i32 mx = GET_X_LPARAM(lParam);
-			i32 my = GET_Y_LPARAM(lParam);
-			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonDown;
-			break;
-		}
+	case WM_MBUTTONDOWN:
+	{
+		i32 mx = GET_X_LPARAM(lParam);
+		i32 my = GET_Y_LPARAM(lParam);
+		userData.inputSystem.MouseX = mx;
+		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonDown;
+		break;
+	}
 
-		case WM_MBUTTONUP:
-		{
-			i32 mx = GET_X_LPARAM(lParam);
-			i32 my = GET_Y_LPARAM(lParam);
-			userData.inputSystem.MouseX = mx;
-			userData.inputSystem.MouseY = XHEIGHT - my;
-			userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonUp;
-			break;
-		}
+	case WM_MBUTTONUP:
+	{
+		i32 mx = GET_X_LPARAM(lParam);
+		i32 my = GET_Y_LPARAM(lParam);
+		userData.inputSystem.MouseX = mx;
+		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonUp;
+		break;
+	}
 
-		case WM_SIZE:
+	case WM_SIZE:
+	{
+		// TODO(Zero): This needs to handle more things then it is currently
+		if (wParam == SIZE_MINIMIZED)
 		{
-			// TODO(Zero): This needs to handle more things then it is currently
-			if(wParam == SIZE_MINIMIZED)
-			{
-				a3Log("Window minimized");
-			}
-			else if(wParam == SIZE_RESTORED)
-			{
-				a3Log("Window restored");
-				a3Log("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
-			}
-			HDC hDC = GetDC(hWnd);
-			SwapBuffers(hDC);
-			ReleaseDC(hWnd, hDC);
-			return 0;
+			a3Log("Window minimized");
 		}
+		else if (wParam == SIZE_RESTORED)
+		{
+			a3Log("Window restored");
+			a3Log("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
+		}
+		HDC hDC = GetDC(hWnd);
+		SwapBuffers(hDC);
+		ReleaseDC(hWnd, hDC);
+		return 0;
+	}
 
-		case WM_DESTROY:
+	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
 
-		default:
+	default:
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 	return 0;
@@ -381,10 +378,10 @@ struct entity
 int main()
 {
 	HINSTANCE hInstance = GetModuleHandleW(0);
-	#else
+#else
 i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 {
-	#endif
+#endif
 	WNDCLASSEXW wndClassExW = {};
 	wndClassExW.cbSize = sizeof(wndClassExW);
 	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
@@ -408,7 +405,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	height = wrc.bottom - wrc.top;
 	HWND hWnd = CreateWindowExW(0, XWNDCLASSNAME, L"x Application", wndStyles, CW_USEDEFAULT, CW_USEDEFAULT, width, height, null, null, hInstance, 0);
 
-	if(!hWnd)
+	if (!hWnd)
 	{
 		a3LogError("Window could not be created!");
 		return 1;
@@ -457,7 +454,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	LARGE_INTEGER performanceCounter;
 	QueryPerformanceCounter(&performanceCounter);
 
-	#define X_NUMBER_OF_ENTITIES 1
+#define X_NUMBER_OF_ENTITIES 1
 	entity rect = {};
 	rect.position = { 100.0f, 100.0f, 0.0f };
 	rect.dimension = { 100.0f, 100.0f };
@@ -472,7 +469,6 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	memory_arena memory = NewMemoryBlock(a3GigaBytes(1));
 
 	a3::image* testImage = a3::LoadPNGImage(memory, "Resources/BigSmile.png");
-	i32 err = GetLastError();
 	a3Assert(testImage);
 
 	a3::image* zeroImage = a3::LoadPNGImage(memory, "Resources/Zero.png");
@@ -492,7 +488,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testImage->Width, testImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, testImage->Pixels));
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
-	
+
 	a3GL(glGenTextures(1, &zeroID));
 	a3GL(glBindTexture(GL_TEXTURE_2D, zeroID));
 	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
@@ -522,12 +518,12 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	f32 deltaTime = 0.0f;
 
 	b32 shouldRun = true;
-	while(shouldRun)
+	while (shouldRun)
 	{
 		MSG sMsg;
-		while(PeekMessageW(&sMsg, null, 0, 0, PM_REMOVE))
+		while (PeekMessageW(&sMsg, null, 0, 0, PM_REMOVE))
 		{
-			if(sMsg.message == WM_QUIT)
+			if (sMsg.message == WM_QUIT)
 			{
 				shouldRun = false;
 				a3Log("Quitting");
@@ -540,7 +536,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		}
 
 		a3_input_system& input = userData.inputSystem;
-		if(oldInput.Buttons[a3::ButtonLeft] && input.Buttons[a3::ButtonLeft] == a3::ButtonUp)
+		if (oldInput.Buttons[a3::ButtonLeft] && input.Buttons[a3::ButtonLeft] == a3::ButtonUp)
 		{
 			//rect.position.x = (f32)input.MouseX - rect.dimension.x / 2;
 			//rect.position.y = (f32)input.MouseY - rect.dimension.y / 2;
@@ -551,12 +547,12 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		}
 		oldInput = input;
 
-		if(rect.isMoving)
+		if (rect.isMoving)
 		{
 			rect.position.xy += (rect.moveFrameTime * deltaTime * Normalize(rect.moveFinalPosition - rect.position.xy) * 450.0f);
 			rect.moveFrameTime += deltaTime;
 			f32 distance = a3FAbsf(a3Sqrtf(Distance2(rect.position.xy, rect.moveFinalPosition)));
-			if(distance < 0.01f)
+			if (distance < 0.01f)
 			{
 				rect.isMoving = false;
 				rect.moveFrameTime = 0.0f;
@@ -580,16 +576,16 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		//xGL(glBindTexture(GL_TEXTURE_2D, zeroID));
 
 		f32 angle = a3Sinf(value);
-		
+
 		a3GL(x_v2d* v = (x_v2d*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 		a3GL(u32* indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
-		for(i32 i = 0; i < X_NUMBER_OF_ENTITIES; ++i)
+		for (i32 i = 0; i < X_NUMBER_OF_ENTITIES; ++i)
 		{
 			v2 d = rect.dimension;
-			v[i * 4 + 0].position = v3{ 0.0f, 0.0f, 0.0f } * m4x4::TranslationR(rect.position);
-			v[i * 4 + 1].position = v3{ 0.0f, d.y, 0.0f } * m4x4::TranslationR(rect.position);
-			v[i * 4 + 2].position = v3{ d.x, d.y, 0.0f } * m4x4::TranslationR(rect.position);
-			v[i * 4 + 3].position = v3{ d.x, 0.0f, 0.0f } * m4x4::TranslationR(rect.position);
+			v[i * 4 + 0].position = v3{ 0.0f, 0.0f, 0.0f } *m4x4::TranslationR(rect.position);
+			v[i * 4 + 1].position = v3{ 0.0f, d.y, 0.0f } *m4x4::TranslationR(rect.position);
+			v[i * 4 + 2].position = v3{ d.x, d.y, 0.0f } *m4x4::TranslationR(rect.position);
+			v[i * 4 + 3].position = v3{ d.x, 0.0f, 0.0f } *m4x4::TranslationR(rect.position);
 			v[i * 4 + 0].color = rect.acolor[0];
 			v[i * 4 + 1].color = rect.acolor[1];
 			v[i * 4 + 2].color = rect.acolor[2];
@@ -617,7 +613,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3GL(glUseProgram(fontRenderer.ShaderProgram));
 		a3GL(u32 pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Texture"));
 		a3GL(glUniform1i(pos, 1));
-		
+
 		v3 fontColor = { 1,0,0 };
 		a3GL(pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Color"));
 		a3GL(glUniform3fv(pos, 1, fontColor.values));
@@ -627,7 +623,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 		a3GL(glBindBuffer(GL_ARRAY_BUFFER, fontRenderer.VertexArrayBuffer));
 		a3GL(x_vfont* fontVertices = (x_vfont*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-		
+
 		f32 x = 50;
 		f32 y = 50;
 		f32 w = 100.0f;
@@ -644,7 +640,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		//fontVertices[3].positionTexCoords = { x, y, tsx, tsy };
 		//fontVertices[4].positionTexCoords = { x + w, y + h, tex, tey };
 		//fontVertices[5].positionTexCoords = { x + w, y, tex, tsy };
-		
+
 		fontVertices[0].positionTexCoords = { x, y, 0.0f, 0.0f };
 		fontVertices[1].positionTexCoords = { x, y + h, 0.0f, 1.0f };
 		fontVertices[2].positionTexCoords = { x + w, y + h, 1.0f, 1.f };
@@ -655,7 +651,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
 
 		a3GL(glDrawArrays(GL_TRIANGLES, 0, 6));
-		
+
 		SwapBuffers(hDC);
 		value += 0.01f;
 
