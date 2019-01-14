@@ -770,20 +770,20 @@ void stbiw__write_hdr_scanline(stbi__write_context *s, int width, int ncomp, uns
 //	return stbi_write_hdr_core(&s, x, y, comp, (float *)data);
 //}
 
-#ifndef STBI_WRITE_NO_STDIO
-STBIWDEF int stbi_write_hdr(char const *filename, int x, int y, int comp, const float *data)
-{
-	stbi__write_context s;
-	if(stbi__start_write_file(&s, filename))
-	{
-		int r = stbi_write_hdr_core(&s, x, y, comp, (float *)data);
-		stbi__end_write_file(&s);
-		return r;
-	}
-	else
-		return 0;
-}
-#endif // STBI_WRITE_NO_STDIO
+//#ifndef STBI_WRITE_NO_STDIO
+//STBIWDEF int stbi_write_hdr(char const *filename, int x, int y, int comp, const float *data)
+//{
+//	stbi__write_context s;
+//	if(stbi__start_write_file(&s, filename))
+//	{
+//		int r = stbi_write_hdr_core(&s, x, y, comp, (float *)data);
+//		stbi__end_write_file(&s);
+//		return r;
+//	}
+//	else
+//		return 0;
+//}
+//#endif // STBI_WRITE_NO_STDIO
 
 
 //////////////////////////////////////////////////////////////////////////////

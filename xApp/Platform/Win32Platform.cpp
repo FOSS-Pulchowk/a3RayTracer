@@ -29,7 +29,7 @@ namespace a3 {
 	const a3_platform Platform;
 }
 
-static const HANDLE s_HeapHandle = HeapCreate(0, a3MegaBytes(500), 0);
+static const HANDLE s_HeapHandle = GetProcessHeap();
 
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 static u64 s_TotalHeapAllocated;
@@ -124,6 +124,7 @@ void* a3_platform::Malloc(u64 size) const
 	xInternalHeapAllocation(
 		void* ptr = HeapAlloc(s_HeapHandle, 0, xInternalAllocationSize(size))
 	);
+	if (!ptr) a3LogWarn("Nullptr returned by heap allocation");
 	return ptr;
 }
 
@@ -132,15 +133,23 @@ void* a3_platform::Calloc(u64 size) const
 	xInternalHeapAllocation(
 		void* ptr = HeapAlloc(s_HeapHandle, HEAP_ZERO_MEMORY, xInternalAllocationSize(size))
 	);
+	if (!ptr) a3LogWarn("Nullptr returned by heap allocation");
 	return ptr;
 }
 
 void* a3_platform::Realloc(void* usrPtr, u64 size) const
 {
-	xInternalHeapReAllocation(
-		void* ptr = HeapReAlloc(s_HeapHandle, 0, xInternalGetActualPtr(usrPtr), xInternalAllocationSize(size))
-	);
-	return ptr;
+	if (usrPtr)
+	{
+		xInternalHeapReAllocation(
+			void* ptr = HeapReAlloc(s_HeapHandle, 0, xInternalGetActualPtr(usrPtr), xInternalAllocationSize(size))
+		);
+		return ptr;
+	}
+	// NOTE(Zero):
+	// If the usrPtr is null, Malloc is called
+	// Following the Standard Library
+	return a3::Platform.Malloc(size);
 }
 
 b32 a3_platform::Free(void* ptr) const
@@ -150,6 +159,7 @@ b32 a3_platform::Free(void* ptr) const
 		xInternalHeapFree(b32 result = (b32)HeapFree(s_HeapHandle, 0, xInternalGetActualPtr(ptr)));
 		return result;
 	}
+	a3LogWarn("Attempt to free null pointer");
 	return false;
 }
 
@@ -424,7 +434,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3::image* zeroImage = a3::LoadPNGImage(memory, "Resources/Zero.png");
 	a3Assert(zeroImage);
 
-	a3::ttf* testFont = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 100);
+	a3::fonts* testFont = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 100.0f);
 	//x::ttfont* testFont = x::LoadTTFont(memory, "c:/windows/fonts/arialbd.ttf");
 	a3Assert(testFont);
 
@@ -457,7 +467,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	// NOTE(Zero): Should we pack bytes and use single channel for the fonts or should we use all 4 channels for the fonts
 #if 1
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
+	u8 loc = 3;
+	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont[loc].width, testFont[loc].height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont[loc].pixels));
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 #else
 	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
@@ -583,12 +594,19 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		f32 tex = 1.0f;
 		f32 tey = 1.0f;
 
-		fontVertices[0].positionTexCoords = { x, y, tsx, tsy };
-		fontVertices[1].positionTexCoords = { x, y + h, tsx, tey };
-		fontVertices[2].positionTexCoords = { x + w, y + h, tex, tey };
-		fontVertices[3].positionTexCoords = { x, y, tsx, tsy };
-		fontVertices[4].positionTexCoords = { x + w, y + h, tex, tey };
-		fontVertices[5].positionTexCoords = { x + w, y, tex, tsy };
+		//fontVertices[0].positionTexCoords = { x, y, tsx, tsy };
+		//fontVertices[1].positionTexCoords = { x, y + h, tsx, tey };
+		//fontVertices[2].positionTexCoords = { x + w, y + h, tex, tey };
+		//fontVertices[3].positionTexCoords = { x, y, tsx, tsy };
+		//fontVertices[4].positionTexCoords = { x + w, y + h, tex, tey };
+		//fontVertices[5].positionTexCoords = { x + w, y, tex, tsy };
+		
+		fontVertices[0].positionTexCoords = { x, y, 0.0f, 0.0f };
+		fontVertices[1].positionTexCoords = { x, y + h, 0.0f, 1.0f };
+		fontVertices[2].positionTexCoords = { x + w, y + h, 1.0f, 1.f };
+		fontVertices[3].positionTexCoords = { x, y, 0.0f, 0.0f };
+		fontVertices[4].positionTexCoords = { x + w, y + h, 1.0f, 1.0f };
+		fontVertices[5].positionTexCoords = { x + w, y, 1.0f, 0.0f };
 
 		a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
 

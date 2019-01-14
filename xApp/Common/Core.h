@@ -20,10 +20,6 @@
 #define a3ArrayCount(arr) (sizeof(arr)/sizeof((arr)[0]))
 #define a3OffsetOf(s, m) (&(((s*)0)->m))
 
-#define a3KiloBytes(n) (sizeof(u8) * (n) * 1024u)
-#define a3MegaBytes(n) (a3KiloBytes(n) * 1024u)
-#define a3GigaBytes(n) (a3MegaBytes(n) * 1024u)
-
 // Debug Macro
 #if defined(_MSC_VER)
 #define a3Assert(x) if(!(x))		{ __debugbreak(); }
@@ -72,6 +68,10 @@ typedef unsigned char uutf8;
 
 typedef const char* s8;
 typedef const wchar_t* s16;
+
+#define a3KiloBytes(n) (sizeof(u8) * (n) * (u64)1024)
+#define a3MegaBytes(n) (a3KiloBytes(n) * (u64)1024)
+#define a3GigaBytes(n) (a3MegaBytes(n) * (u64)1024)
 
 #ifndef A3STDLIB
 #include <xmmintrin.h>

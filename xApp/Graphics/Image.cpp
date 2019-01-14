@@ -2,6 +2,10 @@
 #include "Platform/Platform.h"
 #include "STBImplementation.h"
 
+#define a3AspectRatio (16.0f / 9.0f)
+#define a3AspectHeight(x) ((x) / a3AspectRatio)
+#define a3AspectWidth(x) (a3AspectRatio * (x))
+
 a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 {
 	i32 x, y, n;
@@ -30,7 +34,7 @@ a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 	return img;
 }
 
-a3::ttf* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
+a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 {
 	a3::file_content file = a3::Platform.LoadFileContent(fileName);
 	if(file.Buffer)
@@ -38,18 +42,40 @@ a3::ttf* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 		stbtt_fontinfo fontInfo;
 		stbtt_InitFont(&fontInfo, (u8*)file.Buffer, stbtt_GetFontOffsetForIndex((u8*)file.Buffer, 0));
 
-		i32 x0, y0, x1, y1;
-		f32 scale_y = stbtt_ScaleForPixelHeight(&fontInfo, scale);
-		stbtt_GetCodepointBitmapBox(&fontInfo, 'A', 1, 1, &x0, &y0, &x1, &y1);
-		i32 w = x1 - x0;
-		i32 h = y1 - y0;
-		a3::ttf* ret = a3Push(stack, a3::ttf);
-		u8* result = a3PushArray(stack, u8, w * h);
-		stbtt_MakeCodepointBitmap(&fontInfo, result, w, h, 1, 1, 1, 'A');
-		ret->Width = w;
-		ret->Height = h;
-		ret->Pixels = result;
-		return ret;
+		f32 scaleY = stbtt_ScaleForPixelHeight(&fontInfo, scale);
+		f32 scaleX = a3AspectWidth(scaleY);
+
+		fonts* glyphs= a3PushArray(stack, fonts, 255 - 32 + 1);
+		MemorySet(glyphs, 0, 255 - 32 + 1);
+
+		char output[] = "Platform/etc/img_x.png";
+		i32 atlasWidth = 0;
+		i32 atlasHeight = (i32)a3Ceilf(scaleY);
+		for (i32 glyphIndex = 32; glyphIndex < 255; ++glyphIndex)
+		{
+			u32 cp = glyphIndex - 32;
+			i32 x0, y0, x1, y1;
+			i32 glyphCode = stbtt_FindGlyphIndex(&fontInfo, glyphIndex);
+			stbtt_GetGlyphBitmapBox(&fontInfo, glyphCode, scaleX, scaleY, &x0, &y0, &x1, &y1);
+			i32 w = x1 - x0;
+			i32 h = y1 - y0;
+			glyphs[cp].width = w;
+			glyphs[cp].height = h;
+			glyphs[cp].pixels = new u8[w*h];
+			glyphs[cp].c = (u8)glyphIndex;
+			stbtt_MakeGlyphBitmap(&fontInfo, glyphs[cp].pixels, w, h, sizeof(u8), scaleX, scaleY, glyphCode);
+			atlasWidth += glyphs[cp].width;
+			output[17] = glyphIndex;
+			stbi_write_png(output, w, h, 1, glyphs[cp].pixels, 1);
+		}
+		return glyphs;
+		//a3::ttf* ret = a3Push(stack, a3::ttf);
+		//u8* result = a3PushArray(stack, u8, w * h);
+		//stbtt_MakeCodepointBitmap(&fontInfo, result, w, h, 1, 1, 1, 'A');
+		//ret->Width = w;
+		//ret->Height = h;
+		//ret->Pixels = result;
+		//return ret;
 
 		//u8* bitmap = stbtt_GetCodepointBitmap(&fontInfo, 0, stbtt_ScaleForPixelHeight(&fontInfo, 100), 'A', &width, &height, &xoffset, &yoffset);
 		//xAssert(bitmap);
