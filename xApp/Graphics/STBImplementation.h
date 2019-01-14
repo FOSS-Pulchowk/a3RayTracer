@@ -9,7 +9,7 @@
 #define STBI_ONLY_PNG
 #define STBI_NO_GIF
 #define STBI_NO_STDIO
-#define STBI_ASSERT(s)		a3Assert(s)
+#define STBI_ASSERT(s)			a3Assert(s)
 #define STBI_MALLOC(sz)			a3::Platform.Malloc(sz)
 #define STBI_REALLOC(p,newsz)	a3::Platform.Realloc(p, (newsz))
 #define STBI_FREE(p)			a3::Platform.Free(p)
@@ -18,6 +18,7 @@
 #else
 #define STBI_NO_FAILURE_STRINGS
 #endif
+#define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #include "External/STBImage.h"
 
@@ -35,6 +36,7 @@
 #define STBTT_MALLOC(sz)		a3::Platform.Malloc(sz)
 #define STBTT_REALLOC(p,newsz)	a3::Platform.Realloc(p, newsz)
 #define STBTT_FREE(p)			a3::Platform.Free(p)
+#define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "External/STBTrueType.h"
 
@@ -45,7 +47,7 @@
 #define STBIW_REALLOC(p, s)		a3::Platform.Realloc(p, s)
 #define STBIW_FREE(p)			a3::Platform.Free(p)
 #define STBIW_MEMMOVE			a3::MemoryMove
-//#define STBI_WRITE_NO_STDIO
+#define STBI_WRITE_NO_STDIO
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "External/STBImageWrite.h"
 

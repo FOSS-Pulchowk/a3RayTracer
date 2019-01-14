@@ -36,6 +36,7 @@ struct fonts
 };
 
 image* LoadPNGImage(memory_arena& arena, s8 file);
+b32 WritePNGImage(s8 file, i32 width, i32 height, i32 channels, void* pixels);
 fonts* LoadTTFont(memory_arena& arena, s8 file, f32 scale);
 
 }

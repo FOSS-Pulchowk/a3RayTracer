@@ -126,6 +126,8 @@ struct a3_platform
 {
 	const a3::file_content LoadFileContent(s8 fileName) const;
 	void FreeFileContent(a3::file_content fileReadInfo) const;
+	b32 WriteFileContent(s8 fileName, const a3::file_content& file) const;
+	b32 ReplaceFileContent(s8 fileName, const a3::file_content& file) const;
 	void* Malloc(u64 size) const;
 	void* Calloc(u64 size) const;
 	void* Realloc(void* ptr, u64 size) const;

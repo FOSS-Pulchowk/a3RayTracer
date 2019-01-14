@@ -180,7 +180,7 @@ typedef void stbi_write_func(void *context, void *data, int size);
 STBIWDEF int stbi_write_png_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data, int stride_in_bytes);
 STBIWDEF int stbi_write_bmp_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);
 STBIWDEF int stbi_write_tga_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const void  *data);
-//STBIWDEF int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const float *data);
+STBIWDEF int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int w, int h, int comp, const float *data);
 STBIWDEF int stbi_write_jpg_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void  *data, int quality);
 
 STBIWDEF void stbi_flip_vertically_on_write(int flip_boolean);
@@ -736,54 +736,54 @@ void stbiw__write_hdr_scanline(stbi__write_context *s, int width, int ncomp, uns
 	}
 }
 
-//static int stbi_write_hdr_core(stbi__write_context *s, int x, int y, int comp, float *data)
-//{
-//	if(y <= 0 || x <= 0 || data == NULL)
-//		return 0;
-//	else
-//	{
-//		// Each component is stored separately. Allocate scratch space for full output scanline.
-//		unsigned char *scratch = (unsigned char *)STBIW_MALLOC(x * 4);
-//		int i, len;
-//		char buffer[128];
-//		char header[] = "#?RADIANCE\n# Written by stb_image_write.h\nFORMAT=32-bit_rle_rgbe\n";
-//		s->func(s->context, header, sizeof(header) - 1);
-//
-//		#ifdef STBI_MSC_SECURE_CRT
-//		len = sprintf_s(buffer, "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
-//		#else
-//		len = sprintf(buffer, "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
-//		#endif
-//		s->func(s->context, buffer, len);
-//
-//		for(i = 0; i < y; i++)
-//			stbiw__write_hdr_scanline(s, x, comp, scratch, data + comp * x*(stbi__flip_vertically_on_write ? y - 1 - i : i)*x);
-//		STBIW_FREE(scratch);
-//		return 1;
-//	}
-//}
+static int stbi_write_hdr_core(stbi__write_context *s, int x, int y, int comp, float *data)
+{
+	if(y <= 0 || x <= 0 || data == NULL)
+		return 0;
+	else
+	{
+		// Each component is stored separately. Allocate scratch space for full output scanline.
+		unsigned char *scratch = (unsigned char *)STBIW_MALLOC(x * 4);
+		int i, len;
+		char buffer[128];
+		char header[] = "#?RADIANCE\n# Written by stb_image_write.h\nFORMAT=32-bit_rle_rgbe\n";
+		s->func(s->context, header, sizeof(header) - 1);
 
-//STBIWDEF int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const float *data)
-//{
-//	stbi__write_context s;
-//	stbi__start_write_callbacks(&s, func, context);
-//	return stbi_write_hdr_core(&s, x, y, comp, (float *)data);
-//}
+		#ifdef STBI_MSC_SECURE_CRT
+		len = sprintf_s(buffer, "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
+		#else
+		len = sprintf(buffer, "EXPOSURE=          1.0000000000000\n\n-Y %d +X %d\n", y, x);
+		#endif
+		s->func(s->context, buffer, len);
 
-//#ifndef STBI_WRITE_NO_STDIO
-//STBIWDEF int stbi_write_hdr(char const *filename, int x, int y, int comp, const float *data)
-//{
-//	stbi__write_context s;
-//	if(stbi__start_write_file(&s, filename))
-//	{
-//		int r = stbi_write_hdr_core(&s, x, y, comp, (float *)data);
-//		stbi__end_write_file(&s);
-//		return r;
-//	}
-//	else
-//		return 0;
-//}
-//#endif // STBI_WRITE_NO_STDIO
+		for(i = 0; i < y; i++)
+			stbiw__write_hdr_scanline(s, x, comp, scratch, data + comp * x*(stbi__flip_vertically_on_write ? y - 1 - i : i)*x);
+		STBIW_FREE(scratch);
+		return 1;
+	}
+}
+
+STBIWDEF int stbi_write_hdr_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const float *data)
+{
+	stbi__write_context s;
+	stbi__start_write_callbacks(&s, func, context);
+	return stbi_write_hdr_core(&s, x, y, comp, (float *)data);
+}
+
+#ifndef STBI_WRITE_NO_STDIO
+STBIWDEF int stbi_write_hdr(char const *filename, int x, int y, int comp, const float *data)
+{
+	stbi__write_context s;
+	if(stbi__start_write_file(&s, filename))
+	{
+		int r = stbi_write_hdr_core(&s, x, y, comp, (float *)data);
+		stbi__end_write_file(&s);
+		return r;
+	}
+	else
+		return 0;
+}
+#endif // STBI_WRITE_NO_STDIO
 
 
 //////////////////////////////////////////////////////////////////////////////

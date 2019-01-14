@@ -6,6 +6,16 @@
 #define a3AspectHeight(x) ((x) / a3AspectRatio)
 #define a3AspectWidth(x) (a3AspectRatio * (x))
 
+static inline void InternalSTBWriteCallback(void* context, void* data, i32 size)
+{
+	a3::file_content* fc = (a3::file_content*)context;
+	fc->Buffer = new u8[size];
+	if (fc->Buffer)
+	{
+		a3::MemoryCopy(fc->Buffer, data, size);
+	}
+}
+
 a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 {
 	i32 x, y, n;
@@ -15,11 +25,6 @@ a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 	a3Assert(fc.Size < (u64)max_i32);
 	u8* pixels = stbi_load_from_memory((u8*)fc.Buffer, (i32)fc.Size, &x, &y, &n, 4);
 	Platform.FreeFileContent(fc);
-	if (!pixels)
-	{
-		a3LogWarn("{s} Image not loaded {s}", file, stbi_failure_reason());
-		return null;
-	}
 
 	a3::image* img = a3Push(arena, a3::image);
 	img->Width = x;
@@ -32,6 +37,19 @@ a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 	stbi_image_free(pixels);
 
 	return img;
+}
+
+b32 a3::WritePNGImage(s8 file, i32 width, i32 height, i32 channels, void* pixels)
+{
+	a3::file_content fc = {};
+	if (stbi_write_png_to_func(InternalSTBWriteCallback, &fc, width, height, channels, pixels, sizeof(u8)))
+	{
+		i32 res = a3::Platform.WriteFileContent(file, fc);
+		if (fc.Buffer)
+			delete[] fc.Buffer;
+		return res;
+	}
+	return false;
 }
 
 a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
@@ -66,7 +84,8 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 			stbtt_MakeGlyphBitmap(&fontInfo, glyphs[cp].pixels, w, h, sizeof(u8), scaleX, scaleY, glyphCode);
 			atlasWidth += glyphs[cp].width;
 			output[17] = glyphIndex;
-			stbi_write_png(output, w, h, 1, glyphs[cp].pixels, 1);
+			WritePNGImage("test_image.png", w, h, 1, glyphs[64 - 32].pixels);
+			//stbi_write_png(output, w, h, 1, glyphs[cp].pixels, 1);
 		}
 		return glyphs;
 		//a3::ttf* ret = a3Push(stack, a3::ttf);

@@ -119,6 +119,50 @@ void a3_platform::FreeFileContent(a3::file_content fileReadInfo) const
 	}
 }
 
+b32 a3_platform::WriteFileContent(s8 fileName, const a3::file_content & file) const
+{
+	HANDLE hFile = CreateFileA(fileName, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		return false;
+	}
+	DWORD numOfBytesToWrite = file.Size;
+	DWORD numOfBytesWritten = 0;
+	while (numOfBytesWritten < numOfBytesToWrite)
+	{
+		void* buffer = ((u8*)file.Buffer + numOfBytesWritten);
+		if (!WriteFile(hFile, buffer, numOfBytesToWrite, &numOfBytesWritten, NULL))
+		{
+			CloseHandle(hFile);
+			return false;
+		}
+	}
+	CloseHandle(hFile);
+	return true;
+}
+
+b32 a3_platform::ReplaceFileContent(s8 fileName, const a3::file_content & file) const
+{
+	HANDLE hFile = CreateFileA(fileName, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		return false;
+	}
+	DWORD numOfBytesToWrite = file.Size;
+	DWORD numOfBytesWritten = 0;
+	while (numOfBytesWritten < numOfBytesToWrite)
+	{
+		void* buffer = ((u8*)file.Buffer + numOfBytesWritten);
+		if (!WriteFile(hFile, buffer, numOfBytesToWrite, &numOfBytesWritten, NULL))
+		{
+			CloseHandle(hFile);
+			return false;
+		}
+	}
+	CloseHandle(hFile);
+	return true;
+}
+
 void* a3_platform::Malloc(u64 size) const
 {
 	xInternalHeapAllocation(
