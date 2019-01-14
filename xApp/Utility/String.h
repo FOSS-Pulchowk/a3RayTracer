@@ -102,7 +102,7 @@ inline void MemoryCopy(void* dst, const void* src, u64 size)
 inline void ReverseMemoryCopy(void* dst, const void* src, u64 size)
 {
 	u8* pd = (u8*)dst;
-	u8* sp = (u8*)src + size;
+	u8* sp = (u8*)src + size - 1;
 	for (u64 i = 0; i < size; ++i)
 		*pd++ = *sp--;
 }
