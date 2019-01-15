@@ -36,6 +36,9 @@
 #define STBTT_MALLOC(sz)		a3::Platform.Malloc(sz)
 #define STBTT_REALLOC(p,newsz)	a3::Platform.Realloc(p, newsz)
 #define STBTT_FREE(p)			a3::Platform.Free(p)
+#define STBTT_malloc(x,u)		((void)(u),a3::Platform.Malloc(x))
+#define STBTT_free(x,u)			((void)(u),a3::Platform.Free(x))
+#define STBTT_assert(x)			a3Assert(x)
 #define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "External/STBTrueType.h"

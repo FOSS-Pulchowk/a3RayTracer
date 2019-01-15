@@ -474,8 +474,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3::image* zeroImage = a3::LoadPNGImage(memory, "Resources/Zero.png");
 	a3Assert(zeroImage);
 
-	a3::fonts* testFont = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 100.0f);
-	//x::ttfont* testFont = x::LoadTTFont(memory, "c:/windows/fonts/arialbd.ttf");
+	a3::font* testFont = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 50);
 	a3Assert(testFont);
 
 	u32 texID, zeroID, fontTexID;
@@ -507,11 +506,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	// NOTE(Zero): Should we pack bytes and use single channel for the fonts or should we use all 4 channels for the fonts
 #if 1
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	u8 loc = 3;
-	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont[loc].width, testFont[loc].height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont[loc].pixels));
+	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont->bitmap.Width, testFont->bitmap.Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->bitmap.Pixels));
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-#else
-	xGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, testFont->Width, testFont->Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Pixels));
 #endif
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
 
@@ -609,7 +605,6 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3GL(glBindVertexArray(fontRenderer.VertexBufferObject));
 		a3GL(glActiveTexture(GL_TEXTURE1));
 		a3GL(glBindTexture(GL_TEXTURE_2D, fontTexID));
-		//xGL(glBindTexture(GL_TEXTURE_2D, fontTexID));
 		a3GL(glUseProgram(fontRenderer.ShaderProgram));
 		a3GL(u32 pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Texture"));
 		a3GL(glUniform1i(pos, 1));

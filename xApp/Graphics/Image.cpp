@@ -42,11 +42,26 @@ a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 	return img;
 }
 
-b32 a3::WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels)
+b32 a3::WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPerPixel,  void* pixels)
 {
 	stbi_flip_vertically_on_write(1);
 	a3::file_content fc = {};
-	i32 stride = 4 * ((width * bytesPerPixel + 3) / 4);
+	// NOTE(Zero): Stride for images should align to multiple of 4 or 8
+	// This is done for SSE optimizations and such
+	// Stride reference : https://en.wikipedia.org/wiki/Stride_of_an_array
+	// Here the stride is for pitch of the image and not for the pixel
+	// Byte alignment didn't work for the single channel image
+	// `bytesPerPixel` is only use by images with 3 channel, it's not mistake
+	i32 stride;
+	if (channels == 1)
+		stride = width;
+	else if (channels == 3) // TODO(Zero): Test for images with 3 channels
+		stride = 4 * ((width * bytesPerPixel + 3) / 4);
+	else if (channels == 4)
+		stride = width;
+	else
+		return false; // NOTE(Zero): Ouput only for 1, 3 and 4 channel images
+
 	if (stbi_write_png_to_func(InternalSTBWriteCallback, &fc, width, height, channels, pixels, stride))
 	{
 		// HACK(Zero): Should we directly replace the file?
@@ -59,90 +74,40 @@ b32 a3::WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPer
 	return false;
 }
 
-a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
+a3::font* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 {
 	a3::file_content file = a3::Platform.LoadFileContent(fileName);
 	if(file.Buffer)
 	{
-		stbtt_fontinfo fontInfo;
-		stbtt_InitFont(&fontInfo, (u8*)file.Buffer, stbtt_GetFontOffsetForIndex((u8*)file.Buffer, 0));
+		stbtt_fontinfo info;
+		stbtt_InitFont(&info, (u8*)file.Buffer, stbtt_GetFontOffsetForIndex((u8*)file.Buffer, 0));
 
-		f32 scaleY = stbtt_ScaleForPixelHeight(&fontInfo, scale);
-		f32 scaleX = a3AspectWidth(scaleY);
+		a3::font* f = a3Push(stack, a3::font);
+		f->glyph = stbtt_FindGlyphIndex(&info, 'B');
+		stbtt_GetGlyphBox(&info, f->glyph, &f->xMin, &f->yMin, &f->xMax, &f->yMax);
+		stbtt_GetGlyphHMetrics(&info, f->glyph, &f->advance, &f->leftSideBearing);
+		f->scalingFactor = stbtt_ScaleForPixelHeight(&info, 50);
+		f32 sx = f->scalingFactor * 16.0f / 9.0f;
+		i32 x0, x1, y0, y1;
+		stbtt_GetGlyphBitmapBox(&info, f->glyph, sx, f->scalingFactor, &x0, &y0, &x1, &y1);
+		i32 w = x1 - x0;
+		i32 h = y1 - y0;
+		u8* bitmap = a3PushArray(stack, u8, w*h);
 
-		fonts* glyphs= a3PushArray(stack, fonts, 255 - 32 + 1);
-		MemorySet(glyphs, 0, 255 - 32 + 1);
+		// TODO(Zero): 
+		// bitmap output will be upside down
+		// should we invert the texture co-odrdinates or the image pixels?
+		// load all fonts here, not just single font
+		// handle the cases when fonts don't have bitmap such as newline and space
 
-		char output[] = "Platform/etc/img_x.png";
-		i32 atlasWidth = 0;
-		i32 atlasHeight = (i32)a3Ceilf(scaleY);
-		for (i32 glyphIndex = 32; glyphIndex < 255; ++glyphIndex)
-		{
-			u32 cp = glyphIndex - 32;
-			i32 x0, y0, x1, y1;
-			i32 glyphCode = stbtt_FindGlyphIndex(&fontInfo, glyphIndex);
-			stbtt_GetGlyphBitmapBox(&fontInfo, glyphCode, scaleX, scaleY, &x0, &y0, &x1, &y1);
-			i32 w = x1 - x0;
-			i32 h = y1 - y0;
-			glyphs[cp].width = w;
-			glyphs[cp].height = h;
-			glyphs[cp].pixels = new u8[w*h];
-			glyphs[cp].c = (u8)glyphIndex;
-			stbtt_MakeGlyphBitmap(&fontInfo, glyphs[cp].pixels, w, h, sizeof(u8), scaleX, scaleY, glyphCode);
-			atlasWidth += glyphs[cp].width;
-			output[17] = glyphIndex;
-			WritePNGImage("test_image.png", w, h, 1, 1, glyphs[cp].pixels);
-			//stbi_write_png(output, w, h, 1, glyphs[cp].pixels, 1);
-		}
-		return glyphs;
-		//a3::ttf* ret = a3Push(stack, a3::ttf);
-		//u8* result = a3PushArray(stack, u8, w * h);
-		//stbtt_MakeCodepointBitmap(&fontInfo, result, w, h, 1, 1, 1, 'A');
-		//ret->Width = w;
-		//ret->Height = h;
-		//ret->Pixels = result;
-		//return ret;
-
-		//u8* bitmap = stbtt_GetCodepointBitmap(&fontInfo, 0, stbtt_ScaleForPixelHeight(&fontInfo, 100), 'A', &width, &height, &xoffset, &yoffset);
-		//xAssert(bitmap);
-		//stbtt_FreeBitmap(bitmap, 0);
-#if 0
-		result->Pixels = xPushArray(stack, u8, width * height * 4);
-		u8* destRow = (u8*)((u32*)result->Pixels + width * height - width);
-		u8* source = bitmap;
-		for(i32 y = 0; y < height; ++y)
-		{
-			u32* dest = (u32*)destRow;
-			for(i32 x = 0; x < width; ++x)
-			{
-				*dest++ = (u32)*source << 24;
-				source++;
-			}
-			destRow -= width * 4;
-		}
-
-		result->Pixels = xPushArray(stack, u8, width * height);
-		u8* destRow = result->Pixels + width * height - width;
-		u8* source = bitmap;
-		for (i32 y = 0; y < height; ++y)
-		{
-			u8* dest = destRow;
-			for (i32 x = 0; x < width; ++x)
-			{
-				*dest++ = *source++;
-			}
-			destRow -= width;
-		}
-
-		result->Width = width;
-		result->Height = height;
-		result->XOffset = xoffset;
-		result->YOffset = yoffset;
-		x::Platform.FreeFileContent(file);
-#endif
-
-
-		//return result;
+		// NOTE(Zero): Here stride is equal to width because OpenGL wants packed pixels
+		i32 stride = w;
+		stbtt_MakeGlyphBitmap(&info, bitmap, w, h, stride, sx, f->scalingFactor, f->glyph);
+		f->bitmap.Width = w;
+		f->bitmap.Height = h;
+		f->bitmap.Pixels = bitmap;
+		f->bitmap.Channels = 1;
+		return f;
 	}
 	return 0;
 }
