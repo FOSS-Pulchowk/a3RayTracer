@@ -474,7 +474,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3::image* zeroImage = a3::LoadPNGImage(memory, "Resources/Zero.png");
 	a3Assert(zeroImage);
 
-	a3::font* testFont = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 50);
+	a3::fonts* testFont = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 200);
 	a3Assert(testFont);
 
 	u32 texID, zeroID, fontTexID;
@@ -506,7 +506,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	// NOTE(Zero): Should we pack bytes and use single channel for the fonts or should we use all 4 channels for the fonts
 #if 1
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont->bitmap.Width, testFont->bitmap.Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->bitmap.Pixels));
+	u8 charLoc = '3';
+	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont->Characters[charLoc].Bitmap.Width, testFont->Characters[charLoc].Bitmap.Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Characters[charLoc].Bitmap.Pixels));
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 #endif
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
@@ -556,7 +557,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 			}
 		}
 
-		a3GL(glClearColor(0.25f, 0.5f, 1.0f, 1.0f));
+		a3GL(glClearColor(0.2f, 0.2f, 0.2f, 1.0f));
 		a3GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		a3GL(glDisable(GL_DEPTH_TEST));
 		a3GL(glEnable(GL_BLEND));
@@ -609,7 +610,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3GL(u32 pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Texture"));
 		a3GL(glUniform1i(pos, 1));
 
-		v3 fontColor = { 1,0,0 };
+		v3 fontColor = { 1.0f,0.8f,0.2f };
 		a3GL(pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Color"));
 		a3GL(glUniform3fv(pos, 1, fontColor.values));
 
@@ -629,12 +630,12 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		f32 tex = 1.0f;
 		f32 tey = 1.0f;
 
-		//fontVertices[0].positionTexCoords = { x, y, tsx, tsy };
-		//fontVertices[1].positionTexCoords = { x, y + h, tsx, tey };
-		//fontVertices[2].positionTexCoords = { x + w, y + h, tex, tey };
-		//fontVertices[3].positionTexCoords = { x, y, tsx, tsy };
-		//fontVertices[4].positionTexCoords = { x + w, y + h, tex, tey };
-		//fontVertices[5].positionTexCoords = { x + w, y, tex, tsy };
+		/*fontVertices[0].positionTexCoords = { x, y, tsx, tsy };
+		fontVertices[1].positionTexCoords = { x, y + h, tsx, tey };
+		fontVertices[2].positionTexCoords = { x + w, y + h, tex, tey };
+		fontVertices[3].positionTexCoords = { x, y, tsx, tsy };
+		fontVertices[4].positionTexCoords = { x + w, y + h, tex, tey };
+		fontVertices[5].positionTexCoords = { x + w, y, tex, tsy };*/
 
 		fontVertices[0].positionTexCoords = { x, y, 0.0f, 0.0f };
 		fontVertices[1].positionTexCoords = { x, y + h, 0.0f, 1.0f };

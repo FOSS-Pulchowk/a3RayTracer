@@ -11,21 +11,27 @@ struct image
 	i32 Channels;
 };
 
-struct font
+struct character
 {
-	i32 glyph;
-	i32 xMin;
-	i32 xMax;
-	i32 yMin;
-	i32 yMax;
-	i32 advance;
-	i32 leftSideBearing;
-	f32 scalingFactor;
-	image bitmap;
+	i32 GlyphIndex;
+	i32 XMin;
+	i32 XMax;
+	i32 YMin;
+	i32 YMax;
+	i32 Advance;
+	i32 LeftSideBearing;
+	b32 HasBitmap;
+	image Bitmap;
+};
+
+struct fonts
+{
+	character Characters[256];
+	f32 ScalingFactor;
 };
 
 image* LoadPNGImage(memory_arena& arena, s8 file);
 b32 WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
-font* LoadTTFont(memory_arena& arena, s8 file, f32 scale);
+fonts* LoadTTFont(memory_arena& arena, s8 file, f32 scale);
 
 }

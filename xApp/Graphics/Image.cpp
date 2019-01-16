@@ -3,8 +3,8 @@
 #include "STBImplementation.h"
 
 #define a3AspectRatio (16.0f / 9.0f)
-#define a3AspectHeight(x) ((x) / a3AspectRatio)
-#define a3AspectWidth(x) (a3AspectRatio * (x))
+#define a3AspectHeight(width) ((width) / a3AspectRatio)
+#define a3AspectWidth(height) (a3AspectRatio * (height))
 
 static inline void InternalSTBWriteCallback(void* context, void* data, i32 size)
 {
@@ -35,8 +35,7 @@ a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 	img->Channels = n;
 	img->Pixels = a3PushArray(arena, u8, x * y * n);
 
-	for(i32 i = 0; i < x*y*n; ++i)
-		img->Pixels[i] = pixels[i];
+	a3::MemoryCopy(img->Pixels, pixels, x*y*n);
 	stbi_image_free(pixels);
 
 	return img;
@@ -74,40 +73,57 @@ b32 a3::WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPer
 	return false;
 }
 
-a3::font* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
+a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 {
 	a3::file_content file = a3::Platform.LoadFileContent(fileName);
-	if(file.Buffer)
+	if (file.Buffer)
 	{
 		stbtt_fontinfo info;
 		stbtt_InitFont(&info, (u8*)file.Buffer, stbtt_GetFontOffsetForIndex((u8*)file.Buffer, 0));
 
-		a3::font* f = a3Push(stack, a3::font);
-		f->glyph = stbtt_FindGlyphIndex(&info, 'B');
-		stbtt_GetGlyphBox(&info, f->glyph, &f->xMin, &f->yMin, &f->xMax, &f->yMax);
-		stbtt_GetGlyphHMetrics(&info, f->glyph, &f->advance, &f->leftSideBearing);
-		f->scalingFactor = stbtt_ScaleForPixelHeight(&info, 50);
-		f32 sx = f->scalingFactor * 16.0f / 9.0f;
-		i32 x0, x1, y0, y1;
-		stbtt_GetGlyphBitmapBox(&info, f->glyph, sx, f->scalingFactor, &x0, &y0, &x1, &y1);
-		i32 w = x1 - x0;
-		i32 h = y1 - y0;
-		u8* bitmap = a3PushArray(stack, u8, w*h);
+		a3::fonts* result = a3Push(stack, a3::fonts);
+		result->ScalingFactor = stbtt_ScaleForPixelHeight(&info, scale);
+		f32 scaleY = result->ScalingFactor;
+		f32 scaleX = a3AspectWidth(scaleY);
 
-		// TODO(Zero): 
-		// bitmap output will be upside down
-		// should we invert the texture co-odrdinates or the image pixels?
-		// load all fonts here, not just single font
-		// handle the cases when fonts don't have bitmap such as newline and space
+		u8* tempBuffer = null;
+		u64 tempBufferSize = 0;
 
-		// NOTE(Zero): Here stride is equal to width because OpenGL wants packed pixels
-		i32 stride = w;
-		stbtt_MakeGlyphBitmap(&info, bitmap, w, h, stride, sx, f->scalingFactor, f->glyph);
-		f->bitmap.Width = w;
-		f->bitmap.Height = h;
-		f->bitmap.Pixels = bitmap;
-		f->bitmap.Channels = 1;
-		return f;
+		for (i32 index = 0; index < a3ArrayCount(result->Characters); ++index)
+		{
+			a3::character* c = &result->Characters[index];
+			c->GlyphIndex = stbtt_FindGlyphIndex(&info, index);
+			stbtt_GetGlyphBox(&info, c->GlyphIndex, &c->XMin, &c->YMin, &c->XMax, &c->YMax);
+			stbtt_GetGlyphHMetrics(&info, c->GlyphIndex, &c->Advance, &c->LeftSideBearing);
+			if (stbtt_IsGlyphEmpty(&info, c->GlyphIndex))
+			{
+				c->HasBitmap = false;
+				continue;
+			}
+			else
+			{
+				c->HasBitmap = true;
+				i32 x0, x1, y0, y1;
+				stbtt_GetGlyphBitmapBox(&info, c->GlyphIndex, scaleX, scaleY, &x0, &y0, &x1, &y1);
+				i32 w = x1 - x0; i32 h = y1 - y0;
+				if (tempBufferSize < w*h)
+				{
+					tempBuffer = (u8*)a3::Platform.Realloc(tempBuffer, w*h);
+					tempBufferSize = w * h;
+				}
+				// NOTE(Zero): Here stride is equal to width because OpenGL wants packed pixels
+				i32 stride = w;
+				stbtt_MakeGlyphBitmap(&info, tempBuffer, w, h, stride, scaleX, scaleY, c->GlyphIndex);
+				c->Bitmap.Width = w;
+				c->Bitmap.Height = h;
+				c->Bitmap.Channels = 1;
+				c->Bitmap.Pixels = a3PushArray(stack, u8, w*h);
+				a3::ReverseRectCopy(c->Bitmap.Pixels, tempBuffer, w, h);
+			}
+		}
+
+		a3::Platform.Free(tempBuffer);
+		return result;
 	}
-	return 0;
+	return null;
 }
