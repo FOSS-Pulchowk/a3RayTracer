@@ -13,6 +13,12 @@
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
 
+// Needed only for Debug and internal build
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+// TODO(Zero): Implement our own and remove this
+#include <stdio.h> // For _snprintf_s
+#endif
+
 // undefining annoying windows macros
 // NOTE(Zero): Add every window macros that fucks up our code
 #ifdef LoadImage
@@ -54,7 +60,7 @@ static u64 s_TotalHeapFreed;
 				*loc = size; \
 				ptr = ((u8*)loc + sizeof(u64)); \
 			}
-#define xInternalHeapFree(x) u64 freed = *(u64*)ptr; \
+#define xInternalHeapFree(x) u64 freed = *(u64*)(xInternalGetActualPtr(ptr)); \
 			x;\
 			if(result) { \
 				s_TotalHeapFreed += freed; \
@@ -165,7 +171,9 @@ void* a3_platform::Malloc(u64 size) const
 	xInternalHeapAllocation(
 		void* ptr = HeapAlloc(s_HeapHandle, 0, xInternalAllocationSize(size))
 	);
+#if defined(A3DEBUG) || defined(A3INTERNAL)
 	if (!ptr) a3LogWarn("Nullptr returned by heap allocation");
+#endif
 	return ptr;
 }
 
@@ -174,7 +182,9 @@ void* a3_platform::Calloc(u64 size) const
 	xInternalHeapAllocation(
 		void* ptr = HeapAlloc(s_HeapHandle, HEAP_ZERO_MEMORY, xInternalAllocationSize(size))
 	);
+#if defined(A3DEBUG) || defined(A3INTERNAL)
 	if (!ptr) a3LogWarn("Nullptr returned by heap allocation");
+#endif
 	return ptr;
 }
 
@@ -426,7 +436,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3::Platform.FreeFileContent(vText);
 	a3::Platform.FreeFileContent(fSource);
 
-	m4x4 projection = m4x4::OrthographicR(0.0f, 800.0f, 0.0f, 600.0, -1.0f, 1.0f);
+	m4x4 projection = m4x4::OrthographicR(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
 	a3GL(glUseProgram(sProgram));
 	a3GL(u32 projLoc = glGetUniformLocation(sProgram, "u_Projection"));
 	a3GL(glUniformMatrix4fv(projLoc, 1, GL_FALSE, projection.elements));
@@ -476,7 +486,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3Assert(zeroImage);
 
 	a3::gl_textures hackFontTextures = {};
-	hackFontTextures.font = a3::LoadTTFont(memory, "Resources/Coiny.ttf", 45);
+	hackFontTextures.font = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 45);
 	a3Assert(hackFontTextures.font);
 	
 	a3::gl_textures mcFontTextures = {};
@@ -636,17 +646,24 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3GL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
 		a3GL(glDrawElements(GL_TRIANGLES, X_NUMBER_OF_ENTITIES * 6, GL_UNSIGNED_INT, null));
 
-		a3::RenderFont(fontRenderer, "a3 Project is on it's way!", hackFontTextures, { 50.0f, 250.0f }, { 0.8f, 0.9f, 0.2f }, 0.6f);
-		a3::RenderFont(fontRenderer, "# a3 Ray Tracing", mcFontTextures, { 0.0f, 500.0f }, { 0.2f, 0.8f, 0.4f }, 1.0f);
-
-		SwapBuffers(hDC);
-		value += 0.01f;
-
 		LARGE_INTEGER currentPerformanceCounter;
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
-		//xLogTrace("FPS: {f} Time spent last frame: {f}ms", 1000.0f / dt, dt);
+
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+		utf8 buffer[256];
+		_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)( 1.0f / deltaTime));
+		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 580.0f }, { 0.8f, 0.9f, 0.2f }, 0.6f);
+		_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fMB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f * 1024.0f));
+		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 560.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
+		_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fMB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f * 1024.0f));
+		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 540.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
+#endif
+
+		SwapBuffers(hDC);
+		value += 0.01f;
+
 	}
 
 	return 0;
