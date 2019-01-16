@@ -2,9 +2,7 @@
 #include "Common/Core.h"
 #include "Platform/Platform.h"
 
-#define a3AspectRatio (16.0f / 9.0f)
-#define a3AspectHeight(width) ((width) / a3AspectRatio)
-#define a3AspectWidth(height) (a3AspectRatio * (height))
+struct stbtt_fontinfo;
 
 namespace a3 {
 
@@ -21,18 +19,16 @@ struct character
 	i32 GlyphIndex;
 	i32 OffsetX;
 	i32 OffsetY;
-	f32 BearingX;
-	f32 BearingY;
-	i32 Advance;
-	i32 LeftSideBearing;
+	f32 Advance;
 	b32 HasBitmap;
 	image Bitmap;
 };
 
 struct fonts
 {
-	character Characters[256];
+	::stbtt_fontinfo* Info;
 	f32 ScalingFactor;
+	character Characters[256];
 };
 
 struct gl_textures
@@ -44,5 +40,6 @@ struct gl_textures
 image* LoadPNGImage(memory_arena& arena, s8 file);
 b32 WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
 fonts* LoadTTFont(memory_arena& arena, s8 file, f32 scale);
+f32 GetTTFontKernalAdvance(const fonts& font, i32 glyph0, i32 glyph1);
 
 }

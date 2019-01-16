@@ -74,13 +74,11 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 	a3::file_content file = a3::Platform.LoadFileContent(fileName);
 	if (file.Buffer)
 	{
-		stbtt_fontinfo info;
-		stbtt_InitFont(&info, (u8*)file.Buffer, stbtt_GetFontOffsetForIndex((u8*)file.Buffer, 0));
-
 		a3::fonts* result = a3Push(stack, a3::fonts);
-		result->ScalingFactor = stbtt_ScaleForPixelHeight(&info, scale);
-		f32 scaleY = stbtt_ScaleForPixelHeight(&info, scale);
-		f32 scaleX = a3AspectWidth(scaleY);
+		result->Info = a3Push(stack, stbtt_fontinfo);
+		stbtt_InitFont(result->Info, (u8*)file.Buffer, stbtt_GetFontOffsetForIndex((u8*)file.Buffer, 0));
+
+		scale = stbtt_ScaleForPixelHeight(result->Info, scale);
 
 		u8* tempBuffer = null;
 		u64 tempBufferSize = 0;
@@ -88,9 +86,13 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 		for (i32 index = 0; index < a3ArrayCount(result->Characters); ++index)
 		{
 			a3::character* c = &result->Characters[index];
-			c->GlyphIndex = stbtt_FindGlyphIndex(&info, index);
-			stbtt_GetGlyphHMetrics(&info, c->GlyphIndex, &c->Advance, &c->LeftSideBearing);
-			if (stbtt_IsGlyphEmpty(&info, c->GlyphIndex))
+			c->GlyphIndex = stbtt_FindGlyphIndex(result->Info, index);
+			result->ScalingFactor = stbtt_ScaleForPixelHeight(result->Info, scale);
+			i32 leftSizeBearing; // NOTE(Zero): Ignored
+			i32 advance;
+			stbtt_GetGlyphHMetrics(result->Info, c->GlyphIndex, &advance, &leftSizeBearing);
+			c->Advance = (f32)advance * scale;
+			if (stbtt_IsGlyphEmpty(result->Info, c->GlyphIndex))
 			{
 				c->HasBitmap = false;
 				continue;
@@ -99,7 +101,7 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 			{
 				c->HasBitmap = true;
 				i32 x0, x1, y0, y1;
-				stbtt_GetGlyphBitmapBox(&info, c->GlyphIndex, scaleX, scaleY, &x0, &y0, &x1, &y1);
+				stbtt_GetGlyphBitmapBox(result->Info, c->GlyphIndex, scale, scale, &x0, &y0, &x1, &y1);
 				i32 w = x1 - x0; i32 h = y1 - y0;
 				if (tempBufferSize < w*h)
 				{
@@ -108,7 +110,7 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 				}
 				// NOTE(Zero): Here stride is equal to width because OpenGL wants packed pixels
 				i32 stride = w;
-				stbtt_MakeGlyphBitmap(&info, tempBuffer, w, h, stride, scaleX, scaleY, c->GlyphIndex);
+				stbtt_MakeGlyphBitmap(result->Info, tempBuffer, w, h, stride, scale, scale, c->GlyphIndex);
 				c->OffsetX = x0;
 				c->OffsetY = -y1;
 				c->Bitmap.Width = w;
@@ -123,4 +125,10 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 		return result;
 	}
 	return null;
+}
+
+f32 a3::GetTTFontKernalAdvance(const fonts & font, i32 glyph0, i32 glyph1)
+{
+	i32 res = stbtt_GetGlyphKernAdvance(font.Info, glyph0, glyph1);
+	return res * font.ScalingFactor;
 }

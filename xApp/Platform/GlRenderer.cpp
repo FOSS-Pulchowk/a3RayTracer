@@ -52,7 +52,7 @@ namespace a3 {
 		return r;
 	}
 
-	void RenderFont(const renderer_font& renderer, s8 string, const gl_textures& texts, v2 position, f32 scale)
+	void RenderFont(const renderer_font& renderer, s8 string, const gl_textures& texts, v2 position, v3 color, f32 scale)
 	{
 		a3GL(glBindVertexArray(renderer.VertexBufferObject));
 		a3GL(glBindBuffer(GL_ARRAY_BUFFER, renderer.VertexArrayBuffer));
@@ -61,7 +61,7 @@ namespace a3 {
 		a3GL(u32 loc = glGetUniformLocation(renderer.ShaderProgram, "u_Projection"));
 		a3GL(glUniformMatrix4fv(loc, 1, GL_FALSE, renderer.Projection.elements));
 		a3GL(loc = glGetUniformLocation(renderer.ShaderProgram, "u_Color"));
-		a3GL(glUniform3fv(loc, 1, renderer.Color.values));
+		a3GL(glUniform3fv(loc, 1, color.values));
 		a3GL(loc = glGetUniformLocation(renderer.ShaderProgram, "u_Texture"));
 		a3GL(glUniform1i(loc, 0));
 		a3GL(glActiveTexture(GL_TEXTURE0));
@@ -89,7 +89,9 @@ namespace a3 {
 				a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
 				a3GL(glDrawArrays(GL_TRIANGLES, 0, 6));
 			}
-			startX += (c.Advance >> 5) * scale;
+			startX += c.Advance * scale;
+			if(string[ch+1])
+				startX += (a3::GetTTFontKernalAdvance(*texts.font, c.GlyphIndex, (&c + 1)->GlyphIndex) * scale);
 		}
 	}
 

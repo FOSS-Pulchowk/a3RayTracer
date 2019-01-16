@@ -440,7 +440,6 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3::renderer2d renderer2d = a3::CreateBatchRenderer2D(sProgram);
 	a3::renderer_font fontRenderer = a3::CreateFontRenderer(fProgram);
 	fontRenderer.Projection = projection;
-	fontRenderer.Color = v3{ 0.8f, 0.8f, 0.2f };
 
 	f32 value = 0.0f;
 
@@ -477,8 +476,12 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3Assert(zeroImage);
 
 	a3::gl_textures hackFontTextures = {};
-	hackFontTextures.font = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 50);
+	hackFontTextures.font = a3::LoadTTFont(memory, "Resources/Coiny.ttf", 45);
 	a3Assert(hackFontTextures.font);
+	
+	a3::gl_textures mcFontTextures = {};
+	mcFontTextures.font = a3::LoadTTFont(memory, "Resources/McLetters.ttf", 45);
+	a3Assert(mcFontTextures.font);
 
 	u32 texID, zeroID;
 
@@ -520,8 +523,24 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 			hackFontTextures.textures[index] = 0;
 		}
 	}
-	a3::character& c = hackFontTextures.font->Characters['a'];
-	a3::WritePNGImage("test_a.png", c.Bitmap.Width, c.Bitmap.Height, 1, 1, c.Bitmap.Pixels);
+	for (i32 index = 0; index < a3ArrayCount(mcFontTextures.textures); ++index)
+	{
+		a3::character& c = mcFontTextures.font->Characters[index];
+		if (c.HasBitmap)
+		{
+			a3GL(glGenTextures(1, &mcFontTextures.textures[index]));
+			a3GL(glBindTexture(GL_TEXTURE_2D, mcFontTextures.textures[index]));
+			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+			a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, c.Bitmap.Width, c.Bitmap.Height, 0, GL_RED, GL_UNSIGNED_BYTE, c.Bitmap.Pixels));
+		}
+		else
+		{
+			mcFontTextures.textures[index] = 0;
+		}
+	}
 
 	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
@@ -617,7 +636,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3GL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
 		a3GL(glDrawElements(GL_TRIANGLES, X_NUMBER_OF_ENTITIES * 6, GL_UNSIGNED_INT, null));
 
-		a3::RenderFont(fontRenderer, "a3 Project is on it's way!", hackFontTextures, { 50.0f, 250.0f }, 1);
+		a3::RenderFont(fontRenderer, "a3 Project is on it's way!", hackFontTextures, { 50.0f, 250.0f }, { 0.8f, 0.9f, 0.2f }, 0.6f);
+		a3::RenderFont(fontRenderer, "# a3 Ray Tracing", mcFontTextures, { 0.0f, 500.0f }, { 0.2f, 0.8f, 0.4f }, 1.0f);
 
 		SwapBuffers(hDC);
 		value += 0.01f;
