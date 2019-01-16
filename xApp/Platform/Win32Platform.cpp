@@ -617,7 +617,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3GL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
 		a3GL(glDrawElements(GL_TRIANGLES, X_NUMBER_OF_ENTITIES * 6, GL_UNSIGNED_INT, null));
 
-		a3::RenderFont(fontRenderer, "a3 Project is on it's way!", hackFontTextures, { 50.0f, 250.0f }, 50);
+		a3::RenderFont(fontRenderer, "a3 Project is on it's way!", hackFontTextures, { 50.0f, 250.0f }, 1);
 
 		SwapBuffers(hDC);
 		value += 0.01f;

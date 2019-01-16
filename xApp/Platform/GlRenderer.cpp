@@ -67,9 +67,6 @@ namespace a3 {
 		a3GL(glActiveTexture(GL_TEXTURE0));
 
 		f32 startX = position.x;
-		f32 h = scale;
-		f32 w = a3AspectWidth(h);
-		//w = 20; h = 20;
 		for (i32 ch = 0; string[ch] != 0; ++ch)
 		{
 			const a3::character& c = texts.font->Characters[string[ch]];
@@ -77,8 +74,10 @@ namespace a3 {
 			{
 				a3GL(glBindTexture(GL_TEXTURE_2D, texts.textures[string[ch]]));
 
-				f32 x = startX + c.BearingX * w;// *scale;
-				f32 y = position.y + c.BearingY * h;// *scale;
+				f32 w = c.Bitmap.Width * scale;
+				f32 h = c.Bitmap.Height * scale;
+				f32 x = startX + c.OffsetX * scale;
+				f32 y = position.y + c.OffsetY * scale;
 
 				a3GL(x_vfont* vertices = (x_vfont*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 				vertices[0].positionTexCoords = { x, y, 0.0f, 0.0f };
@@ -90,7 +89,7 @@ namespace a3 {
 				a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
 				a3GL(glDrawArrays(GL_TRIANGLES, 0, 6));
 			}
-			startX += c.Advance * w;
+			startX += (c.Advance >> 5) * scale;
 		}
 	}
 

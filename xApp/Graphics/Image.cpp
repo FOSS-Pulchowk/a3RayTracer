@@ -89,9 +89,7 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 		{
 			a3::character* c = &result->Characters[index];
 			c->GlyphIndex = stbtt_FindGlyphIndex(&info, index);
-			stbtt_GetGlyphBox(&info, c->GlyphIndex, &c->XMin, &c->YMin, &c->XMax, &c->YMax);
-			i32 advancePt;
-			stbtt_GetGlyphHMetrics(&info, c->GlyphIndex, &advancePt, &c->LeftSideBearing);
+			stbtt_GetGlyphHMetrics(&info, c->GlyphIndex, &c->Advance, &c->LeftSideBearing);
 			if (stbtt_IsGlyphEmpty(&info, c->GlyphIndex))
 			{
 				c->HasBitmap = false;
@@ -111,12 +109,11 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 				// NOTE(Zero): Here stride is equal to width because OpenGL wants packed pixels
 				i32 stride = w;
 				stbtt_MakeGlyphBitmap(&info, tempBuffer, w, h, stride, scaleX, scaleY, c->GlyphIndex);
+				c->OffsetX = x0;
+				c->OffsetY = -y1;
 				c->Bitmap.Width = w;
 				c->Bitmap.Height = h;
 				c->Bitmap.Channels = 1;
-				c->BearingX = (c->XMax - c->XMin)*stbtt_ScaleForMappingEmToPixels(&info, scale) / w;
-				c->BearingY = (c->YMax - c->YMin)*stbtt_ScaleForMappingEmToPixels(&info, scale) / h;
-				c->Advance = advancePt * stbtt_ScaleForMappingEmToPixels(&info, scale) / w;
 				c->Bitmap.Pixels = a3PushArray(stack, u8, w*h);
 				a3::ReverseRectCopy(c->Bitmap.Pixels, tempBuffer, w, h);
 			}

@@ -19,13 +19,11 @@ struct image
 struct character
 {
 	i32 GlyphIndex;
-	i32 XMin;
-	i32 XMax;
-	i32 YMin;
-	i32 YMax;
+	i32 OffsetX;
+	i32 OffsetY;
 	f32 BearingX;
 	f32 BearingY;
-	f32 Advance;
+	i32 Advance;
 	i32 LeftSideBearing;
 	b32 HasBitmap;
 	image Bitmap;
