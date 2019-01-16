@@ -2,10 +2,6 @@
 #include "Platform/Platform.h"
 #include "STBImplementation.h"
 
-#define a3AspectRatio (16.0f / 9.0f)
-#define a3AspectHeight(width) ((width) / a3AspectRatio)
-#define a3AspectWidth(height) (a3AspectRatio * (height))
-
 static inline void InternalSTBWriteCallback(void* context, void* data, i32 size)
 {
 	a3::file_content* fc = (a3::file_content*)context;
@@ -83,7 +79,7 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 
 		a3::fonts* result = a3Push(stack, a3::fonts);
 		result->ScalingFactor = stbtt_ScaleForPixelHeight(&info, scale);
-		f32 scaleY = result->ScalingFactor;
+		f32 scaleY = stbtt_ScaleForPixelHeight(&info, scale);
 		f32 scaleX = a3AspectWidth(scaleY);
 
 		u8* tempBuffer = null;
@@ -94,7 +90,8 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 			a3::character* c = &result->Characters[index];
 			c->GlyphIndex = stbtt_FindGlyphIndex(&info, index);
 			stbtt_GetGlyphBox(&info, c->GlyphIndex, &c->XMin, &c->YMin, &c->XMax, &c->YMax);
-			stbtt_GetGlyphHMetrics(&info, c->GlyphIndex, &c->Advance, &c->LeftSideBearing);
+			i32 advancePt;
+			stbtt_GetGlyphHMetrics(&info, c->GlyphIndex, &advancePt, &c->LeftSideBearing);
 			if (stbtt_IsGlyphEmpty(&info, c->GlyphIndex))
 			{
 				c->HasBitmap = false;
@@ -117,6 +114,9 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 				c->Bitmap.Width = w;
 				c->Bitmap.Height = h;
 				c->Bitmap.Channels = 1;
+				c->BearingX = (c->XMax - c->XMin)*stbtt_ScaleForMappingEmToPixels(&info, scale) / w;
+				c->BearingY = (c->YMax - c->YMin)*stbtt_ScaleForMappingEmToPixels(&info, scale) / h;
+				c->Advance = advancePt * stbtt_ScaleForMappingEmToPixels(&info, scale) / w;
 				c->Bitmap.Pixels = a3PushArray(stack, u8, w*h);
 				a3::ReverseRectCopy(c->Bitmap.Pixels, tempBuffer, w, h);
 			}

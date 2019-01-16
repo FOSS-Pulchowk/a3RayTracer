@@ -1,5 +1,7 @@
 #pragma once
 #include "Common/Core.h"
+#include "Math/Math.h"
+#include "Graphics/Image.h"
 
 struct x_v2d
 {
@@ -38,9 +40,13 @@ namespace a3 {
 		u32 VertexBufferObject;
 		u32 VertexArrayBuffer;
 		shader_program ShaderProgram;
+		m4x4 Projection;
+		v3 Color;
 	};
 
 	const renderer2d CreateBatchRenderer2D(shader_program program);
 	const renderer_font CreateFontRenderer(shader_program program);
+
+	void RenderFont(const renderer_font& renderer, s8 string, const gl_textures& texts, v2 position, f32 scale);
 
 }

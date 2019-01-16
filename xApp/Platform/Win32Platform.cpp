@@ -439,6 +439,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 	a3::renderer2d renderer2d = a3::CreateBatchRenderer2D(sProgram);
 	a3::renderer_font fontRenderer = a3::CreateFontRenderer(fProgram);
+	fontRenderer.Projection = projection;
+	fontRenderer.Color = v3{ 0.8f, 0.8f, 0.2f };
 
 	f32 value = 0.0f;
 
@@ -474,10 +476,11 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3::image* zeroImage = a3::LoadPNGImage(memory, "Resources/Zero.png");
 	a3Assert(zeroImage);
 
-	a3::fonts* testFont = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 200);
-	a3Assert(testFont);
+	a3::gl_textures hackFontTextures = {};
+	hackFontTextures.font = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 50);
+	a3Assert(hackFontTextures.font);
 
-	u32 texID, zeroID, fontTexID;
+	u32 texID, zeroID;
 
 	a3GL(glGenTextures(1, &texID));
 	a3GL(glBindTexture(GL_TEXTURE_2D, texID));
@@ -495,21 +498,32 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
 	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, zeroImage->Width, zeroImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroImage->Pixels));
-	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
+	a3GL(glBindTexture(GL_TEXTURE_2D, 0));	
 
-	a3GL(glGenTextures(1, &fontTexID));
-	a3GL(glBindTexture(GL_TEXTURE_2D, fontTexID));
-	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-	// NOTE(Zero): Should we pack bytes and use single channel for the fonts or should we use all 4 channels for the fonts
-#if 1
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	u8 charLoc = '3';
-	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, testFont->Characters[charLoc].Bitmap.Width, testFont->Characters[charLoc].Bitmap.Height, 0, GL_RED, GL_UNSIGNED_BYTE, testFont->Characters[charLoc].Bitmap.Pixels));
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-#endif
+	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+	
+	for (i32 index = 0; index < a3ArrayCount(hackFontTextures.textures); ++index)
+	{
+		a3::character& c = hackFontTextures.font->Characters[index];
+		if (c.HasBitmap)
+		{
+			a3GL(glGenTextures(1, &hackFontTextures.textures[index]));
+			a3GL(glBindTexture(GL_TEXTURE_2D, hackFontTextures.textures[index]));
+			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+			a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, c.Bitmap.Width, c.Bitmap.Height, 0, GL_RED, GL_UNSIGNED_BYTE, c.Bitmap.Pixels));
+		}
+		else
+		{
+			hackFontTextures.textures[index] = 0;
+		}
+	}
+	a3::character& c = hackFontTextures.font->Characters['a'];
+	a3::WritePNGImage("test_a.png", c.Bitmap.Width, c.Bitmap.Height, 1, 1, c.Bitmap.Pixels);
+
+	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
 
 	f32 deltaTime = 0.0f;
@@ -603,50 +617,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3GL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
 		a3GL(glDrawElements(GL_TRIANGLES, X_NUMBER_OF_ENTITIES * 6, GL_UNSIGNED_INT, null));
 
-		a3GL(glBindVertexArray(fontRenderer.VertexBufferObject));
-		a3GL(glActiveTexture(GL_TEXTURE1));
-		a3GL(glBindTexture(GL_TEXTURE_2D, fontTexID));
-		a3GL(glUseProgram(fontRenderer.ShaderProgram));
-		a3GL(u32 pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Texture"));
-		a3GL(glUniform1i(pos, 1));
-
-		v3 fontColor = { 1.0f,0.8f,0.2f };
-		a3GL(pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Color"));
-		a3GL(glUniform3fv(pos, 1, fontColor.values));
-
-		a3GL(pos = glGetUniformLocation(fontRenderer.ShaderProgram, "u_Projection"));
-		a3GL(glUniformMatrix4fv(pos, 1, GL_FALSE, projection.elements));
-
-		a3GL(glBindBuffer(GL_ARRAY_BUFFER, fontRenderer.VertexArrayBuffer));
-		a3GL(x_vfont* fontVertices = (x_vfont*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-
-		f32 x = 50;
-		f32 y = 50;
-		f32 w = 100.0f;
-		f32 h = 100.0f;
-
-		f32 tsx = 0.0f;
-		f32 tsy = 0.0f;
-		f32 tex = 1.0f;
-		f32 tey = 1.0f;
-
-		/*fontVertices[0].positionTexCoords = { x, y, tsx, tsy };
-		fontVertices[1].positionTexCoords = { x, y + h, tsx, tey };
-		fontVertices[2].positionTexCoords = { x + w, y + h, tex, tey };
-		fontVertices[3].positionTexCoords = { x, y, tsx, tsy };
-		fontVertices[4].positionTexCoords = { x + w, y + h, tex, tey };
-		fontVertices[5].positionTexCoords = { x + w, y, tex, tsy };*/
-
-		fontVertices[0].positionTexCoords = { x, y, 0.0f, 0.0f };
-		fontVertices[1].positionTexCoords = { x, y + h, 0.0f, 1.0f };
-		fontVertices[2].positionTexCoords = { x + w, y + h, 1.0f, 1.f };
-		fontVertices[3].positionTexCoords = { x, y, 0.0f, 0.0f };
-		fontVertices[4].positionTexCoords = { x + w, y + h, 1.0f, 1.0f };
-		fontVertices[5].positionTexCoords = { x + w, y, 1.0f, 0.0f };
-
-		a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
-
-		a3GL(glDrawArrays(GL_TRIANGLES, 0, 6));
+		a3::RenderFont(fontRenderer, "a3 Project is on it's way!", hackFontTextures, { 50.0f, 250.0f }, 50);
 
 		SwapBuffers(hDC);
 		value += 0.01f;
