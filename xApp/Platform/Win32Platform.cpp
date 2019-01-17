@@ -40,9 +40,9 @@ static const HANDLE s_HeapHandle = GetProcessHeap();
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 static u64 s_TotalHeapAllocated;
 static u64 s_TotalHeapFreed;
-#define xInternalAllocationSize(x) ((x) + sizeof(u64))
-#define xInternalGetActualPtr(p) ((void*)((u8*)(p) - sizeof(u64)))
-#define xInternalHeapAllocation(x) x;\
+#define a3InternalAllocationSize(x) ((x) + sizeof(u64))
+#define a3InternalGetActualPtr(p) ((void*)((u8*)(p) - sizeof(u64)))
+#define a3InternalHeapAllocation(x) x;\
 			 if(ptr) { \
 				if(size > a3MegaBytes(1)) \
 					a3LogWarn("Large Heap Allocation of {u} bytes", size); \
@@ -50,8 +50,10 @@ static u64 s_TotalHeapFreed;
 				u64* loc = (u64*)ptr; \
 				*loc = size; \
 				ptr = ((u8*)loc + sizeof(u64)); \
-			}
-#define xInternalHeapReAllocation(x) x;\
+			} \
+			else \
+				 a3LogWarn("Nullptr returned by heap allocation");
+#define a3InternalHeapReAllocation(x) x;\
 			 if(ptr) { \
 				if(size > a3MegaBytes(1)) \
 					a3LogWarn("Large Heap Re Allocation of {u} bytes", size); \
@@ -60,17 +62,17 @@ static u64 s_TotalHeapFreed;
 				*loc = size; \
 				ptr = ((u8*)loc + sizeof(u64)); \
 			}
-#define xInternalHeapFree(x) u64 freed = *(u64*)(xInternalGetActualPtr(ptr)); \
+#define a3InternalHeapFree(x) u64 freed = *(u64*)(a3InternalGetActualPtr(ptr)); \
 			x;\
 			if(result) { \
 				s_TotalHeapFreed += freed; \
 			}
 #else
-#define xInternalAllocationSize(x) (x)
-#define xInternalGetActualPtr(p) (p)
-#define xInternalHeapAllocation(x) x;
-#define xInternalHeapReAllocation(x) x;
-#define xInternalHeapFree(x) x;
+#define a3InternalAllocationSize(x) (x)
+#define a3InternalGetActualPtr(p) (p)
+#define a3InternalHeapAllocation(x) x;
+#define a3InternalHeapReAllocation(x) x;
+#define a3InternalHeapFree(x) x;
 #endif
 
 const a3::file_content a3_platform::LoadFileContent(s8 fileName) const
@@ -168,23 +170,17 @@ b32 a3_platform::ReplaceFileContent(s8 fileName, const a3::file_content & file) 
 
 void* a3_platform::Malloc(u64 size) const
 {
-	xInternalHeapAllocation(
-		void* ptr = HeapAlloc(s_HeapHandle, 0, xInternalAllocationSize(size))
+	a3InternalHeapAllocation(
+		void* ptr = HeapAlloc(s_HeapHandle, 0, a3InternalAllocationSize(size))
 	);
-#if defined(A3DEBUG) || defined(A3INTERNAL)
-	if (!ptr) a3LogWarn("Nullptr returned by heap allocation");
-#endif
 	return ptr;
 }
 
 void* a3_platform::Calloc(u64 size) const
 {
-	xInternalHeapAllocation(
-		void* ptr = HeapAlloc(s_HeapHandle, HEAP_ZERO_MEMORY, xInternalAllocationSize(size))
+	a3InternalHeapAllocation(
+		void* ptr = HeapAlloc(s_HeapHandle, HEAP_ZERO_MEMORY, a3InternalAllocationSize(size))
 	);
-#if defined(A3DEBUG) || defined(A3INTERNAL)
-	if (!ptr) a3LogWarn("Nullptr returned by heap allocation");
-#endif
 	return ptr;
 }
 
@@ -192,8 +188,8 @@ void* a3_platform::Realloc(void* usrPtr, u64 size) const
 {
 	if (usrPtr)
 	{
-		xInternalHeapReAllocation(
-			void* ptr = HeapReAlloc(s_HeapHandle, 0, xInternalGetActualPtr(usrPtr), xInternalAllocationSize(size))
+		a3InternalHeapReAllocation(
+			void* ptr = HeapReAlloc(s_HeapHandle, 0, a3InternalGetActualPtr(usrPtr), a3InternalAllocationSize(size))
 		);
 		return ptr;
 	}
@@ -207,7 +203,7 @@ b32 a3_platform::Free(void* ptr) const
 {
 	if (ptr)
 	{
-		xInternalHeapFree(b32 result = (b32)HeapFree(s_HeapHandle, 0, xInternalGetActualPtr(ptr)));
+		a3InternalHeapFree(b32 result = (b32)HeapFree(s_HeapHandle, 0, a3InternalGetActualPtr(ptr)));
 		return result;
 	}
 	a3LogWarn("Attempt to free null pointer");
@@ -655,9 +651,9 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		utf8 buffer[256];
 		_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)( 1.0f / deltaTime));
 		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 580.0f }, { 0.8f, 0.9f, 0.2f }, 0.6f);
-		_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fMB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f * 1024.0f));
+		_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
 		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 560.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
-		_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fMB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f * 1024.0f));
+		_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
 		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 540.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
 #endif
 
