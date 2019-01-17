@@ -655,6 +655,10 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 560.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
 		_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
 		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 540.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
+		_snprintf_s(buffer, 256, 256, "Total Application Memory: %.2fMB", (f32)memory.Capacity / (1024.0f * 1024.0f));
+		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 520.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
+		_snprintf_s(buffer, 256, 256, "Used Application Memory: %.2fMB", (f32)memory.Consumed / (1024.0f * 1024.0f));
+		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 500.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
 #endif
 
 		SwapBuffers(hDC);

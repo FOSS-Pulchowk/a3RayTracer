@@ -111,6 +111,7 @@ inline void* PushSize(memory_arena& arena, u32 bytes)
 	a3Assert(arena.Capacity >= (arena.Consumed + bytes));
 	void* result = (void*)arena.Current;
 	arena.Current += bytes;
+	arena.Consumed += bytes;
 	return result;
 }
 
