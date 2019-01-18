@@ -3,17 +3,6 @@
 #include "Math/Math.h"
 #include "Graphics/Image.h"
 
-struct x_v2d
-{
-	enum
-	{
-		POSITION = 0, COLOR, TEXCOORDS
-	};
-	v3 position;
-	v3 color;
-	v2 texCoords;
-};
-
 struct x_vfont
 {
 	enum
@@ -44,14 +33,6 @@ namespace a3 {
 		friend struct a3_renderer;
 	};
 
-	struct renderer2d
-	{
-		u32 VertexBufferObject;
-		u32 VertexArrayBuffer;
-		u32 ElementArrayBuffer;
-		u32 ShaderProgram;
-	};
-
 	struct renderer_font
 	{
 		u32 VertexBufferObject;
@@ -60,7 +41,6 @@ namespace a3 {
 		m4x4 Projection;
 	};
 
-	const renderer2d CreateBatchRenderer2D(u32 program);
 	const renderer_font CreateFontRenderer(u32 program);
 
 	void RenderFont(const renderer_font& renderer, s8 string, const gl_textures& texts, v2 position, v3 color, f32 scale);

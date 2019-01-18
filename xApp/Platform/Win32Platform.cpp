@@ -432,7 +432,6 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3GL(glUniformMatrix4fv(aprojLoc, 1, GL_FALSE, projection.elements));
 	a3GL(glUseProgram(0));
 
-	//a3::renderer2d renderer2d = a3::CreateBatchRenderer2D(sProgram);
 	a3::basic2drenderer renderer2d = a3::Renderer.Create2DRenderer();
 	renderer2d.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 	a3::renderer_font fontRenderer = a3::CreateFontRenderer(fProgram);
