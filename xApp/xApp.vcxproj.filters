@@ -86,9 +86,6 @@
     <ClInclude Include="Platform\GL\LoadOpenGL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Platform\GlShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Platform\GlRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -103,6 +100,8 @@
     <None Include="Platform\font.frag" />
     <None Include="Platform\GLSL\Basic2DVertexShader.glsl" />
     <None Include="Platform\GLSL\Basic2DFragmentShader.glsl" />
+    <None Include="Platform\GLSL\FontFragmentShader.glsl" />
+    <None Include="Platform\GLSL\FontVertexShader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\BigSmile.png">

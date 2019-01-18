@@ -40,7 +40,7 @@ inline void InternalBindElementArrayBuffer(u32 target)
 inline void InternalBindProgram(u32 target)
 {
 	//if (target == s_CurrentBound.ShaderProgram) return;
-	glUseProgram(target);
+	a3GL(glUseProgram(target));
 	s_CurrentBound.ShaderProgram = target;
 }
 
@@ -97,6 +97,16 @@ struct a3_vertex2d
 	v3 texCoords;
 	enum { POSITION = 0, COLOR, TEXCOORDS };
 };
+
+#define A3_FONT_RENDER_MAX 1000
+#define A3_VERTICES_FONT_MAX A3_FONT_RENDER_MAX * 4
+#define A3_INDICES_FONT_MAX A3_FONT_RENDER_MAX * 6
+struct a3_vertex_font
+{
+	v4 posTexCoords;
+	enum { POSTEXCOORDS = 0 };
+};
+
 namespace a3 {
 	const a3_renderer Renderer;
 }
@@ -147,6 +157,36 @@ a3::basic2drenderer a3_renderer::Create2DRenderer() const
 	return r;
 }
 
+a3::font_renderer a3_renderer::CreateFontRenderer() const
+{
+	a3::font_renderer r;
+	a3GL(glGenVertexArrays(1, &r.m_VertexArrayObject));
+	a3GL(glGenBuffers(1, &r.m_VertexArrayBuffer));
+	a3GL(glGenBuffers(1, &r.m_ElementArrayBuffer));
+	InternalBindVertexArrayObject(r.m_VertexArrayObject);
+	InternalBindVertexArrayBuffer(r.m_VertexArrayBuffer);
+	InternalBindElementArrayBuffer(r.m_ElementArrayBuffer);
+
+	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex_font) * A3_VERTICES_FONT_MAX, null, GL_DYNAMIC_DRAW));
+	a3GL(glVertexAttribPointer(a3_vertex_font::POSTEXCOORDS, 4, GL_FLOAT, GL_FALSE, sizeof(a3_vertex_font), (void*)(a3OffsetOf(a3_vertex_font, a3_vertex_font::posTexCoords))));
+	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * A3_INDICES_FONT_MAX, null, GL_DYNAMIC_DRAW));
+	a3GL(glEnableVertexAttribArray(a3_vertex_font::POSTEXCOORDS));
+
+	a3::file_content vertex = a3::Platform.LoadFileContent("Platform/GLSL/FontVertexShader.glsl");
+	a3::file_content fragment = a3::Platform.LoadFileContent("Platform/GLSL/FontFragmentShader.glsl");
+	a3Assert(vertex.Buffer);
+	a3Assert(fragment.Buffer);
+	r.m_ShaderProgram = GLCreateShaderProgramFromBuffer((s8)vertex.Buffer, (s8)fragment.Buffer);
+	a3::Platform.FreeFileContent(vertex);
+	a3::Platform.FreeFileContent(fragment);
+	InternalBindProgram(r.m_ShaderProgram);
+	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
+	a3GL(r.m_Color = glGetUniformLocation(r.m_ShaderProgram, "u_Color"));
+	a3GL(r.m_FontAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_FontAtlas"));
+
+	return r;
+}
+
 namespace a3 {
 
 	void basic2drenderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
@@ -160,9 +200,9 @@ namespace a3 {
 		InternalBindVertexArrayObject(m_VertexArrayObject);
 		InternalBindVertexArrayBuffer(m_VertexArrayBuffer);
 		InternalBindProgram(m_ShaderProgram);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glUniform1i(m_TextureDiffuse, 0);
+		a3GL(glActiveTexture(GL_TEXTURE0));
+		a3GL(glBindTexture(GL_TEXTURE_2D, texture));
+		a3GL(glUniform1i(m_TextureDiffuse, 0));
 		a3_vertex2d v[4];
 		v[0].position = position;
 		v[1].position = position;
@@ -183,64 +223,71 @@ namespace a3 {
 		a3GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null));
 	}
 
-	const renderer_font CreateFontRenderer(u32 program)
+	void font_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
 	{
-		renderer_font r = {};
-
-		a3GL(glGenVertexArrays(1, &r.VertexBufferObject));
-		a3GL(glGenBuffers(1, &r.VertexArrayBuffer));
-		a3GL(glBindVertexArray(r.VertexBufferObject));
-		a3GL(glBindBuffer(GL_ARRAY_BUFFER, r.VertexArrayBuffer));
-		a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(x_vfont) * XMAXRENDERABLEFONT, null, GL_DYNAMIC_DRAW));
-		a3GL(glVertexAttribPointer(x_vfont::POSITEXCORDS, 4, GL_FLOAT, GL_FALSE, sizeof(x_vfont), (void*)(a3OffsetOf(x_vfont, x_vfont::positionTexCoords))));
-		a3GL(glEnableVertexAttribArray(x_vfont::POSITEXCORDS));
-		a3GL(glBindVertexArray(0));
-
-		r.ShaderProgram = program;
-
-		return r;
+		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f).elements));
 	}
 
-	void RenderFont(const renderer_font& renderer, s8 string, const gl_textures& texts, v2 position, v3 color, f32 scale)
+	void font_renderer::Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::fonts & f)
 	{
-		a3GL(glBindVertexArray(renderer.VertexBufferObject));
-		a3GL(glBindBuffer(GL_ARRAY_BUFFER, renderer.VertexArrayBuffer));
-		a3GL(glUseProgram(renderer.ShaderProgram));
-		// TODO(Zero): Get all locations when loading shader
-		a3GL(u32 loc = glGetUniformLocation(renderer.ShaderProgram, "u_Projection"));
-		a3GL(glUniformMatrix4fv(loc, 1, GL_FALSE, renderer.Projection.elements));
-		a3GL(loc = glGetUniformLocation(renderer.ShaderProgram, "u_Color"));
-		a3GL(glUniform3fv(loc, 1, color.values));
-		a3GL(loc = glGetUniformLocation(renderer.ShaderProgram, "u_Texture"));
-		a3GL(glUniform1i(loc, 0));
+		InternalBindVertexArrayObject(m_VertexArrayObject);
+		InternalBindVertexArrayBuffer(m_VertexArrayBuffer);
+		InternalBindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0));
+		a3GL(glBindTexture(GL_TEXTURE_2D, texture));
+		a3GL(glUniform1i(m_FontAtlas, 0));
+		a3GL(glUniform3fv(m_Color, 1, color.values));
 
-		f32 startX = position.x;
-		for (i32 ch = 0; string[ch] != 0; ++ch)
+		u8* t = (u8*)font;
+		f32 hBegin = position.x;
+		a3GL(a3_vertex_font* vertices = (a3_vertex_font*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+		a3GL(u32* indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+
+		u32 counter = 0;
+		for ( ; ; ++t)
 		{
-			const a3::character& c = texts.font->Characters[string[ch]];
+			// Flush
+			if (counter == A3_FONT_RENDER_MAX || *t == 0)
+			{
+				a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
+				a3GL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
+				a3GL(glDrawElements(GL_TRIANGLES, counter * 6, GL_UNSIGNED_INT, null));
+				if (*t == 0) break;
+				counter = 0;
+				a3GL(vertices = (a3_vertex_font*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+				a3GL(indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+			}
+
+			const a3::character& c = f.Characters[*t];
 			if (c.HasBitmap)
 			{
-				a3GL(glBindTexture(GL_TEXTURE_2D, texts.textures[string[ch]]));
-
-				f32 w = c.Bitmap.Width * scale;
-				f32 h = c.Bitmap.Height * scale;
-				f32 x = startX + c.OffsetX * scale;
+				f32 x = hBegin + c.OffsetX * scale;
 				f32 y = position.y + c.OffsetY * scale;
+				f32 w = c.Width * scale;
+				f32 h = c.Height * scale;
 
-				a3GL(x_vfont* vertices = (x_vfont*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-				vertices[0].positionTexCoords = { x, y, 0.0f, 0.0f };
-				vertices[1].positionTexCoords = { x, y + h, 0.0f, 1.0f };
-				vertices[2].positionTexCoords = { x + w, y + h, 1.0f, 1.0f };
-				vertices[3].positionTexCoords = { x, y, 0.0f, 0.0f };
-				vertices[4].positionTexCoords = { x + w, y + h, 1.0f, 1.0f };
-				vertices[5].positionTexCoords = { x + w, y, 1.0f, 0.0f };
-				a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
-				a3GL(glDrawArrays(GL_TRIANGLES, 0, 6));
+				f32 tx0 = c.NormalX0;
+				f32 tx1 = c.NormalX1;
+				f32 ty0 = c.NormalY0;
+				f32 ty1 = c.NormalY1;
+
+				vertices[counter * 4 + 0].posTexCoords = { x, y, tx0, ty0 };
+				vertices[counter * 4 + 1].posTexCoords = { x + w, y, tx1, ty0 };
+				vertices[counter * 4 + 2].posTexCoords = { x + w, y + h, tx1, ty1 };
+				vertices[counter * 4 + 3].posTexCoords = { x, y + h, tx0, ty1 };
+
+				indices[counter * 6 + 0] = counter * 4 + 0;
+				indices[counter * 6 + 1] = counter * 4 + 1;
+				indices[counter * 6 + 2] = counter * 4 + 2;
+				indices[counter * 6 + 3] = counter * 4 + 0;
+				indices[counter * 6 + 4] = counter * 4 + 2;
+				indices[counter * 6 + 5] = counter * 4 + 3;
+
+				counter++;
 			}
-			startX += c.Advance * scale;
-			if(string[ch+1])
-				startX += (a3::GetTTFontKernalAdvance(*texts.font, c.GlyphIndex, (&c + 1)->GlyphIndex) * scale);
+			hBegin += c.Advance * scale;
+			if (*(t + 1))
+				hBegin += (a3::GetTTFontKernalAdvance(f, c.GlyphIndex, (f.Characters[*(t + 1)]).GlyphIndex) * scale);
 		}
 	}
 

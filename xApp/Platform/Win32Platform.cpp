@@ -3,8 +3,6 @@
 #include "GL/LoadOpenGL.h"
 
 #include "GL/GLDebug.h"
-
-#include "GlShader.h"
 #include "GlRenderer.h"
 
 #include "Math/Math.h"
@@ -420,22 +418,10 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	HDC hDC = GetDC(hWnd);
 	a3GL(glViewport(0, 0, XWIDTH, XHEIGHT));
 
-	a3::file_content vText = a3::Platform.LoadFileContent("Platform/font.vert");
-	a3::file_content fText = a3::Platform.LoadFileContent("Platform/font.frag");
-	u32 fProgram = GLCreateShaderProgramFromFile((s8)vText.Buffer, (s8)fText.Buffer);
-	a3::Platform.FreeFileContent(vText);
-	a3::Platform.FreeFileContent(fText);
-
-	m4x4 projection = m4x4::OrthographicR(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
-	a3GL(glUseProgram(fProgram));
-	a3GL(u32 aprojLoc = glGetUniformLocation(fProgram, "u_Projection"));
-	a3GL(glUniformMatrix4fv(aprojLoc, 1, GL_FALSE, projection.elements));
-	a3GL(glUseProgram(0));
-
 	a3::basic2drenderer renderer2d = a3::Renderer.Create2DRenderer();
 	renderer2d.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
-	a3::renderer_font fontRenderer = a3::CreateFontRenderer(fProgram);
-	fontRenderer.Projection = projection;
+	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer();
+	fontRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 
 	f32 value = 0.0f;
 
@@ -471,14 +457,6 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3::image* zeroImage = a3::LoadPNGImage(memory, "Resources/Zero.png");
 	a3Assert(zeroImage);
 
-	a3::gl_textures hackFontTextures = {};
-	hackFontTextures.font = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 45);
-	a3Assert(hackFontTextures.font);
-	
-	a3::gl_textures mcFontTextures = {};
-	mcFontTextures.font = a3::LoadTTFont(memory, "Resources/McLetters.ttf", 45);
-	a3Assert(mcFontTextures.font);
-
 	u32 texID, zeroID;
 
 	a3GL(glGenTextures(1, &texID));
@@ -499,44 +477,20 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, zeroImage->Width, zeroImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroImage->Pixels));
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));	
 
-	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+	//a3::gl_textures hackFontTextures = {};
+	a3::fonts* font = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 50.0f);
+	a3Assert(font);
+	u32 fontTexture;
 	
-	for (i32 index = 0; index < a3ArrayCount(hackFontTextures.textures); ++index)
-	{
-		a3::character& c = hackFontTextures.font->Characters[index];
-		if (c.HasBitmap)
-		{
-			a3GL(glGenTextures(1, &hackFontTextures.textures[index]));
-			a3GL(glBindTexture(GL_TEXTURE_2D, hackFontTextures.textures[index]));
-			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-			a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, c.Bitmap.Width, c.Bitmap.Height, 0, GL_RED, GL_UNSIGNED_BYTE, c.Bitmap.Pixels));
-		}
-		else
-		{
-			hackFontTextures.textures[index] = 0;
-		}
-	}
-	for (i32 index = 0; index < a3ArrayCount(mcFontTextures.textures); ++index)
-	{
-		a3::character& c = mcFontTextures.font->Characters[index];
-		if (c.HasBitmap)
-		{
-			a3GL(glGenTextures(1, &mcFontTextures.textures[index]));
-			a3GL(glBindTexture(GL_TEXTURE_2D, mcFontTextures.textures[index]));
-			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-			a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-			a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, c.Bitmap.Width, c.Bitmap.Height, 0, GL_RED, GL_UNSIGNED_BYTE, c.Bitmap.Pixels));
-		}
-		else
-		{
-			mcFontTextures.textures[index] = 0;
-		}
-	}
+	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+
+	a3GL(glGenTextures(1, &fontTexture));
+	a3GL(glBindTexture(GL_TEXTURE_2D, fontTexture));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, font->AtlasWidth, font->AtlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, font->Atlas));
 
 	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
@@ -600,18 +554,19 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
 
+
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 		utf8 buffer[256];
-		_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)( 1.0f / deltaTime));
-		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 580.0f }, { 0.8f, 0.9f, 0.2f }, 0.6f);
+		_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
+		fontRenderer.Render(buffer, { 0.0f, 580.0f }, 0.6f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 		_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
-		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 560.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
-		_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
-		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 540.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
+		fontRenderer.Render(buffer, { 0.0f, 560.0f }, 0.5f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+		_snprintf_s(buffer, 256, 256, "Total Heapf Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
+		fontRenderer.Render(buffer, { 0.0f, 540.0f }, 0.5f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 		_snprintf_s(buffer, 256, 256, "Total Application Memory: %.2fMB", (f32)memory.Capacity / (1024.0f * 1024.0f));
-		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 520.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
+		fontRenderer.Render(buffer, { 0.0f, 520.0f }, 0.5f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 		_snprintf_s(buffer, 256, 256, "Used Application Memory: %.2fMB", (f32)memory.Consumed / (1024.0f * 1024.0f));
-		a3::RenderFont(fontRenderer, buffer, hackFontTextures, { 0.0f, 500.0f }, { 0.8f, 0.9f, 0.2f }, 0.4f);
+		fontRenderer.Render(buffer, { 0.0f, 500.0f }, 0.5f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 #endif
 
 		SwapBuffers(hDC);

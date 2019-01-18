@@ -78,20 +78,36 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 		result->Info = a3Push(stack, stbtt_fontinfo);
 		stbtt_InitFont(result->Info, (u8*)file.Buffer, stbtt_GetFontOffsetForIndex((u8*)file.Buffer, 0));
 
-		scale = stbtt_ScaleForPixelHeight(result->Info, scale);
-
+		// NOTE(Zero):
+		// These temp buffers are used to store extracted bitmap from stb
+		// This is requied because stb extracts bitmap from top-bottom
+		// But we use from bottom-top, so we use this buffer to flip the bitmap vertically
 		u8* tempBuffer = null;
 		u64 tempBufferSize = 0;
 
+		// NOTE(Zero):
+		// Maximum dimention for the bitmap required by the largest character in the font
+		// Maximum height is set as the given scale factor
+		// 0.5 is added to properly ceil when casting to integer
+		// 1 is added to the height so that there's a pixel of gap between each bitmaps
+		// If 1 is not added, there may be chance that a line of another bitmap may be shown
+		i32 maxWidth = 0;
+		i32 maxHeight = (u32)(scale + 0.5f) + 1;
+
+		// NOTE(Zero):
+		// Now the scale is changed into unit of points and it is no more pixel
+		f32 pscale = stbtt_ScaleForPixelHeight(result->Info, scale);
+		result->ScalingFactor = pscale;
+
+		u8* bitmaps[a3ArrayCount(result->Characters)];
 		for (i32 index = 0; index < a3ArrayCount(result->Characters); ++index)
 		{
 			a3::character* c = &result->Characters[index];
 			c->GlyphIndex = stbtt_FindGlyphIndex(result->Info, index);
-			result->ScalingFactor = stbtt_ScaleForPixelHeight(result->Info, scale);
 			i32 leftSizeBearing; // NOTE(Zero): Ignored
 			i32 advance;
 			stbtt_GetGlyphHMetrics(result->Info, c->GlyphIndex, &advance, &leftSizeBearing);
-			c->Advance = (f32)advance * scale;
+			c->Advance = (f32)advance * pscale;
 			if (stbtt_IsGlyphEmpty(result->Info, c->GlyphIndex))
 			{
 				c->HasBitmap = false;
@@ -101,7 +117,7 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 			{
 				c->HasBitmap = true;
 				i32 x0, x1, y0, y1;
-				stbtt_GetGlyphBitmapBox(result->Info, c->GlyphIndex, scale, scale, &x0, &y0, &x1, &y1);
+				stbtt_GetGlyphBitmapBox(result->Info, c->GlyphIndex, pscale, pscale, &x0, &y0, &x1, &y1);
 				i32 w = x1 - x0; i32 h = y1 - y0;
 				if (tempBufferSize < w*h)
 				{
@@ -110,18 +126,57 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 				}
 				// NOTE(Zero): Here stride is equal to width because OpenGL wants packed pixels
 				i32 stride = w;
-				stbtt_MakeGlyphBitmap(result->Info, tempBuffer, w, h, stride, scale, scale, c->GlyphIndex);
+				stbtt_MakeGlyphBitmap(result->Info, tempBuffer, w, h, stride, pscale, pscale, c->GlyphIndex);
 				c->OffsetX = x0;
 				c->OffsetY = -y1;
-				c->Bitmap.Width = w;
-				c->Bitmap.Height = h;
-				c->Bitmap.Channels = 1;
-				c->Bitmap.Pixels = a3PushArray(stack, u8, w*h);
-				a3::ReverseRectCopy(c->Bitmap.Pixels, tempBuffer, w, h);
+				c->Width = w;
+				c->Height = h;
+				bitmaps[index] = new u8[w*h];
+				a3::ReverseRectCopy(bitmaps[index], tempBuffer, w, h);
+				if (maxWidth < w)maxWidth = w;
+			}
+		}
+		a3::Platform.Free(tempBuffer);
+
+		// NOTE(Zero):
+		// Here we multiple max dimensions by 16 to get altas dimension
+		// We extract bitmaps for 256(0-255) characters from the font file
+		// sqrt(256) = 16, thus 16 is used here
+		result->AtlasWidth = 16 * maxWidth;
+		result->AtlasHeight = 16 * maxHeight;
+		result->Atlas = a3PushArray(stack, u8, result->AtlasWidth * result->AtlasHeight);
+
+		for (i32 blockY = 0; blockY < 16; ++blockY)
+		{
+			u8* destBlockY = result->Atlas + blockY * maxHeight * result->AtlasWidth;
+			for (i32 blockX = 0; blockX < 16; ++blockX)
+			{
+				u8* destBlock = destBlockY + blockX * maxWidth;
+				i32 index = blockY * 16 + blockX;
+				a3::character* c = &result->Characters[index];
+				c->NormalX0 = (f32)(blockX * maxWidth) / (f32)result->AtlasWidth;
+				c->NormalX1 = (f32)(blockX * maxWidth + maxWidth) / (f32)result->AtlasWidth;
+				c->NormalY0 = (f32)(blockY * maxHeight) / (f32)result->AtlasHeight;
+				c->NormalY1 = (f32)(blockY * maxHeight + scale) / (f32)result->AtlasHeight;
+				if (c->HasBitmap)
+				{
+					u8* src = bitmaps[index];
+					for (i32 y = 0; y < c->Height; ++y)
+					{
+						u8* dest = destBlock + y * result->AtlasWidth;
+						for (i32 x = 0; x < c->Width; ++x)
+						{
+							*dest++ = *src++;
+						}
+					}
+					c->Width = maxWidth;
+					c->Height = maxHeight;
+					delete[] bitmaps[index];
+				}
 			}
 		}
 
-		a3::Platform.Free(tempBuffer);
+		a3::WritePNGImage("test.png", result->AtlasWidth, result->AtlasHeight, 1, 1, result->Atlas);
 		return result;
 	}
 	return null;

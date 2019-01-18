@@ -19,22 +19,24 @@ struct character
 	i32 GlyphIndex;
 	i32 OffsetX;
 	i32 OffsetY;
-	f32 Advance;
+	i32 Width;
+	i32 Height;
 	b32 HasBitmap;
-	image Bitmap;
+	f32 NormalX0;
+	f32 NormalX1;
+	f32 NormalY0;
+	f32 NormalY1;
+	f32 Advance;
 };
 
 struct fonts
 {
 	::stbtt_fontinfo* Info;
+	u32 AtlasWidth;
+	u32 AtlasHeight;
+	u8* Atlas;
 	f32 ScalingFactor;
 	character Characters[256];
-};
-
-struct gl_textures
-{
-	u32 textures[256];
-	fonts* font;
 };
 
 image* LoadPNGImage(memory_arena& arena, s8 file);

@@ -3,15 +3,6 @@
 #include "Math/Math.h"
 #include "Graphics/Image.h"
 
-struct x_vfont
-{
-	enum
-	{
-		POSITEXCORDS = 0
-	};
-	v4 positionTexCoords;
-};
-
 struct a3_renderer;
 
 namespace a3 {
@@ -33,23 +24,31 @@ namespace a3 {
 		friend struct a3_renderer;
 	};
 
-	struct renderer_font
+	struct font_renderer
 	{
-		u32 VertexBufferObject;
-		u32 VertexArrayBuffer;
-		u32 ShaderProgram;
-		m4x4 Projection;
+	private:
+		u32 m_VertexArrayObject;
+		u32 m_VertexArrayBuffer;
+		u32 m_ElementArrayBuffer;
+		u32 m_ShaderProgram;
+		u32 m_Projection;
+		u32 m_FontAtlas;
+		u32 m_Color;
+		font_renderer(){}
+	public:
+		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
+		void Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::fonts& f);
+
+		friend struct a3_renderer;
 	};
-
-	const renderer_font CreateFontRenderer(u32 program);
-
-	void RenderFont(const renderer_font& renderer, s8 string, const gl_textures& texts, v2 position, v3 color, f32 scale);
 }
 
 struct a3_renderer
 {
 	a3::basic2drenderer Create2DRenderer() const;
+	a3::font_renderer CreateFontRenderer() const;
 };
+
 namespace a3 {
 	extern const a3_renderer Renderer;
 }

@@ -276,7 +276,6 @@
     <ClInclude Include="Math\Matrix4.h" />
     <ClInclude Include="Math\Quaterniod.h" />
     <ClInclude Include="Platform\GlRenderer.h" />
-    <ClInclude Include="Platform\GlShader.h" />
     <ClInclude Include="Platform\GL\Glad.h" />
     <ClInclude Include="Platform\GL\GLDebug.h" />
     <ClInclude Include="Platform\GL\GLExtensions.h" />
@@ -290,6 +289,8 @@
     <None Include="Platform\font.vert" />
     <None Include="Platform\GLSL\Basic2DFragmentShader.glsl" />
     <None Include="Platform\GLSL\Basic2DVertexShader.glsl" />
+    <None Include="Platform\GLSL\FontFragmentShader.glsl" />
+    <None Include="Platform\GLSL\FontVertexShader.glsl" />
     <None Include="Platform\sample.frag" />
     <None Include="Platform\sample.vert" />
   </ItemGroup>
