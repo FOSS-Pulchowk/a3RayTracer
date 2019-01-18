@@ -420,24 +420,13 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	HDC hDC = GetDC(hWnd);
 	a3GL(glViewport(0, 0, XWIDTH, XHEIGHT));
 
-	a3::file_content vSource = a3::Platform.LoadFileContent("Platform/sample.vert");
-	a3::file_content fSource = a3::Platform.LoadFileContent("Platform/sample.frag");
-	u32 sProgram = GLCreateShaderProgramFromFile((s8)vSource.Buffer, (s8)fSource.Buffer);
-	a3::Platform.FreeFileContent(vSource);
-	a3::Platform.FreeFileContent(fSource);
-
 	a3::file_content vText = a3::Platform.LoadFileContent("Platform/font.vert");
 	a3::file_content fText = a3::Platform.LoadFileContent("Platform/font.frag");
 	u32 fProgram = GLCreateShaderProgramFromFile((s8)vText.Buffer, (s8)fText.Buffer);
 	a3::Platform.FreeFileContent(vText);
-	a3::Platform.FreeFileContent(fSource);
+	a3::Platform.FreeFileContent(fText);
 
 	m4x4 projection = m4x4::OrthographicR(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f);
-	a3GL(glUseProgram(sProgram));
-	a3GL(u32 projLoc = glGetUniformLocation(sProgram, "u_Projection"));
-	a3GL(glUniformMatrix4fv(projLoc, 1, GL_FALSE, projection.elements));
-	a3GL(glUseProgram(0));
-
 	a3GL(glUseProgram(fProgram));
 	a3GL(u32 aprojLoc = glGetUniformLocation(fProgram, "u_Projection"));
 	a3GL(glUniformMatrix4fv(aprojLoc, 1, GL_FALSE, projection.elements));
