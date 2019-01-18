@@ -379,6 +379,8 @@ struct entity
 	f32 moveFrameTime;
 };
 
+#if 0
+
 #define XWNDCLASSNAME L"xWindowClass"
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 int main()
@@ -668,3 +670,5 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 	return 0;
 }
+
+#endif
