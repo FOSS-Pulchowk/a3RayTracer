@@ -443,7 +443,9 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3GL(glUniformMatrix4fv(aprojLoc, 1, GL_FALSE, projection.elements));
 	a3GL(glUseProgram(0));
 
-	a3::renderer2d renderer2d = a3::CreateBatchRenderer2D(sProgram);
+	//a3::renderer2d renderer2d = a3::CreateBatchRenderer2D(sProgram);
+	a3::basic2drenderer renderer2d = a3::Renderer.Create2DRenderer();
+	renderer2d.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 	a3::renderer_font fontRenderer = a3::CreateFontRenderer(fProgram);
 	fontRenderer.Projection = projection;
 
@@ -602,45 +604,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3GL(glEnable(GL_BLEND));
 		a3GL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-		a3GL(glBindVertexArray(renderer2d.VertexBufferObject));
-		a3GL(glBindBuffer(GL_ARRAY_BUFFER, renderer2d.VertexArrayBuffer));
-		a3GL(glUseProgram(renderer2d.ShaderProgram));
-		a3GL(u32 loc = glGetUniformLocation(renderer2d.ShaderProgram, "u_Texture"));
-		a3GL(glUniform1i(loc, 0));
-		a3GL(glActiveTexture(GL_TEXTURE0));
-		a3GL(glBindTexture(GL_TEXTURE_2D, texID));
-		//xGL(glBindTexture(GL_TEXTURE_2D, zeroID));
-
-		f32 angle = a3Sinf(value);
-
-		a3GL(x_v2d* v = (x_v2d*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-		a3GL(u32* indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
-		for (i32 i = 0; i < X_NUMBER_OF_ENTITIES; ++i)
-		{
-			v2 d = rect.dimension;
-			v[i * 4 + 0].position = v3{ 0.0f, 0.0f, 0.0f } *m4x4::TranslationR(rect.position);
-			v[i * 4 + 1].position = v3{ 0.0f, d.y, 0.0f } *m4x4::TranslationR(rect.position);
-			v[i * 4 + 2].position = v3{ d.x, d.y, 0.0f } *m4x4::TranslationR(rect.position);
-			v[i * 4 + 3].position = v3{ d.x, 0.0f, 0.0f } *m4x4::TranslationR(rect.position);
-			v[i * 4 + 0].color = rect.acolor[0];
-			v[i * 4 + 1].color = rect.acolor[1];
-			v[i * 4 + 2].color = rect.acolor[2];
-			v[i * 4 + 3].color = rect.acolor[3];
-			v[i * 4 + 0].texCoords = v2{ 0.0f, 0.0f };
-			v[i * 4 + 1].texCoords = v2{ 0.0f, 1.0f };
-			v[i * 4 + 2].texCoords = v2{ 1.0f, 1.0f };
-			v[i * 4 + 3].texCoords = v2{ 1.0f, 0.0f };
-
-			indices[i * 6 + 0] = i * 4 + 0;
-			indices[i * 6 + 1] = i * 4 + 1;
-			indices[i * 6 + 2] = i * 4 + 2;
-			indices[i * 6 + 3] = i * 4 + 0;
-			indices[i * 6 + 4] = i * 4 + 2;
-			indices[i * 6 + 5] = i * 4 + 3;
-		}
-		a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
-		a3GL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
-		a3GL(glDrawElements(GL_TRIANGLES, X_NUMBER_OF_ENTITIES * 6, GL_UNSIGNED_INT, null));
+		v2 dimension = { 100.0f, 100.0f };
+		renderer2d.Render(rect.position, dimension, rect.acolor, texID);
 
 		LARGE_INTEGER currentPerformanceCounter;
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));

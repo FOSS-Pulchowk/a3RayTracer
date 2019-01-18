@@ -101,6 +101,8 @@
     <None Include="Platform\sample.frag" />
     <None Include="Platform\font.vert" />
     <None Include="Platform\font.frag" />
+    <None Include="Platform\GLSL\Basic2DVertexShader.glsl" />
+    <None Include="Platform\GLSL\Basic2DFragmentShader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\BigSmile.png">
