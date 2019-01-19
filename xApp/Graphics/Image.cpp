@@ -176,7 +176,6 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 			}
 		}
 
-		a3::WritePNGImage("test.png", result->AtlasWidth, result->AtlasHeight, 1, 1, result->Atlas);
 		return result;
 	}
 	return A3NULL;

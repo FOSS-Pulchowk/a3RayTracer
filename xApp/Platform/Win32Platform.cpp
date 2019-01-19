@@ -383,7 +383,7 @@ struct entity
 	f32 moveFrameTime;
 };
 
-#define XWNDCLASSNAME L"xWindowClass"
+#define A3_WINDOW_CLASS_NAME L"a3WindowClass"
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 int main()
 {
@@ -397,7 +397,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
 	wndClassExW.lpfnWndProc = WndProc;
 	wndClassExW.hInstance = hInstance;
-	wndClassExW.lpszClassName = XWNDCLASSNAME;
+	wndClassExW.lpszClassName = A3_WINDOW_CLASS_NAME;
 	//TODO(Zero): Put icons
 	//wndClassExW.hIcon = 
 	//wndClassExW.hIconSm =
@@ -413,7 +413,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	AdjustWindowRectEx(&wrc, wndStyles, FALSE, 0);
 	width = wrc.right - wrc.left;
 	height = wrc.bottom - wrc.top;
-	HWND hWnd = CreateWindowExW(0, XWNDCLASSNAME, L"x Application", wndStyles, CW_USEDEFAULT, CW_USEDEFAULT, width, height, A3NULL, A3NULL, hInstance, 0);
+	HWND hWnd = CreateWindowExW(0, A3_WINDOW_CLASS_NAME, L"a3 Ray Tracer", wndStyles, CW_USEDEFAULT, CW_USEDEFAULT, width, height, A3NULL, A3NULL, hInstance, 0);
 
 	if (!hWnd)
 	{
@@ -569,13 +569,13 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
 		fontRenderer.Render(buffer, { 0.0f, 580.0f }, 0.6f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 		_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
-		fontRenderer.Render(buffer, { 0.0f, 560.0f }, 0.5f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
-		_snprintf_s(buffer, 256, 256, "Total Heapf Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
-		fontRenderer.Render(buffer, { 0.0f, 540.0f }, 0.5f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+		fontRenderer.Render(buffer, { 0.0f, 560.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+		_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
+		fontRenderer.Render(buffer, { 0.0f, 540.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 		_snprintf_s(buffer, 256, 256, "Total Application Memory: %.2fMB", (f32)memory.Capacity / (1024.0f * 1024.0f));
-		fontRenderer.Render(buffer, { 0.0f, 520.0f }, 0.5f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+		fontRenderer.Render(buffer, { 0.0f, 520.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 		_snprintf_s(buffer, 256, 256, "Used Application Memory: %.2fMB", (f32)memory.Consumed / (1024.0f * 1024.0f));
-		fontRenderer.Render(buffer, { 0.0f, 500.0f }, 0.5f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+		fontRenderer.Render(buffer, { 0.0f, 500.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 #endif
 
 		SwapBuffers(hDC);
