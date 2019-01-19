@@ -229,8 +229,12 @@ void operator delete(void* ptr)
 	a3::Platform.Free(ptr);
 }
 
-#define XWIDTH 800
-#define XHEIGHT 600
+// TODO(Zero):
+// Do not force window resolution
+// Make the window size fixed
+// Make application independent to window resolution
+#define A3_WINDOW_WIDTH 800
+#define A3_WINDOW_HEIGHT 600
 
 memory_arena NewMemoryBlock(u32 size)
 {
@@ -268,7 +272,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		i32 mx = GET_X_LPARAM(lParam);
 		i32 my = GET_Y_LPARAM(lParam);
 		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
 		break;
 	}
 
@@ -277,7 +281,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		i32 mx = GET_X_LPARAM(lParam);
 		i32 my = GET_Y_LPARAM(lParam);
 		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
 		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonDown;
 		break;
 	}
@@ -287,7 +291,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		i32 mx = GET_X_LPARAM(lParam);
 		i32 my = GET_Y_LPARAM(lParam);
 		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
 		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonUp;
 		break;
 	}
@@ -297,7 +301,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		i32 mx = GET_X_LPARAM(lParam);
 		i32 my = GET_Y_LPARAM(lParam);
 		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
 		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonDown;
 		break;
 	}
@@ -307,7 +311,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		i32 mx = GET_X_LPARAM(lParam);
 		i32 my = GET_Y_LPARAM(lParam);
 		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
 		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonUp;
 		break;
 	}
@@ -317,7 +321,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		i32 mx = GET_X_LPARAM(lParam);
 		i32 my = GET_Y_LPARAM(lParam);
 		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
 		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonDown;
 		break;
 	}
@@ -327,7 +331,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		i32 mx = GET_X_LPARAM(lParam);
 		i32 my = GET_Y_LPARAM(lParam);
 		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = XHEIGHT - my;
+		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
 		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonUp;
 		break;
 	}
@@ -405,8 +409,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	RegisterClassExW(&wndClassExW);
 
 	DWORD wndStyles = WS_OVERLAPPEDWINDOW;
-	i32 width = XWIDTH;
-	i32 height = XHEIGHT;
+	i32 width = A3_WINDOW_WIDTH;
+	i32 height = A3_WINDOW_HEIGHT;
 	RECT wrc = {};
 	wrc.right = width;
 	wrc.bottom = height;
@@ -420,9 +424,9 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		a3LogError("Window could not be created!");
 		return 1;
 	}
-	a3Log("Window of resolution {i} X {i} created.", XWIDTH, XHEIGHT);
+	a3Log("Window of resolution {i} X {i} created.", A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT);
 	HDC hDC = GetDC(hWnd);
-	a3GL(glViewport(0, 0, XWIDTH, XHEIGHT));
+	a3GL(glViewport(0, 0, A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT));
 
 	a3::basic2drenderer renderer2d = a3::Renderer.Create2DRenderer();
 	renderer2d.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
