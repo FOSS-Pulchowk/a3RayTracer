@@ -547,7 +547,7 @@ PFNGLVIEWPORTINDEXEDFPROC glad_glViewportIndexedf;
 PFNGLVIEWPORTINDEXEDFVPROC glad_glViewportIndexedfv;
 PFNGLWAITSYNCPROC glad_glWaitSync;
 
-static void InternalLoadGLVersion10(GLADLoadProc load)
+static void a3_LoadGLVersion10(GLADLoadProc load)
 {
 	glad_glCullFace = (PFNGLCULLFACEPROC)load("glCullFace");
 	glad_glFrontFace = (PFNGLFRONTFACEPROC)load("glFrontFace");
@@ -598,7 +598,7 @@ static void InternalLoadGLVersion10(GLADLoadProc load)
 	glad_glDepthRange = (PFNGLDEPTHRANGEPROC)load("glDepthRange");
 	glad_glViewport = (PFNGLVIEWPORTPROC)load("glViewport");
 }
-static void InternalLoadGLVersion11(GLADLoadProc load)
+static void a3_LoadGLVersion11(GLADLoadProc load)
 {
 	glad_glDrawArrays = (PFNGLDRAWARRAYSPROC)load("glDrawArrays");
 	glad_glDrawElements = (PFNGLDRAWELEMENTSPROC)load("glDrawElements");
@@ -614,7 +614,7 @@ static void InternalLoadGLVersion11(GLADLoadProc load)
 	glad_glGenTextures = (PFNGLGENTEXTURESPROC)load("glGenTextures");
 	glad_glIsTexture = (PFNGLISTEXTUREPROC)load("glIsTexture");
 }
-static void InternalLoadGLVersion12(GLADLoadProc load)
+static void a3_LoadGLVersion12(GLADLoadProc load)
 {
 	glad_glDrawRangeElements = (PFNGLDRAWRANGEELEMENTSPROC)load("glDrawRangeElements");
 	glad_glTexImage3D = (PFNGLTEXIMAGE3DPROC)load("glTexImage3D");
@@ -622,7 +622,7 @@ static void InternalLoadGLVersion12(GLADLoadProc load)
 	glad_glCopyTexSubImage3D = (PFNGLCOPYTEXSUBIMAGE3DPROC)load("glCopyTexSubImage3D");
 }
 
-static void InternalLoadGLVersion13(GLADLoadProc load)
+static void a3_LoadGLVersion13(GLADLoadProc load)
 {
 	glad_glActiveTexture = (PFNGLACTIVETEXTUREPROC)load("glActiveTexture");
 	glad_glSampleCoverage = (PFNGLSAMPLECOVERAGEPROC)load("glSampleCoverage");
@@ -634,7 +634,7 @@ static void InternalLoadGLVersion13(GLADLoadProc load)
 	glad_glCompressedTexSubImage1D = (PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC)load("glCompressedTexSubImage1D");
 	glad_glGetCompressedTexImage = (PFNGLGETCOMPRESSEDTEXIMAGEPROC)load("glGetCompressedTexImage");
 }
-static void InternalLoadGLVersion14(GLADLoadProc load)
+static void a3_LoadGLVersion14(GLADLoadProc load)
 {
 	glad_glBlendFuncSeparate = (PFNGLBLENDFUNCSEPARATEPROC)load("glBlendFuncSeparate");
 	glad_glMultiDrawArrays = (PFNGLMULTIDRAWARRAYSPROC)load("glMultiDrawArrays");
@@ -646,7 +646,7 @@ static void InternalLoadGLVersion14(GLADLoadProc load)
 	glad_glBlendColor = (PFNGLBLENDCOLORPROC)load("glBlendColor");
 	glad_glBlendEquation = (PFNGLBLENDEQUATIONPROC)load("glBlendEquation");
 }
-static void InternalLoadGLVersion15(GLADLoadProc load)
+static void a3_LoadGLVersion15(GLADLoadProc load)
 {
 	glad_glGenQueries = (PFNGLGENQUERIESPROC)load("glGenQueries");
 	glad_glDeleteQueries = (PFNGLDELETEQUERIESPROC)load("glDeleteQueries");
@@ -668,7 +668,7 @@ static void InternalLoadGLVersion15(GLADLoadProc load)
 	glad_glGetBufferParameteriv = (PFNGLGETBUFFERPARAMETERIVPROC)load("glGetBufferParameteriv");
 	glad_glGetBufferPointerv = (PFNGLGETBUFFERPOINTERVPROC)load("glGetBufferPointerv");
 }
-static void InternalLoadGLVersion20(GLADLoadProc load)
+static void a3_LoadGLVersion20(GLADLoadProc load)
 {
 	glad_glBlendEquationSeparate = (PFNGLBLENDEQUATIONSEPARATEPROC)load("glBlendEquationSeparate");
 	glad_glDrawBuffers = (PFNGLDRAWBUFFERSPROC)load("glDrawBuffers");
@@ -764,7 +764,7 @@ static void InternalLoadGLVersion20(GLADLoadProc load)
 	glad_glVertexAttrib4usv = (PFNGLVERTEXATTRIB4USVPROC)load("glVertexAttrib4usv");
 	glad_glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)load("glVertexAttribPointer");
 }
-static void InternalLoadGLVersion21(GLADLoadProc load)
+static void a3_LoadGLVersion21(GLADLoadProc load)
 {
 	glad_glUniformMatrix2x3fv = (PFNGLUNIFORMMATRIX2X3FVPROC)load("glUniformMatrix2x3fv");
 	glad_glUniformMatrix3x2fv = (PFNGLUNIFORMMATRIX3X2FVPROC)load("glUniformMatrix3x2fv");
@@ -773,7 +773,7 @@ static void InternalLoadGLVersion21(GLADLoadProc load)
 	glad_glUniformMatrix3x4fv = (PFNGLUNIFORMMATRIX3X4FVPROC)load("glUniformMatrix3x4fv");
 	glad_glUniformMatrix4x3fv = (PFNGLUNIFORMMATRIX4X3FVPROC)load("glUniformMatrix4x3fv");
 }
-static void InternalLoadGLVersion30(GLADLoadProc load)
+static void a3_LoadGLVersion30(GLADLoadProc load)
 {
 	glad_glColorMaski = (PFNGLCOLORMASKIPROC)load("glColorMaski");
 	glad_glGetBooleani_v = (PFNGLGETBOOLEANI_VPROC)load("glGetBooleani_v");
@@ -860,7 +860,7 @@ static void InternalLoadGLVersion30(GLADLoadProc load)
 	glad_glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)load("glGenVertexArrays");
 	glad_glIsVertexArray = (PFNGLISVERTEXARRAYPROC)load("glIsVertexArray");
 }
-static void InternalLoadGLVersion31(GLADLoadProc load)
+static void a3_LoadGLVersion31(GLADLoadProc load)
 {
 	glad_glDrawArraysInstanced = (PFNGLDRAWARRAYSINSTANCEDPROC)load("glDrawArraysInstanced");
 	glad_glDrawElementsInstanced = (PFNGLDRAWELEMENTSINSTANCEDPROC)load("glDrawElementsInstanced");
@@ -878,7 +878,7 @@ static void InternalLoadGLVersion31(GLADLoadProc load)
 	glad_glBindBufferBase = (PFNGLBINDBUFFERBASEPROC)load("glBindBufferBase");
 	glad_glGetIntegeri_v = (PFNGLGETINTEGERI_VPROC)load("glGetIntegeri_v");
 }
-static void InternalLoadGLVersion32(GLADLoadProc load)
+static void a3_LoadGLVersion32(GLADLoadProc load)
 {
 	glad_glDrawElementsBaseVertex = (PFNGLDRAWELEMENTSBASEVERTEXPROC)load("glDrawElementsBaseVertex");
 	glad_glDrawRangeElementsBaseVertex = (PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC)load("glDrawRangeElementsBaseVertex");
@@ -900,7 +900,7 @@ static void InternalLoadGLVersion32(GLADLoadProc load)
 	glad_glGetMultisamplefv = (PFNGLGETMULTISAMPLEFVPROC)load("glGetMultisamplefv");
 	glad_glSampleMaski = (PFNGLSAMPLEMASKIPROC)load("glSampleMaski");
 }
-static void InternalLoadGLVersion33(GLADLoadProc load)
+static void a3_LoadGLVersion33(GLADLoadProc load)
 {
 	glad_glBindFragDataLocationIndexed = (PFNGLBINDFRAGDATALOCATIONINDEXEDPROC)load("glBindFragDataLocationIndexed");
 	glad_glGetFragDataIndex = (PFNGLGETFRAGDATAINDEXPROC)load("glGetFragDataIndex");
@@ -961,7 +961,7 @@ static void InternalLoadGLVersion33(GLADLoadProc load)
 	glad_glSecondaryColorP3ui = (PFNGLSECONDARYCOLORP3UIPROC)load("glSecondaryColorP3ui");
 	glad_glSecondaryColorP3uiv = (PFNGLSECONDARYCOLORP3UIVPROC)load("glSecondaryColorP3uiv");
 }
-static void InternalLoadGLVersion40(GLADLoadProc load)
+static void a3_LoadGLVersion40(GLADLoadProc load)
 {
 	glad_glMinSampleShading = (PFNGLMINSAMPLESHADINGPROC)load("glMinSampleShading");
 	glad_glBlendEquationi = (PFNGLBLENDEQUATIONIPROC)load("glBlendEquationi");
@@ -1010,7 +1010,7 @@ static void InternalLoadGLVersion40(GLADLoadProc load)
 	glad_glEndQueryIndexed = (PFNGLENDQUERYINDEXEDPROC)load("glEndQueryIndexed");
 	glad_glGetQueryIndexediv = (PFNGLGETQUERYINDEXEDIVPROC)load("glGetQueryIndexediv");
 }
-static void InternalLoadGLVersion41(GLADLoadProc load)
+static void a3_LoadGLVersion41(GLADLoadProc load)
 {
 	glad_glReleaseShaderCompiler = (PFNGLRELEASESHADERCOMPILERPROC)load("glReleaseShaderCompiler");
 	glad_glShaderBinary = (PFNGLSHADERBINARYPROC)load("glShaderBinary");
@@ -1102,7 +1102,7 @@ static void InternalLoadGLVersion41(GLADLoadProc load)
 	glad_glGetFloati_v = (PFNGLGETFLOATI_VPROC)load("glGetFloati_v");
 	glad_glGetDoublei_v = (PFNGLGETDOUBLEI_VPROC)load("glGetDoublei_v");
 }
-static void InternalLoadGLVersion42(GLADLoadProc load)
+static void a3_LoadGLVersion42(GLADLoadProc load)
 {
 	glad_glDrawArraysInstancedBaseInstance = (PFNGLDRAWARRAYSINSTANCEDBASEINSTANCEPROC)load("glDrawArraysInstancedBaseInstance");
 	glad_glDrawElementsInstancedBaseInstance = (PFNGLDRAWELEMENTSINSTANCEDBASEINSTANCEPROC)load("glDrawElementsInstancedBaseInstance");
@@ -1118,7 +1118,7 @@ static void InternalLoadGLVersion42(GLADLoadProc load)
 	glad_glDrawTransformFeedbackStreamInstanced = (PFNGLDRAWTRANSFORMFEEDBACKSTREAMINSTANCEDPROC)load("glDrawTransformFeedbackStreamInstanced");
 }
 
-static gl_version InternalFindCoreGL(GLADLoadProc load)
+static gl_version a3_FindCoreGL(GLADLoadProc load)
 {
 	const char* version = (const char*)glGetString(GL_VERSION);
 	if(!version)
@@ -1159,25 +1159,25 @@ static gl_version InternalFindCoreGL(GLADLoadProc load)
 	int glVersion41 = (major == 4 && minor >= 1) || major > 4;
 	int glVersion42 = (major == 4 && minor >= 2) || major > 4;
 
-	if(glVersion10) InternalLoadGLVersion10(load);
-	if(glVersion11) InternalLoadGLVersion11(load);
-	if(glVersion12) InternalLoadGLVersion12(load);
-	if(glVersion13) InternalLoadGLVersion13(load);
-	if(glVersion14) InternalLoadGLVersion14(load);
-	if(glVersion15) InternalLoadGLVersion15(load);
-	if(glVersion20) InternalLoadGLVersion20(load);
-	if(glVersion21) InternalLoadGLVersion21(load);
-	if(glVersion30) InternalLoadGLVersion30(load);
-	if(glVersion31) InternalLoadGLVersion31(load);
-	if(glVersion32) InternalLoadGLVersion32(load);
-	if(glVersion33) InternalLoadGLVersion33(load);
-	if(glVersion40) InternalLoadGLVersion40(load);
-	if(glVersion41) InternalLoadGLVersion41(load);
-	if(glVersion42) InternalLoadGLVersion42(load);
+	if(glVersion10) a3_LoadGLVersion10(load);
+	if(glVersion11) a3_LoadGLVersion11(load);
+	if(glVersion12) a3_LoadGLVersion12(load);
+	if(glVersion13) a3_LoadGLVersion13(load);
+	if(glVersion14) a3_LoadGLVersion14(load);
+	if(glVersion15) a3_LoadGLVersion15(load);
+	if(glVersion20) a3_LoadGLVersion20(load);
+	if(glVersion21) a3_LoadGLVersion21(load);
+	if(glVersion30) a3_LoadGLVersion30(load);
+	if(glVersion31) a3_LoadGLVersion31(load);
+	if(glVersion32) a3_LoadGLVersion32(load);
+	if(glVersion33) a3_LoadGLVersion33(load);
+	if(glVersion40) a3_LoadGLVersion40(load);
+	if(glVersion41) a3_LoadGLVersion41(load);
+	if(glVersion42) a3_LoadGLVersion42(load);
 	return glVersion;
 }
 
-int InternalExtensionAvailable(const char* gext)
+int a3_ExtensionAvailable(const char* gext)
 {
 	int nExtensions = 0;
 	glGetIntegerv(GL_NUM_EXTENSIONS, &nExtensions);
@@ -1202,7 +1202,7 @@ int InternalExtensionAvailable(const char* gext)
 
 void* GladLoadGLFunction(GLADLoadProc load, const char* name)
 {
-	if(InternalExtensionAvailable(name))
+	if(a3_ExtensionAvailable(name))
 		return load(name);
 	else
 		return 0;
@@ -1215,7 +1215,7 @@ int GladLoadGLLoader(GLADLoadProc load, gl_version* pGLVersion)
 	glGetString = (PFNGLGETSTRINGPROC)load("glGetString");
 	if(glGetString == 0) return 0;
 	if(glGetString(GL_VERSION) == 0) return 0;
-	*pGLVersion = InternalFindCoreGL(load);
+	*pGLVersion = a3_FindCoreGL(load);
 
 	return (pGLVersion->major != 0 || pGLVersion->minor != 0);
 }

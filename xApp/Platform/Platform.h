@@ -96,7 +96,9 @@ void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...);
 #define a3AspectHeight(width) ((width) / a3AspectRatio)
 #define a3AspectWidth(height) (a3AspectRatio * (height))
 
-// TODO(Zero): Clean this
+// TODO(Zero):
+// Clean this
+// Make proper allocators for different systems for the application
 struct memory_arena
 {
 	u8* Memory;
@@ -105,6 +107,7 @@ struct memory_arena
 	u32 Consumed;
 };
 
+// TODO(Zero): This need to be cleaned
 inline void* PushSize(memory_arena& arena, u32 bytes)
 {
 	a3Assert(bytes != 0);

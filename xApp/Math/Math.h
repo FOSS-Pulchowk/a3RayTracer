@@ -3,9 +3,9 @@
 #include "Matrix4.h"
 #include "Quaterniod.h"
 
-#define xPi32 3.1415926535f
-#define xToRadians(deg) ((deg)*xPi32 / 180)
-#define xToDegrees(rad) ((rad)*180 / xPi32)
+#define a3Pi32 3.1415926535f
+#define a3ToRadians(deg) ((deg)*a3Pi32 / 180)
+#define a3ToDegrees(rad) ((rad)*180 / a3Pi32)
 
 ////////////////////// Matrix Vector operations ///////////////////////////////////////
 
@@ -61,12 +61,12 @@ inline v3 operator*(const m4x4 &mat, v3 vec)
 inline quat EulerAnglesToQuat(v3 eulerAngles)
 {
 	quat q;
-	f32 cy = a3Cosf(-eulerAngles.y * 0.5f);
-	f32 sy = a3Sinf(-eulerAngles.y * 0.5f);
-	f32 cr = a3Cosf(eulerAngles.z * 0.5f);
-	f32 sr = a3Sinf(eulerAngles.z * 0.5f);
-	f32 cp = a3Cosf(eulerAngles.x * 0.5f);
-	f32 sp = a3Sinf(eulerAngles.x * 0.5f);
+	f32 cy = Cosf(-eulerAngles.y * 0.5f);
+	f32 sy = Sinf(-eulerAngles.y * 0.5f);
+	f32 cr = Cosf(eulerAngles.z * 0.5f);
+	f32 sr = Sinf(eulerAngles.z * 0.5f);
+	f32 cp = Cosf(eulerAngles.x * 0.5f);
+	f32 sp = Sinf(eulerAngles.x * 0.5f);
 	q.r = cy * cr * cp + sy * sr * sp;
 	q.i = cy * sr * cp - sy * cr * sp;
 	q.j = cy * cr * sp + sy * sr * cp;
@@ -87,15 +87,15 @@ inline v3 QuatToEulerAngles(const quat &q)
 	f32 sinr = 2.0f * (q.r * q.i + q.j * q.k);
 	f32 cosr = 1.0f - 2.0f * (q.i * q.i + q.j * q.j);
 
-	ret.z = a3ATan2f(sinr, cosr);
+	ret.z = ArcTan2f(sinr, cosr);
 	f32 sinp = 2.0f * (q.r * q.j - q.k * q.i);
-	if(a3FAbsf(sinp) >= 1.0f)
-		ret.x = a3CopySignf(3.141592f * 0.5f, sinp);
+	if(FAbsf(sinp) >= 1.0f)
+		ret.x = CopySignf(3.141592f * 0.5f, sinp);
 	else
-		ret.x = a3ASinf(sinp);
+		ret.x = ArcSinf(sinp);
 	f32 siny = 2.0f * (q.r * q.k + q.i * q.j);
 	f32 cosy = 1.0f - 2.0f * (q.j * q.j + q.k * q.k);
-	ret.y = a3ATan2f(siny, cosy);
+	ret.y = ArcTan2f(siny, cosy);
 
 	return ret;
 }
@@ -127,8 +127,8 @@ inline m4x4 QuatMat4x4C(const quat &q)
 inline quat AngleAxisToQuat(f32 angle, v3 axis)
 {
 	quat q;
-	q.r = a3Cosf(angle * 0.5f);
-	f32 s = a3Sinf(angle * 0.5f);
+	q.r = Cosf(angle * 0.5f);
+	f32 s = Sinf(angle * 0.5f);
 	q.i = s * axis.x;
 	q.j = s * axis.y;
 	q.k = s * axis.z;
@@ -145,7 +145,7 @@ inline quat AngleAxisToQuat(f32 angle, v3 axis)
 inline void QuatToAngleAxis(const quat &q, f32 *angle, v3 *axis)
 {
 	f32 len = q.i * q.i + q.j * q.j + q.k * q.k;
-	*angle = 2.0f * a3ATan2f(len, q.r);
+	*angle = 2.0f * ArcTan2f(len, q.r);
 	len = 1.0f / len;
 	axis->x = q.i * len;
 	axis->y = q.j * len;

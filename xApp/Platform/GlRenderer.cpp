@@ -3,8 +3,9 @@
 #include "GL/GLDebug.h"
 #include "Platform.h"
 
-#define XMAXRENDERABLES2D 1000
-#define XMAXRENDERABLEFONT 1000
+// TODO(Zero):
+// Retain texture binds
+// Make the rendering system more efficient by pushing and drawing maximum sprites in single draw call
 
 struct a3_current_bound
 {
@@ -16,35 +17,35 @@ struct a3_current_bound
 
 static a3_current_bound s_CurrentBound;
 
-inline void InternalBindVertexArrayObject(u32 target)
+inline void a3_BindVertexArrayObject(u32 target)
 {
-	//if (target == s_CurrentBound.VertexArrayObject) return;
+	if (target == s_CurrentBound.VertexArrayObject) return;
 	a3GL(glBindVertexArray(target));
 	s_CurrentBound.VertexArrayObject = target;
 }
 
-inline void InternalBindVertexArrayBuffer(u32 target)
+inline void a3_BindVertexArrayBuffer(u32 target)
 {
-	//if (target == s_CurrentBound.VertexArrayBuffer) return;
+	if (target == s_CurrentBound.VertexArrayBuffer) return;
 	a3GL(glBindBuffer(GL_ARRAY_BUFFER, target));
 	s_CurrentBound.VertexArrayBuffer = target;
 }
 
-inline void InternalBindElementArrayBuffer(u32 target)
+inline void a3_BindElementArrayBuffer(u32 target)
 {
-	//if (target == s_CurrentBound.ElementArrayBuffer) return;
+	if (target == s_CurrentBound.ElementArrayBuffer) return;
 	a3GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, target));
 	s_CurrentBound.ElementArrayBuffer = target;
 }
 
-inline void InternalBindProgram(u32 target)
+inline void a3_BindProgram(u32 target)
 {
-	//if (target == s_CurrentBound.ShaderProgram) return;
+	if (target == s_CurrentBound.ShaderProgram) return;
 	a3GL(glUseProgram(target));
 	s_CurrentBound.ShaderProgram = target;
 }
 
-inline u32 GLCompileShader(GLenum type, s8 source)
+inline u32 a3_CompileShader(GLenum type, s8 source)
 {
 	a3GL(u32 shader = glCreateShader(type));
 	a3GL(glShaderSource(shader, 1, &source, 0));
@@ -64,10 +65,10 @@ inline u32 GLCompileShader(GLenum type, s8 source)
 	return shader;
 }
 
-inline u32 GLCreateShaderProgramFromBuffer(s8 vSource, s8 fSource)
+inline u32 a3_CreateShaderProgramFromBuffer(s8 vSource, s8 fSource)
 {
-	u32 vShader = GLCompileShader(GL_VERTEX_SHADER, vSource);
-	u32 fShader = GLCompileShader(GL_FRAGMENT_SHADER, fSource);
+	u32 vShader = a3_CompileShader(GL_VERTEX_SHADER, vSource);
+	u32 fShader = a3_CompileShader(GL_FRAGMENT_SHADER, fSource);
 
 	a3GL(u32 program = glCreateProgram());
 	a3GL(glAttachShader(program, vShader));
@@ -117,11 +118,11 @@ a3::basic2drenderer a3_renderer::Create2DRenderer() const
 	a3GL(glGenVertexArrays(1, &r.m_VertexArrayObject));
 	a3GL(glGenBuffers(1, &r.m_VertexArrayBuffer));
 	a3GL(glGenBuffers(1, &r.m_ElementArrayBuffer));
-	InternalBindVertexArrayObject(r.m_VertexArrayObject);
-	InternalBindVertexArrayBuffer(r.m_VertexArrayBuffer);
-	InternalBindElementArrayBuffer(r.m_ElementArrayBuffer);
+	a3_BindVertexArrayObject(r.m_VertexArrayObject);
+	a3_BindVertexArrayBuffer(r.m_VertexArrayBuffer);
+	a3_BindElementArrayBuffer(r.m_ElementArrayBuffer);
 
-	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex2d) * 4, null, GL_DYNAMIC_DRAW));
+	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex2d) * 4, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glVertexAttribPointer(a3_vertex2d::POSITION, 3, GL_FLOAT,
 		GL_FALSE, sizeof(a3_vertex2d),
 		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::position))));
@@ -147,10 +148,10 @@ a3::basic2drenderer a3_renderer::Create2DRenderer() const
 	a3::file_content fragment = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DFragmentShader.glsl");
 	a3Assert(vertex.Buffer);
 	a3Assert(fragment.Buffer);
-	r.m_ShaderProgram = GLCreateShaderProgramFromBuffer((s8)vertex.Buffer, (s8)fragment.Buffer);
+	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer((s8)vertex.Buffer, (s8)fragment.Buffer);
 	a3::Platform.FreeFileContent(vertex);
 	a3::Platform.FreeFileContent(fragment);
-	InternalBindProgram(r.m_ShaderProgram);
+	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_TextureDiffuse = glGetUniformLocation(r.m_ShaderProgram, "u_Diffuse"));
 
@@ -163,23 +164,23 @@ a3::font_renderer a3_renderer::CreateFontRenderer() const
 	a3GL(glGenVertexArrays(1, &r.m_VertexArrayObject));
 	a3GL(glGenBuffers(1, &r.m_VertexArrayBuffer));
 	a3GL(glGenBuffers(1, &r.m_ElementArrayBuffer));
-	InternalBindVertexArrayObject(r.m_VertexArrayObject);
-	InternalBindVertexArrayBuffer(r.m_VertexArrayBuffer);
-	InternalBindElementArrayBuffer(r.m_ElementArrayBuffer);
+	a3_BindVertexArrayObject(r.m_VertexArrayObject);
+	a3_BindVertexArrayBuffer(r.m_VertexArrayBuffer);
+	a3_BindElementArrayBuffer(r.m_ElementArrayBuffer);
 
-	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex_font) * A3_VERTICES_FONT_MAX, null, GL_DYNAMIC_DRAW));
+	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex_font) * A3_VERTICES_FONT_MAX, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glVertexAttribPointer(a3_vertex_font::POSTEXCOORDS, 4, GL_FLOAT, GL_FALSE, sizeof(a3_vertex_font), (void*)(a3OffsetOf(a3_vertex_font, a3_vertex_font::posTexCoords))));
-	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * A3_INDICES_FONT_MAX, null, GL_DYNAMIC_DRAW));
+	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * A3_INDICES_FONT_MAX, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glEnableVertexAttribArray(a3_vertex_font::POSTEXCOORDS));
 
 	a3::file_content vertex = a3::Platform.LoadFileContent("Platform/GLSL/FontVertexShader.glsl");
 	a3::file_content fragment = a3::Platform.LoadFileContent("Platform/GLSL/FontFragmentShader.glsl");
 	a3Assert(vertex.Buffer);
 	a3Assert(fragment.Buffer);
-	r.m_ShaderProgram = GLCreateShaderProgramFromBuffer((s8)vertex.Buffer, (s8)fragment.Buffer);
+	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer((s8)vertex.Buffer, (s8)fragment.Buffer);
 	a3::Platform.FreeFileContent(vertex);
 	a3::Platform.FreeFileContent(fragment);
-	InternalBindProgram(r.m_ShaderProgram);
+	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_Color = glGetUniformLocation(r.m_ShaderProgram, "u_Color"));
 	a3GL(r.m_FontAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_FontAtlas"));
@@ -191,15 +192,15 @@ namespace a3 {
 
 	void basic2drenderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
 	{
-		InternalBindProgram(m_ShaderProgram);
+		a3_BindProgram(m_ShaderProgram);
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f).elements));
 	}
 
 	void basic2drenderer::Render(v3 position, v2 dimension, v3 color[4], u32 texture)
 	{
-		InternalBindVertexArrayObject(m_VertexArrayObject);
-		InternalBindVertexArrayBuffer(m_VertexArrayBuffer);
-		InternalBindProgram(m_ShaderProgram);
+		a3_BindVertexArrayObject(m_VertexArrayObject);
+		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
+		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0));
 		a3GL(glBindTexture(GL_TEXTURE_2D, texture));
 		a3GL(glUniform1i(m_TextureDiffuse, 0));
@@ -220,7 +221,7 @@ namespace a3 {
 		v[2].texCoords = { 1.0f, 1.0f };
 		v[3].texCoords = { 0.0f, 1.0f };
 		a3GL(glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(a3_vertex2d) * 4, v));
-		a3GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null));
+		a3GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, A3NULL));
 	}
 
 	void font_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
@@ -230,9 +231,9 @@ namespace a3 {
 
 	void font_renderer::Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::fonts & f)
 	{
-		InternalBindVertexArrayObject(m_VertexArrayObject);
-		InternalBindVertexArrayBuffer(m_VertexArrayBuffer);
-		InternalBindProgram(m_ShaderProgram);
+		a3_BindVertexArrayObject(m_VertexArrayObject);
+		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
+		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0));
 		a3GL(glBindTexture(GL_TEXTURE_2D, texture));
 		a3GL(glUniform1i(m_FontAtlas, 0));
@@ -251,7 +252,7 @@ namespace a3 {
 			{
 				a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
 				a3GL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
-				a3GL(glDrawElements(GL_TRIANGLES, counter * 6, GL_UNSIGNED_INT, null));
+				a3GL(glDrawElements(GL_TRIANGLES, counter * 6, GL_UNSIGNED_INT, A3NULL));
 				if (*t == 0) break;
 				counter = 0;
 				a3GL(vertices = (a3_vertex_font*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));

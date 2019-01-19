@@ -22,14 +22,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "External/STBImage.h"
 
-#define STBTT_ifloor(x)			((i32) a3Floorf(x))
-#define STBTT_iceil(x)			((i32) a3Ceilf(x))
-#define STBTT_sqrt(x)			a3Sqrtf(x)
-#define STBTT_pow(x,y)			a3Powf(x,y)
-#define STBTT_fmod(x,y)			a3FModf(x,y)
-#define STBTT_cos(x)			a3Cosf(x)
-#define STBTT_acos(x)			a3ACosf(x)
-#define STBTT_fabs(x)			a3FAbsf(x)
+#define STBTT_ifloor(x)			((i32) Floorf(x))
+#define STBTT_iceil(x)			((i32) Ceilf(x))
+#define STBTT_sqrt(x)			Sqrtf(x)
+#define STBTT_pow(x,y)			Powf(x,y)
+#define STBTT_fmod(x,y)			FModf(x,y)
+#define STBTT_cos(x)			Cosf(x)
+#define STBTT_acos(x)			ArcCosf(x)
+#define STBTT_fabs(x)			FAbsf(x)
 #define STBTT_strlen(x)			a3::GetStringLength(x)
 #define STBTT_memcpy			a3::MemoryCopy
 #define STBTT_memset			a3::MemorySet

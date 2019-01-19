@@ -2,7 +2,7 @@
 #include "Platform/Platform.h"
 #include "STBImplementation.h"
 
-static inline void InternalSTBWriteCallback(void* context, void* data, i32 size)
+static inline void a3_STBWriteCallback(void* context, void* data, i32 size)
 {
 	a3::file_content* fc = (a3::file_content*)context;
 	fc->Buffer = new u8[size];
@@ -23,7 +23,7 @@ a3::image* a3::LoadPNGImage(memory_arena& arena, s8 file)
 	u8* pixels = stbi_load_from_memory((u8*)fc.Buffer, (i32)fc.Size, &x, &y, &n, 4);
 	Platform.FreeFileContent(fc);
 
-	if (!pixels) return null;
+	if (!pixels) return A3NULL;
 
 	a3::image* img = a3Push(arena, a3::image);
 	img->Width = x;
@@ -57,7 +57,7 @@ b32 a3::WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPer
 	else
 		return false; // NOTE(Zero): Ouput only for 1, 3 and 4 channel images
 
-	if (stbi_write_png_to_func(InternalSTBWriteCallback, &fc, width, height, channels, pixels, stride))
+	if (stbi_write_png_to_func(a3_STBWriteCallback, &fc, width, height, channels, pixels, stride))
 	{
 		// HACK(Zero): Should we directly replace the file?
 		b32 res = a3::Platform.WriteFileContent(file, fc);
@@ -82,7 +82,7 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 		// These temp buffers are used to store extracted bitmap from stb
 		// This is requied because stb extracts bitmap from top-bottom
 		// But we use from bottom-top, so we use this buffer to flip the bitmap vertically
-		u8* tempBuffer = null;
+		u8* tempBuffer = A3NULL;
 		u64 tempBufferSize = 0;
 
 		// NOTE(Zero):
@@ -179,7 +179,7 @@ a3::fonts* a3::LoadTTFont(memory_arena& stack, s8 fileName, f32 scale)
 		a3::WritePNGImage("test.png", result->AtlasWidth, result->AtlasHeight, 1, 1, result->Atlas);
 		return result;
 	}
-	return null;
+	return A3NULL;
 }
 
 f32 a3::GetTTFontKernalAdvance(const fonts & font, i32 glyph0, i32 glyph1)

@@ -4,7 +4,7 @@
 #include "Glad.h"
 
 #if defined(A3DEBUG) || defined(A3INTERNAL)
-inline s8 InternalGLGetErrorString(u32 errorCode)
+inline s8 a3_GLGetErrorString(u32 errorCode)
 {
 	switch(errorCode)
 	{
@@ -25,7 +25,7 @@ x;\
 GLenum error = glGetError();\
 while (error != GL_NO_ERROR)\
 {\
-	a3LogError("OpenGL Call[{u}]: {s}", error, InternalGLGetErrorString(error));\
+	a3LogError("OpenGL Call[{u}]: {s}", error, a3_GLGetErrorString(error));\
 	a3Assert(error == GL_NO_ERROR);\
 	error = glGetError();\
 }\

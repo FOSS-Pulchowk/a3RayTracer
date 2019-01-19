@@ -243,6 +243,9 @@ memory_arena NewMemoryBlock(u32 size)
 	return arena;
 }
 
+// TODO(Zero):
+// Make keyboard input system
+// Input system should be moved from platforn layer and needs to be made proper
 struct win32_user_data
 {
 	a3_input_system inputSystem;
@@ -357,6 +360,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+
+// TODO(Zero):
+// Make entity system proper
 struct entity
 {
 	v3 position;
@@ -407,7 +413,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	AdjustWindowRectEx(&wrc, wndStyles, FALSE, 0);
 	width = wrc.right - wrc.left;
 	height = wrc.bottom - wrc.top;
-	HWND hWnd = CreateWindowExW(0, XWNDCLASSNAME, L"x Application", wndStyles, CW_USEDEFAULT, CW_USEDEFAULT, width, height, null, null, hInstance, 0);
+	HWND hWnd = CreateWindowExW(0, XWNDCLASSNAME, L"x Application", wndStyles, CW_USEDEFAULT, CW_USEDEFAULT, width, height, A3NULL, A3NULL, hInstance, 0);
 
 	if (!hWnd)
 	{
@@ -451,6 +457,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 	memory_arena memory = NewMemoryBlock(a3GigaBytes(1));
 
+	// TODO(Zero):
+	// Make a proper assest management system
 	a3::image* testImage = a3::LoadPNGImage(memory, "Resources/BigSmile.png");
 	a3Assert(testImage);
 
@@ -459,6 +467,8 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 
 	u32 texID, zeroID;
 
+	// TODO(Zero):
+	// This should be moved to GL platform and should not be in Win32
 	a3GL(glGenTextures(1, &texID));
 	a3GL(glBindTexture(GL_TEXTURE_2D, texID));
 	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
@@ -477,7 +487,6 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, zeroImage->Width, zeroImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroImage->Pixels));
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));	
 
-	//a3::gl_textures hackFontTextures = {};
 	a3::fonts* font = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 50.0f);
 	a3Assert(font);
 	u32 fontTexture;
@@ -501,7 +510,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	while (shouldRun)
 	{
 		MSG sMsg;
-		while (PeekMessageW(&sMsg, null, 0, 0, PM_REMOVE))
+		while (PeekMessageW(&sMsg, A3NULL, 0, 0, PM_REMOVE))
 		{
 			if (sMsg.message == WM_QUIT)
 			{
@@ -531,7 +540,7 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		{
 			rect.position.xy += (rect.moveFrameTime * deltaTime * Normalize(rect.moveFinalPosition - rect.position.xy) * 450.0f);
 			rect.moveFrameTime += deltaTime;
-			f32 distance = a3FAbsf(a3Sqrtf(Distance2(rect.position.xy, rect.moveFinalPosition)));
+			f32 distance = FAbsf(Sqrtf(Distance2(rect.position.xy, rect.moveFinalPosition)));
 			if (distance < 0.01f)
 			{
 				rect.isMoving = false;
