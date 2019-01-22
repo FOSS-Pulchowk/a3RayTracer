@@ -572,8 +572,6 @@ i32 a3Main()
 	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
 
-	a3::WritePNGImage("test_img.png", 18, 8, 1, 1, (uutf8*)ticked);
-
 	v3 redcolor[] =
 	{
 		{1.0f, 0.0f, 0.0f},
