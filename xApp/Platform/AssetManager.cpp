@@ -11,7 +11,6 @@ namespace a3 {
 	a3_asset Asset = {};
 }
 
-
 void a3_asset::Resize(u64 count)
 {
 	void* temp = a3::Platform.Recalloc(m_Assets, count * sizeof(void*));
