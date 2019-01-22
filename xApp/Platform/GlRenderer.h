@@ -35,11 +35,14 @@ namespace a3 {
 		u32 m_Projection;
 		u32 m_FontAtlas;
 		u32 m_Color;
+		u32 m_FontAtlasGlId;
+		a3::font* m_RawFontData;
 		font_renderer(){}
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
-		void Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::font& f);
+		void SetFont(a3::font* font);
+		void Render(s8 font, v2 position, f32 scale, v3 color);
 
 		friend struct a3_renderer;
 	};

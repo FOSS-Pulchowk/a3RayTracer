@@ -458,8 +458,12 @@ i32 a3Main()
 
 	a3::basic2drenderer renderer2d = a3::Renderer.Create2DRenderer((s8)r2dVS.Buffer, (s8)r2dFS.Buffer);
 	renderer2d.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
+
+	a3::Asset.LoadFontFromFile(2, "Resources/HackRegular.ttf", 50.0f);
 	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer((s8)fVS.Buffer, (s8)fFS.Buffer);
 	fontRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
+	fontRenderer.SetFont(a3::Asset.Get<a3::font>(2));
+
 	a3::ui_renderer uiRenderer = a3::Renderer.CreateUIRenderer((s8)uiVS.Buffer, (s8)uiFS.Buffer);
 	uiRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 
@@ -523,22 +527,6 @@ i32 a3Main()
 	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, zeroImage->Width, zeroImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroImage->Pixels));
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));	
-
-	a3::Asset.LoadFontFromFile(2, "Resources/HackRegular.ttf", 50.0f);
-	a3::font* font = a3::Asset.Get<a3::font>(2);
-
-	u32 fontTexture;
-	
-	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
-
-	a3GL(glGenTextures(1, &fontTexture));
-	a3GL(glBindTexture(GL_TEXTURE_2D, fontTexture));
-	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, font->AtlasWidth, font->AtlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, font->Atlas));
-	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
 
 	// NOTE(Zero):
 	// Width = ?
@@ -659,11 +647,11 @@ i32 a3Main()
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 		utf8 buffer[256];
 		_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
-		fontRenderer.Render(buffer, { 0.0f, 580.0f }, 0.6f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+		fontRenderer.Render(buffer, { 0.0f, 580.0f }, 0.6f, { 0.8f, 0.9f, 0.2f });
 		_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
-		fontRenderer.Render(buffer, { 0.0f, 560.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+		fontRenderer.Render(buffer, { 0.0f, 560.0f }, 0.4f, { 0.8f, 0.9f, 0.2f });
 		_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
-		fontRenderer.Render(buffer, { 0.0f, 540.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+		fontRenderer.Render(buffer, { 0.0f, 540.0f }, 0.4f, { 0.8f, 0.9f, 0.2f });
 		//_snprintf_s(buffer, 256, 256, "Total Application Memory: %.2fMB", (f32)memory.Capacity / (1024.0f * 1024.0f));
 		//fontRenderer.Render(buffer, { 0.0f, 520.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 		//_snprintf_s(buffer, 256, 256, "Used Application Memory: %.2fMB", (f32)memory.Consumed / (1024.0f * 1024.0f));

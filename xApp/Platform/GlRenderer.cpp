@@ -233,6 +233,7 @@ a3::font_renderer a3_renderer::CreateFontRenderer(s8 vSource, s8 fSource) const
 	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_Color = glGetUniformLocation(r.m_ShaderProgram, "u_Color"));
 	a3GL(r.m_FontAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_FontAtlas"));
+	r.m_FontAtlasGlId = 0;
 
 	return r;
 }
@@ -312,13 +313,32 @@ namespace a3 {
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
-	void font_renderer::Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::font & f)
+	void font_renderer::SetFont(a3::font * font)
+	{
+		a3_BindProgram(m_ShaderProgram);
+		if (m_FontAtlasGlId)
+		{
+			glDeleteTextures(1, &m_FontAtlasGlId);
+		}
+		m_RawFontData = font;
+		a3GL(glGenTextures(1, &m_FontAtlasGlId));
+		a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontAtlasGlId));
+		a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+		a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+		a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+		a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, font->AtlasWidth, font->AtlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, font->Atlas));
+		a3GL(glBindTexture(GL_TEXTURE_2D, 0));
+	}
+
+	void font_renderer::Render(s8 font, v2 position, f32 scale, v3 color)
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0));
-		a3GL(glBindTexture(GL_TEXTURE_2D, texture));
+		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontAtlasGlId));
 		a3GL(glUniform1i(m_FontAtlas, 0));
 		a3GL(glUniform3fv(m_Color, 1, color.values));
 
@@ -346,7 +366,7 @@ namespace a3 {
 				u32* indices = a3GetMappedElementPointer();
 			}
 
-			const a3::character& c = f.Characters[*t];
+			const a3::character& c = m_RawFontData->Characters[*t];
 			if (c.HasBitmap)
 			{
 				f32 x = hBegin + c.OffsetX * scale;
@@ -375,7 +395,7 @@ namespace a3 {
 			}
 			hBegin += c.Advance * scale;
 			if (*(t + 1))
-				hBegin += (a3::GetTTFontKernalAdvance(f, c.GlyphIndex, (f.Characters[*(t + 1)]).GlyphIndex) * scale);
+				hBegin += (a3::GetTTFontKernalAdvance(*m_RawFontData, c.GlyphIndex, (m_RawFontData->Characters[*(t + 1)]).GlyphIndex) * scale);
 		}
 	}
 
