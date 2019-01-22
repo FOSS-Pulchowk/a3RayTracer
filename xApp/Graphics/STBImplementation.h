@@ -19,7 +19,6 @@
 #define STBI_NO_FAILURE_STRINGS
 #endif
 #define STB_IMAGE_STATIC
-#define STB_IMAGE_IMPLEMENTATION
 #include "External/STBImage.h"
 
 #define STBTT_ifloor(x)			((i32) Floorf(x))
@@ -40,7 +39,6 @@
 #define STBTT_free(x,u)			((void)(u),a3::Platform.Free(x))
 #define STBTT_assert(x)			a3Assert(x)
 #define STBTT_STATIC
-#define STB_TRUETYPE_IMPLEMENTATION
 #include "External/STBTrueType.h"
 
 #define STBI_MSC_SECURE_CRT
@@ -51,6 +49,5 @@
 #define STBIW_FREE(p)			a3::Platform.Free(p)
 #define STBIW_MEMMOVE			a3::MemoryMove
 #define STBI_WRITE_NO_STDIO
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "External/STBImageWrite.h"
 

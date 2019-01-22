@@ -1,8 +1,10 @@
 #pragma once
 #include "Common/Core.h"
 #include "Platform/Platform.h"
+#include "STBImplementation.h"
 
-struct stbtt_fontinfo;
+#define A3MAXLOADGLYPHX 16
+#define A3MAXLOADGLYPHY 16
 
 namespace a3 {
 
@@ -31,17 +33,23 @@ struct character
 
 struct fonts
 {
-	::stbtt_fontinfo* Info;
+	stbtt_fontinfo Info;
 	u32 AtlasWidth;
 	u32 AtlasHeight;
 	u8* Atlas;
 	f32 ScalingFactor;
-	character Characters[256];
+	character Characters[A3MAXLOADGLYPHX * A3MAXLOADGLYPHY];
 };
+
+u64 QueryImageSize(void* buffer, i32 length);
+image LoadImageFromBufer(void* imgeBuffer, i32 length, void* destination);
+b32 WriteImageToBuffer(void* buffer, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
+u64 QueryFontSize(void* buffer, i32 length, f32 scale);
+fonts LoadFontFromBuffer(void* buffer, f32 scale, void* destination);
+f32 GetTTFontKernalAdvance(const fonts& font, i32 glyph0, i32 glyph1);
 
 image* LoadPNGImage(memory_arena& arena, s8 file);
 b32 WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
 fonts* LoadTTFont(memory_arena& arena, s8 file, f32 scale);
-f32 GetTTFontKernalAdvance(const fonts& font, i32 glyph0, i32 glyph1);
 
 }

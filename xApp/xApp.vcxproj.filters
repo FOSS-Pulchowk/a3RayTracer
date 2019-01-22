@@ -92,6 +92,9 @@
     <ClInclude Include="Graphics\STBImplementation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Platform\GLSL\UIFragmentShader.glsl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Platform\sample.vert" />
@@ -102,6 +105,7 @@
     <None Include="Platform\GLSL\Basic2DFragmentShader.glsl" />
     <None Include="Platform\GLSL\FontFragmentShader.glsl" />
     <None Include="Platform\GLSL\FontVertexShader.glsl" />
+    <None Include="Platform\GLSL\UIVertexShader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\BigSmile.png">

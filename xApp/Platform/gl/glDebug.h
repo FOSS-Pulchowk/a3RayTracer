@@ -1,6 +1,5 @@
 #pragma once
 #include "Common/Core.h"
-#include "Platform/Platform.h"
 #include "Glad.h"
 
 #if defined(A3DEBUG) || defined(A3INTERNAL)

@@ -1,7 +1,7 @@
+#include "Common/Core.h"
 #include "GlRenderer.h"
 #include "GL/Glad.h"
 #include "GL/GLDebug.h"
-#include "Platform.h"
 
 // TODO(Zero):
 // Retain texture binds
@@ -13,9 +13,44 @@ struct a3_current_bound
 	u32 VertexArrayBuffer;
 	u32 ElementArrayBuffer;
 	u32 ShaderProgram;
+
+	b32 VertexArrayBufferIsMapped;
+	b32 ElementArrayBufferIsMapped;
+	void* MappedVertexArrayPointer;
+	u32* MappedElementArrayPointer;
 };
 
 static a3_current_bound s_CurrentBound;
+
+inline void a3_MapVertexPointer()
+{
+	if (s_CurrentBound.VertexArrayBufferIsMapped) return;
+	a3GL(s_CurrentBound.MappedVertexArrayPointer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+	s_CurrentBound.VertexArrayBufferIsMapped = true;
+}
+
+inline void a3_MapElementPointer()
+{
+	if (s_CurrentBound.ElementArrayBufferIsMapped) return;
+	a3GL(s_CurrentBound.MappedElementArrayPointer = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+	s_CurrentBound.ElementArrayBufferIsMapped = true;
+}
+
+inline void a3_UnmapVertexPointer()
+{
+	a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
+	s_CurrentBound.VertexArrayBufferIsMapped = false;
+}
+
+inline void a3_UnmapElementPointer()
+{
+	a3GL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
+	s_CurrentBound.ElementArrayBufferIsMapped = false;
+}
+
+#define a3GetMappedVertexPointer(type) (type*)s_CurrentBound.MappedVertexArrayPointer
+#define a3GetMappedElementPointer() s_CurrentBound.MappedElementArrayPointer
+
 
 inline void a3_BindVertexArrayObject(u32 target)
 {
@@ -27,6 +62,11 @@ inline void a3_BindVertexArrayObject(u32 target)
 inline void a3_BindVertexArrayBuffer(u32 target)
 {
 	if (target == s_CurrentBound.VertexArrayBuffer) return;
+	if (s_CurrentBound.VertexArrayBufferIsMapped)
+	{
+		// NOTE(Zero): Pointer is not cleared to zero
+		a3_UnmapVertexPointer();
+	}
 	a3GL(glBindBuffer(GL_ARRAY_BUFFER, target));
 	s_CurrentBound.VertexArrayBuffer = target;
 }
@@ -34,6 +74,11 @@ inline void a3_BindVertexArrayBuffer(u32 target)
 inline void a3_BindElementArrayBuffer(u32 target)
 {
 	if (target == s_CurrentBound.ElementArrayBuffer) return;
+	if (s_CurrentBound.ElementArrayBufferIsMapped)
+	{
+		// NOTE(Zero): Pointer is not cleared to zero
+		a3_UnmapElementPointer();
+	}
 	a3GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, target));
 	s_CurrentBound.ElementArrayBuffer = target;
 }
@@ -95,7 +140,7 @@ struct a3_vertex2d
 {
 	v3 position;
 	v3 color;
-	v3 texCoords;
+	v2 texCoords;
 	enum { POSITION = 0, COLOR, TEXCOORDS };
 };
 
@@ -108,19 +153,40 @@ struct a3_vertex_font
 	enum { POSTEXCOORDS = 0 };
 };
 
+#define A3_UI_RENDER_MAX 500
+#define A3_VERTICES_UI_MAX A3_FONT_RENDER_MAX * 4
+#define A3_INDICES_UI_MAX A3_FONT_RENDER_MAX * 6
+struct a3_vertex_ui
+{
+	v2 position;
+	v3 color;
+	v2 texCoords;
+	enum { POSITION = 0, COLOR, TEXCOORDS };
+};
+
 namespace a3 {
 	const a3_renderer Renderer;
 }
 
-a3::basic2drenderer a3_renderer::Create2DRenderer() const
+inline void a3_GenerateBuffers(u32* o, u32* v, u32* e)
+{
+	a3GL(glGenVertexArrays(1, o));
+	a3GL(glGenBuffers(1, v));
+	a3GL(glGenBuffers(1, e));
+}
+
+inline void a3_GenerateAndBind(u32* o, u32* v, u32* e)
+{
+	a3_GenerateBuffers(o, v, e);
+	a3_BindVertexArrayObject(*o);
+	a3_BindVertexArrayBuffer(*v);
+	a3_BindElementArrayBuffer(*e);
+}
+
+a3::basic2drenderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 {
 	a3::basic2drenderer r;
-	a3GL(glGenVertexArrays(1, &r.m_VertexArrayObject));
-	a3GL(glGenBuffers(1, &r.m_VertexArrayBuffer));
-	a3GL(glGenBuffers(1, &r.m_ElementArrayBuffer));
-	a3_BindVertexArrayObject(r.m_VertexArrayObject);
-	a3_BindVertexArrayBuffer(r.m_VertexArrayBuffer);
-	a3_BindElementArrayBuffer(r.m_ElementArrayBuffer);
+	a3_GenerateAndBind(&r.m_VertexArrayObject, &r.m_VertexArrayBuffer, &r.m_ElementArrayBuffer);
 
 	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex2d) * 4, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glVertexAttribPointer(a3_vertex2d::POSITION, 3, GL_FLOAT,
@@ -144,13 +210,7 @@ a3::basic2drenderer a3_renderer::Create2DRenderer() const
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::COLOR));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::TEXCOORDS));
 
-	a3::file_content vertex = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DVertexShader.glsl");
-	a3::file_content fragment = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DFragmentShader.glsl");
-	a3Assert(vertex.Buffer);
-	a3Assert(fragment.Buffer);
-	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer((s8)vertex.Buffer, (s8)fragment.Buffer);
-	a3::Platform.FreeFileContent(vertex);
-	a3::Platform.FreeFileContent(fragment);
+	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_TextureDiffuse = glGetUniformLocation(r.m_ShaderProgram, "u_Diffuse"));
@@ -158,28 +218,17 @@ a3::basic2drenderer a3_renderer::Create2DRenderer() const
 	return r;
 }
 
-a3::font_renderer a3_renderer::CreateFontRenderer() const
+a3::font_renderer a3_renderer::CreateFontRenderer(s8 vSource, s8 fSource) const
 {
 	a3::font_renderer r;
-	a3GL(glGenVertexArrays(1, &r.m_VertexArrayObject));
-	a3GL(glGenBuffers(1, &r.m_VertexArrayBuffer));
-	a3GL(glGenBuffers(1, &r.m_ElementArrayBuffer));
-	a3_BindVertexArrayObject(r.m_VertexArrayObject);
-	a3_BindVertexArrayBuffer(r.m_VertexArrayBuffer);
-	a3_BindElementArrayBuffer(r.m_ElementArrayBuffer);
+	a3_GenerateAndBind(&r.m_VertexArrayObject, &r.m_VertexArrayBuffer, &r.m_ElementArrayBuffer);
 
 	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex_font) * A3_VERTICES_FONT_MAX, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glVertexAttribPointer(a3_vertex_font::POSTEXCOORDS, 4, GL_FLOAT, GL_FALSE, sizeof(a3_vertex_font), (void*)(a3OffsetOf(a3_vertex_font, a3_vertex_font::posTexCoords))));
 	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * A3_INDICES_FONT_MAX, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glEnableVertexAttribArray(a3_vertex_font::POSTEXCOORDS));
 
-	a3::file_content vertex = a3::Platform.LoadFileContent("Platform/GLSL/FontVertexShader.glsl");
-	a3::file_content fragment = a3::Platform.LoadFileContent("Platform/GLSL/FontFragmentShader.glsl");
-	a3Assert(vertex.Buffer);
-	a3Assert(fragment.Buffer);
-	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer((s8)vertex.Buffer, (s8)fragment.Buffer);
-	a3::Platform.FreeFileContent(vertex);
-	a3::Platform.FreeFileContent(fragment);
+	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_Color = glGetUniformLocation(r.m_ShaderProgram, "u_Color"));
@@ -188,12 +237,40 @@ a3::font_renderer a3_renderer::CreateFontRenderer() const
 	return r;
 }
 
+a3::ui_renderer a3_renderer::CreateUIRenderer(s8 vSource, s8 fSource) const
+{
+	a3::ui_renderer r;
+	a3_GenerateAndBind(&r.m_VertexArrayObject, &r.m_VertexArrayBuffer, &r.m_ElementArrayBuffer);
+
+	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex_ui) * A3_VERTICES_UI_MAX, A3NULL, GL_DYNAMIC_DRAW));
+	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * A3_INDICES_UI_MAX, A3NULL, GL_DYNAMIC_DRAW));
+	a3GL(glVertexAttribPointer(a3_vertex_ui::POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(a3_vertex_ui), (void*)(a3OffsetOf(a3_vertex_ui, a3_vertex_ui::position))));
+	a3GL(glVertexAttribPointer(a3_vertex_ui::COLOR, 3, GL_FLOAT, GL_FALSE, sizeof(a3_vertex_ui), (void*)(a3OffsetOf(a3_vertex_ui, a3_vertex_ui::color))));
+	a3GL(glVertexAttribPointer(a3_vertex_ui::TEXCOORDS, 2, GL_FLOAT, GL_FALSE, sizeof(a3_vertex_ui), (void*)(a3OffsetOf(a3_vertex_ui, a3_vertex_ui::texCoords))));
+	a3GL(glEnableVertexAttribArray(a3_vertex_ui::POSITION));
+	a3GL(glEnableVertexAttribArray(a3_vertex_ui::COLOR));
+	a3GL(glEnableVertexAttribArray(a3_vertex_ui::TEXCOORDS));
+
+	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
+	a3_BindProgram(r.m_ShaderProgram);
+	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
+	a3GL(r.m_UITexture = glGetUniformLocation(r.m_ShaderProgram, "u_UITexture"));
+	r.m_Count = 0;
+
+	return r;
+}
+
 namespace a3 {
 
 	void basic2drenderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
 	{
+		SetRegion(m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f));
+	}
+
+	void basic2drenderer::SetRegion(const m4x4& p)
+	{
 		a3_BindProgram(m_ShaderProgram);
-		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f).elements));
+		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
 	void basic2drenderer::Render(v3 position, v2 dimension, v3 color[4], u32 texture)
@@ -226,7 +303,13 @@ namespace a3 {
 
 	void font_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
 	{
-		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f).elements));
+		SetRegion(m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f));
+	}
+
+	void font_renderer::SetRegion(const m4x4& p)
+	{
+		a3_BindProgram(m_ShaderProgram);
+		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
 	void font_renderer::Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::fonts & f)
@@ -241,8 +324,10 @@ namespace a3 {
 
 		u8* t = (u8*)font;
 		f32 hBegin = position.x;
-		a3GL(a3_vertex_font* vertices = (a3_vertex_font*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-		a3GL(u32* indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+		a3_MapVertexPointer();
+		a3_MapElementPointer();
+		a3_vertex_font* vertices = a3GetMappedVertexPointer(a3_vertex_font);
+		u32* indices = a3GetMappedElementPointer();
 
 		u32 counter = 0;
 		for ( ; ; ++t)
@@ -250,13 +335,15 @@ namespace a3 {
 			// Flush
 			if (counter == A3_FONT_RENDER_MAX || *t == 0)
 			{
-				a3GL(glUnmapBuffer(GL_ARRAY_BUFFER));
-				a3GL(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
+				a3_UnmapVertexPointer();
+				a3_UnmapElementPointer();
 				a3GL(glDrawElements(GL_TRIANGLES, counter * 6, GL_UNSIGNED_INT, A3NULL));
 				if (*t == 0) break;
 				counter = 0;
-				a3GL(vertices = (a3_vertex_font*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
-				a3GL(indices = (u32*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+				a3_MapVertexPointer();
+				a3_MapElementPointer();
+				a3_vertex_font* vertices = a3GetMappedVertexPointer(a3_vertex_font);
+				u32* indices = a3GetMappedElementPointer();
 			}
 
 			const a3::character& c = f.Characters[*t];
@@ -290,6 +377,70 @@ namespace a3 {
 			if (*(t + 1))
 				hBegin += (a3::GetTTFontKernalAdvance(f, c.GlyphIndex, (f.Characters[*(t + 1)]).GlyphIndex) * scale);
 		}
+	}
+
+	void ui_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
+	{
+		SetRegion(m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f));
+	}
+
+	void ui_renderer::SetRegion(const m4x4& p)
+	{
+		a3_BindProgram(m_ShaderProgram);
+		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
+	}
+
+	void ui_renderer::Push(v2 position, v2 dimension, v3 color[4], v2 texCoords, u32 texture)
+	{
+		if (m_Count == A3_UI_RENDER_MAX) Flush(texture);
+
+		a3_BindVertexArrayObject(m_VertexArrayObject);
+		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
+		a3_BindElementArrayBuffer(m_ElementArrayBuffer);
+		a3_MapVertexPointer();
+		a3_MapElementPointer();
+		a3_vertex_ui* v = a3GetMappedVertexPointer(a3_vertex_ui);
+		u32* i = a3GetMappedElementPointer();
+
+		v[m_Count * 4 + 0].position = position;
+		v[m_Count * 4 + 1].position = position;
+		v[m_Count * 4 + 2].position = position;
+		v[m_Count * 4 + 3].position = position;
+		v[m_Count * 4 + 1].position.x += dimension.x;
+		v[m_Count * 4 + 2].position += dimension;
+		v[m_Count * 4 + 3].position.y += dimension.y;
+		v[m_Count * 4 + 0].color = color[0];
+		v[m_Count * 4 + 1].color = color[1];
+		v[m_Count * 4 + 2].color = color[2];
+		v[m_Count * 4 + 3].color = color[3];
+		v[m_Count * 4 + 0].texCoords = { 0.0f, 0.0f };
+		v[m_Count * 4 + 1].texCoords = { 1.0f, 0.0f };
+		v[m_Count * 4 + 2].texCoords = { 1.0f, 1.0f };
+		v[m_Count * 4 + 3].texCoords = { 0.0f, 1.0f };
+
+		i[m_Count * 4 + 0] = m_Count * 4 + 0;
+		i[m_Count * 4 + 1] = m_Count * 4 + 1;
+		i[m_Count * 4 + 2] = m_Count * 4 + 2;
+		i[m_Count * 4 + 3] = m_Count * 4 + 0;
+		i[m_Count * 4 + 4] = m_Count * 4 + 2;
+		i[m_Count * 4 + 5] = m_Count * 4 + 3;
+
+		m_Count++;
+	}
+
+	void ui_renderer::Flush(u32 texture)
+	{
+		a3_BindVertexArrayObject(m_VertexArrayObject);
+		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
+		a3_BindElementArrayBuffer(m_ElementArrayBuffer);
+		a3_UnmapVertexPointer();
+		a3_UnmapElementPointer();
+		a3_BindProgram(m_ShaderProgram);
+		a3GL(glActiveTexture(GL_TEXTURE1));
+		a3GL(glBindTexture(GL_TEXTURE_2D, texture));
+		a3GL(glUniform1i(m_UITexture, 1));
+		a3GL(glDrawElements(GL_TRIANGLES, m_Count * 6, GL_UNSIGNED_INT, A3NULL));
+		m_Count = 0;
 	}
 
 }

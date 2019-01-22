@@ -19,6 +19,7 @@ namespace a3 {
 		basic2drenderer(){}
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
+		void SetRegion(const m4x4& p);
 		void Render(v3 position, v2 dimension, v3 color[4], u32 texture);
 
 		friend struct a3_renderer;
@@ -37,7 +38,28 @@ namespace a3 {
 		font_renderer(){}
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
+		void SetRegion(const m4x4& p);
 		void Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::fonts& f);
+
+		friend struct a3_renderer;
+	};
+
+	struct ui_renderer
+	{
+	private:
+		u32 m_VertexArrayObject;
+		u32 m_VertexArrayBuffer;
+		u32 m_ElementArrayBuffer;
+		u32 m_ShaderProgram;
+		u32 m_Projection;
+		u32 m_UITexture;
+
+		u32 m_Count;
+	public:
+		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
+		void SetRegion(const m4x4& p);
+		void Push(v2 position, v2 dimension, v3 color[4], v2 texCoords, u32 texture);
+		void Flush(u32 texture);
 
 		friend struct a3_renderer;
 	};
@@ -45,8 +67,9 @@ namespace a3 {
 
 struct a3_renderer
 {
-	a3::basic2drenderer Create2DRenderer() const;
-	a3::font_renderer CreateFontRenderer() const;
+	a3::basic2drenderer Create2DRenderer(s8 vSource, s8 fSource) const;
+	a3::font_renderer CreateFontRenderer(s8 vSource, s8 fSource) const;
+	a3::ui_renderer CreateUIRenderer(s8 vSource, s8 fSource) const;
 };
 
 namespace a3 {

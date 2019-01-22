@@ -38,6 +38,7 @@ static const HANDLE s_HeapHandle = GetProcessHeap();
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 static u64 s_TotalHeapAllocated;
 static u64 s_TotalHeapFreed;
+#define a3Main() main()
 #define a3InternalAllocationSize(x) ((x) + sizeof(u64))
 #define a3InternalGetActualPtr(p) ((void*)((u8*)(p) - sizeof(u64)))
 #define a3InternalHeapAllocation(x) x;\
@@ -66,6 +67,7 @@ static u64 s_TotalHeapFreed;
 				s_TotalHeapFreed += freed; \
 			}
 #else
+#define a3Main() CALLBACK wWinMain(HINSTANCE, HINSTANCE, LPWSTR, i32)
 #define a3InternalAllocationSize(x) (x)
 #define a3InternalGetActualPtr(p) (p)
 #define a3InternalHeapAllocation(x) x;
@@ -387,15 +389,24 @@ struct entity
 	f32 moveFrameTime;
 };
 
+void Test()
+{
+	using namespace a3;
+	memory_arena m = NewMemoryBlock(a3MegaBytes(500));
+	image* i = LoadPNGImage(m, "tick.png");
+	file_content f;
+	f.Buffer = i->Pixels;
+	f.Size = i->Width*i->Height*i->Channels;
+	Platform.WriteFileContent("test_file.txt", f);
+}
+
 #define A3_WINDOW_CLASS_NAME L"a3WindowClass"
-#if defined(A3DEBUG) || defined(A3INTERNAL)
-int main()
+
+i32 a3Main()
 {
-	HINSTANCE hInstance = GetModuleHandleW(0);
-#else
-i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
-{
-#endif
+	//Test();
+	HMODULE hInstance = GetModuleHandleW(0);
+
 	WNDCLASSEXW wndClassExW = {};
 	wndClassExW.cbSize = sizeof(wndClassExW);
 	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
@@ -428,10 +439,32 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	HDC hDC = GetDC(hWnd);
 	a3GL(glViewport(0, 0, A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT));
 
-	a3::basic2drenderer renderer2d = a3::Renderer.Create2DRenderer();
+	a3::file_content r2dVS = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DVertexShader.glsl");
+	a3::file_content r2dFS = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DFragmentShader.glsl");
+	a3Assert(r2dVS.Buffer);
+	a3Assert(r2dFS.Buffer);
+	a3::file_content fVS = a3::Platform.LoadFileContent("Platform/GLSL/FontVertexShader.glsl");
+	a3::file_content fFS = a3::Platform.LoadFileContent("Platform/GLSL/FontFragmentShader.glsl");
+	a3Assert(fVS.Buffer);
+	a3Assert(fFS.Buffer);
+	a3::file_content uiVS = a3::Platform.LoadFileContent("Platform/GLSL/UIVertexShader.glsl");
+	a3::file_content uiFS = a3::Platform.LoadFileContent("Platform/GLSL/UIFragmentShader.glsl");
+	a3Assert(uiVS.Buffer);
+	a3Assert(uiFS.Buffer);
+
+	a3::basic2drenderer renderer2d = a3::Renderer.Create2DRenderer((s8)r2dVS.Buffer, (s8)r2dFS.Buffer);
 	renderer2d.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
-	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer();
+	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer((s8)fVS.Buffer, (s8)fFS.Buffer);
 	fontRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
+	a3::ui_renderer uiRenderer = a3::Renderer.CreateUIRenderer((s8)uiVS.Buffer, (s8)uiFS.Buffer);
+	uiRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
+
+	a3::Platform.FreeFileContent(r2dVS);
+	a3::Platform.FreeFileContent(r2dFS);
+	a3::Platform.FreeFileContent(fFS);
+	a3::Platform.FreeFileContent(fFS);
+	a3::Platform.FreeFileContent(uiFS);
+	a3::Platform.FreeFileContent(uiFS);
 
 	f32 value = 0.0f;
 
@@ -447,7 +480,6 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	LARGE_INTEGER performanceCounter;
 	QueryPerformanceCounter(&performanceCounter);
 
-#define X_NUMBER_OF_ENTITIES 1
 	entity rect = {};
 	rect.position = { 100.0f, 100.0f, 0.0f };
 	rect.dimension = { 100.0f, 100.0f };
@@ -504,9 +536,61 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
 	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, font->AtlasWidth, font->AtlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, font->Atlas));
+	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
 
+	// NOTE(Zero):
+	// Width = ?
+	// Height = ?;
+	i32 a = 255;
+	const utf8 ticked[] =
+	{
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 0, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 126, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 126, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	};
+
+	u32 tick;
+	a3GL(glGenTextures(1, &tick));
+	a3GL(glBindTexture(GL_TEXTURE_2D, tick));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+	a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 50, 50, 0, GL_RED, GL_BYTE, ticked));
 	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));
+
+	a3::WritePNGImage("test_img.png", 18, 8, 1, 1, (uutf8*)ticked);
+
+	v3 redcolor[] =
+	{
+		{1.0f, 0.0f, 0.0f},
+		{1.0f, 0.0f, 0.0f},
+		{1.0f, 0.0f, 0.0f},
+		{1.0f, 0.0f, 0.0f}
+	};
 
 	f32 deltaTime = 0.0f;
 
@@ -562,11 +646,13 @@ i32 CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, i32)
 		v2 dimension = { 100.0f, 100.0f };
 		renderer2d.Render(rect.position, dimension, rect.acolor, texID);
 
+		uiRenderer.Push(rect.position.xy + v2{ 100.0f, 100.0f }, dimension, redcolor, { 0.0f, 0.0f }, tick);
+		uiRenderer.Flush(tick);
+
 		LARGE_INTEGER currentPerformanceCounter;
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
-
 
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 		utf8 buffer[256];
