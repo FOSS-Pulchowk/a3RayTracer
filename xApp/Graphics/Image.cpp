@@ -76,7 +76,7 @@ b32 a3::WriteImageToBuffer(void * destination, i32 width, i32 height, i32 channe
 		return false; // NOTE(Zero): Ouput only for 1, 3 and 4 channel images
 
 	a3_buffer buffer = {};
-	if (stbi_write_png_to_func(a3_STBWriteCallback, &buffer, width, height, channels, pixels, stride))
+	if (stbi_write_png_to_func(a3_STBWriteBufferCallback, &buffer, width, height, channels, pixels, stride))
 	{
 		a3::MemoryCopy(destination, buffer.buffer, buffer.size);
 		delete[] buffer.buffer;
