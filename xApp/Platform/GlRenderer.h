@@ -39,7 +39,7 @@ namespace a3 {
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
-		void Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::fonts& f);
+		void Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::font& f);
 
 		friend struct a3_renderer;
 	};

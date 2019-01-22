@@ -4,6 +4,7 @@
 
 #include "GL/GLDebug.h"
 #include "GlRenderer.h"
+#include "Platform/AssetManager.h"
 
 #include "Math/Math.h"
 #include "Graphics/Image.h"
@@ -199,6 +200,21 @@ void* a3_platform::Realloc(void* usrPtr, u64 size) const
 	return a3::Platform.Malloc(size);
 }
 
+void* a3_platform::Recalloc(void* usrPtr, u64 size) const
+{
+	if (usrPtr)
+	{
+		a3InternalHeapReAllocation(
+			void* ptr = HeapReAlloc(s_HeapHandle, HEAP_ZERO_MEMORY, a3InternalGetActualPtr(usrPtr), a3InternalAllocationSize(size))
+		);
+		return ptr;
+	}
+	// NOTE(Zero):
+	// If the usrPtr is null, Malloc is called
+	// Following the Standard Library
+	return a3::Platform.Calloc(size);
+}
+
 b32 a3_platform::Free(void* ptr) const
 {
 	if (ptr)
@@ -389,22 +405,10 @@ struct entity
 	f32 moveFrameTime;
 };
 
-void Test()
-{
-	using namespace a3;
-	memory_arena m = NewMemoryBlock(a3MegaBytes(500));
-	image* i = LoadPNGImage(m, "tick.png");
-	file_content f;
-	f.Buffer = i->Pixels;
-	f.Size = i->Width*i->Height*i->Channels;
-	Platform.WriteFileContent("test_file.txt", f);
-}
-
 #define A3_WINDOW_CLASS_NAME L"a3WindowClass"
 
 i32 a3Main()
 {
-	//Test();
 	HMODULE hInstance = GetModuleHandleW(0);
 
 	WNDCLASSEXW wndClassExW = {};
@@ -491,15 +495,12 @@ i32 a3Main()
 	rect.isMoving = false;
 	rect.moveFinalPosition = v2{ 0.0f, 0.0f };
 
-	memory_arena memory = NewMemoryBlock(a3GigaBytes(1));
+	//memory_arena memory = NewMemoryBlock(a3GigaBytes(1));
+	a3::Asset.LoadImageFromFile(0, "Resources/BigSmile.png");
+	a3::Asset.LoadImageFromFile(1, "Resources/Zero.png");
 
-	// TODO(Zero):
-	// Make a proper assest management system
-	a3::image* testImage = a3::LoadPNGImage(memory, "Resources/BigSmile.png");
-	a3Assert(testImage);
-
-	a3::image* zeroImage = a3::LoadPNGImage(memory, "Resources/Zero.png");
-	a3Assert(zeroImage);
+	a3::image* testImage = a3::Asset.Get<a3::image>(0);
+	a3::image* zeroImage = a3::Asset.Get<a3::image>(1);
 
 	u32 texID, zeroID;
 
@@ -523,8 +524,9 @@ i32 a3Main()
 	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, zeroImage->Width, zeroImage->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, zeroImage->Pixels));
 	a3GL(glBindTexture(GL_TEXTURE_2D, 0));	
 
-	a3::fonts* font = a3::LoadTTFont(memory, "Resources/HackRegular.ttf", 50.0f);
-	a3Assert(font);
+	a3::Asset.LoadFontFromFile(2, "Resources/HackRegular.ttf", 50.0f);
+	a3::font* font = a3::Asset.Get<a3::font>(2);
+
 	u32 fontTexture;
 	
 	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
@@ -662,10 +664,10 @@ i32 a3Main()
 		fontRenderer.Render(buffer, { 0.0f, 560.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 		_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
 		fontRenderer.Render(buffer, { 0.0f, 540.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
-		_snprintf_s(buffer, 256, 256, "Total Application Memory: %.2fMB", (f32)memory.Capacity / (1024.0f * 1024.0f));
-		fontRenderer.Render(buffer, { 0.0f, 520.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
-		_snprintf_s(buffer, 256, 256, "Used Application Memory: %.2fMB", (f32)memory.Consumed / (1024.0f * 1024.0f));
-		fontRenderer.Render(buffer, { 0.0f, 500.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+		//_snprintf_s(buffer, 256, 256, "Total Application Memory: %.2fMB", (f32)memory.Capacity / (1024.0f * 1024.0f));
+		//fontRenderer.Render(buffer, { 0.0f, 520.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+		//_snprintf_s(buffer, 256, 256, "Used Application Memory: %.2fMB", (f32)memory.Consumed / (1024.0f * 1024.0f));
+		//fontRenderer.Render(buffer, { 0.0f, 500.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 #endif
 
 		SwapBuffers(hDC);

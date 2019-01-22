@@ -39,6 +39,9 @@
     <ClCompile Include="Platform\GlRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Platform\AssetManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\Core.h">
@@ -93,6 +96,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Platform\GLSL\UIFragmentShader.glsl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform\AssetManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

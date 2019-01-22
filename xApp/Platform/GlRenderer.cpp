@@ -312,7 +312,7 @@ namespace a3 {
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
-	void font_renderer::Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::fonts & f)
+	void font_renderer::Render(s8 font, v2 position, f32 scale, v3 color, u32 texture, const a3::font & f)
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);

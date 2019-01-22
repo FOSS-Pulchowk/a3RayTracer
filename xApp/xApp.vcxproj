@@ -260,6 +260,7 @@
     <ClCompile Include="Graphics\Image.cpp" />
     <ClCompile Include="Math\Matrix4.cpp" />
     <ClCompile Include="Math\Quaterniod.cpp" />
+    <ClCompile Include="Platform\AssetManager.cpp" />
     <ClCompile Include="Platform\GlRenderer.cpp" />
     <ClCompile Include="Platform\gl\Glad.cpp" />
     <ClCompile Include="Platform\Win32Platform.cpp" />
@@ -275,6 +276,7 @@
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Math\Matrix4.h" />
     <ClInclude Include="Math\Quaterniod.h" />
+    <ClInclude Include="Platform\AssetManager.h" />
     <ClInclude Include="Platform\GlRenderer.h" />
     <ClInclude Include="Platform\GLSL\UIFragmentShader.glsl" />
     <ClInclude Include="Platform\GL\Glad.h" />

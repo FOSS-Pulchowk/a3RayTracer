@@ -141,7 +141,8 @@ struct a3_platform
 	void* Malloc(u64 size) const;
 	void* Calloc(u64 size) const;
 	void* Realloc(void* ptr, u64 size) const;
-	b32 Free(void* size) const;
+	void* Recalloc(void* ptr, u64 size) const;
+	b32 Free(void* ptr) const;
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 	u64 GetTotalHeapAllocated() const;
 	u64 GetTotalHeapFreed() const;

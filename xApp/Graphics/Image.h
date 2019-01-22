@@ -31,7 +31,7 @@ struct character
 	f32 Advance;
 };
 
-struct fonts
+struct font
 {
 	stbtt_fontinfo Info;
 	u32 AtlasWidth;
@@ -45,11 +45,11 @@ u64 QueryImageSize(void* buffer, i32 length);
 image LoadImageFromBufer(void* imgeBuffer, i32 length, void* destination);
 b32 WriteImageToBuffer(void* buffer, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
 u64 QueryFontSize(void* buffer, i32 length, f32 scale);
-fonts LoadFontFromBuffer(void* buffer, f32 scale, void* destination);
-f32 GetTTFontKernalAdvance(const fonts& font, i32 glyph0, i32 glyph1);
+font LoadFontFromBuffer(void* buffer, f32 scale, void* destination);
+f32 GetTTFontKernalAdvance(const font& font, i32 glyph0, i32 glyph1);
 
 image* LoadPNGImage(memory_arena& arena, s8 file);
 b32 WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
-fonts* LoadTTFont(memory_arena& arena, s8 file, f32 scale);
+font* LoadTTFont(memory_arena& arena, s8 file, f32 scale);
 
 }
