@@ -30,9 +30,6 @@
     <ClCompile Include="Platform\gl\Glad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\Image.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Platform\Win32Platform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -40,6 +37,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Platform\AssetManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility\Resource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,9 +71,6 @@
     <ClInclude Include="Platform\GL\GLExtensions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\Image.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="External\STBImageWrite.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -92,19 +89,25 @@
     <ClInclude Include="Platform\GlRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\STBImplementation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Platform\GLSL\UIFragmentShader.glsl">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Platform\AssetManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Platform\Memory.h">
+    <ClInclude Include="Platform\GLResources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Platform\GLResources.h">
+    <ClInclude Include="a3Interface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\Memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\STBImplementation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

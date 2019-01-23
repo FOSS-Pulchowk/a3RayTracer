@@ -1,7 +1,7 @@
 #pragma once
 #include "Common/Core.h"
 #include "Math/Math.h"
-#include "Graphics/Image.h"
+#include "Utility/Resource.h"
 #include "GLResources.h"
 
 struct a3_renderer;

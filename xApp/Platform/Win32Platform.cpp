@@ -7,11 +7,13 @@
 #include "Platform/AssetManager.h"
 
 #include "Math/Math.h"
-#include "Graphics/Image.h"
-#include "GLResources.h"
 
+#include "GLResources.h"
+#include "Utility/Resource.h"
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
+
+#include "a3Interface.h"
 
 // Needed only for Debug and internal build
 #if defined(A3DEBUG) || defined(A3INTERNAL)

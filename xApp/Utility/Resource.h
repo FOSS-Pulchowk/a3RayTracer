@@ -1,6 +1,5 @@
 #pragma once
 #include "Common/Core.h"
-#include "Platform/Platform.h"
 #include "STBImplementation.h"
 
 #define A3MAXLOADGLYPHX 16
@@ -47,9 +46,5 @@ b32 WriteImageToBuffer(void* buffer, i32 width, i32 height, i32 channels, i32 by
 u64 QueryFontSize(void* buffer, i32 length, f32 scale);
 font LoadFontFromBuffer(void* buffer, f32 scale, void* destination);
 f32 GetTTFontKernalAdvance(const font& font, i32 glyph0, i32 glyph1);
-
-image* LoadPNGImage(memory_arena& arena, s8 file);
-b32 WritePNGImage(s8 file, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
-font* LoadTTFont(memory_arena& arena, s8 file, f32 scale);
 
 }

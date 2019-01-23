@@ -1,6 +1,6 @@
 #include "AssetManager.h"
 #include "Platform/Platform.h"
-#include "Graphics/Image.h"
+#include "Utility/Resource.h"
 #include "GLResources.h"
 
 #define A3_ASSET_NUM_JUMP_ON_FULL 10
