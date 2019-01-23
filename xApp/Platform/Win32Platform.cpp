@@ -441,6 +441,7 @@ i32 a3Main()
 	}
 	a3Log("Window of resolution {i} X {i} created.", A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT);
 	HDC hDC = GetDC(hWnd);
+
 	a3GL(glViewport(0, 0, A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT));
 
 	a3::file_content r2dVS = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DVertexShader.glsl");

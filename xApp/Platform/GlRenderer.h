@@ -70,6 +70,7 @@ namespace a3 {
 
 struct a3_renderer
 {
+	void Initialize() const;
 	a3::basic2drenderer Create2DRenderer(s8 vSource, s8 fSource) const;
 	a3::font_renderer CreateFontRenderer(s8 vSource, s8 fSource) const;
 	a3::ui_renderer CreateUIRenderer(s8 vSource, s8 fSource) const;

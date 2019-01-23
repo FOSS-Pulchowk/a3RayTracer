@@ -18,6 +18,10 @@ struct a3_current_bound
 	b32 ElementArrayBufferIsMapped;
 	void* MappedVertexArrayPointer;
 	u32* MappedElementArrayPointer;
+
+	i32 MaxTextureUnits; // 80 is gaurenteed, use more if available
+	const i32 FontTextureAtlasSlot = 4;
+	const i32 UITextureSlot = 5;
 };
 
 static a3_current_bound s_CurrentBound;
@@ -183,6 +187,11 @@ inline void a3_GenerateAndBind(u32* o, u32* v, u32* e)
 	a3_BindElementArrayBuffer(*e);
 }
 
+void a3_renderer::Initialize() const
+{
+	a3GL(glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &s_CurrentBound.MaxTextureUnits));
+}
+
 a3::basic2drenderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 {
 	a3::basic2drenderer r;
@@ -233,6 +242,8 @@ a3::font_renderer a3_renderer::CreateFontRenderer(s8 vSource, s8 fSource) const
 	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_Color = glGetUniformLocation(r.m_ShaderProgram, "u_Color"));
 	a3GL(r.m_FontAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_FontAtlas"));
+	a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
+	a3GL(glUniform1i(r.m_FontAtlas, s_CurrentBound.FontTextureAtlasSlot));
 	r.m_FontAtlasGlId = 0;
 
 	return r;
@@ -256,6 +267,8 @@ a3::ui_renderer a3_renderer::CreateUIRenderer(s8 vSource, s8 fSource) const
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_UITexture = glGetUniformLocation(r.m_ShaderProgram, "u_UITexture"));
+	a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.UITextureSlot));
+	a3GL(glUniform1i(r.m_UITexture, s_CurrentBound.UITextureSlot));
 	r.m_Count = 0;
 
 	return r;
@@ -337,9 +350,8 @@ namespace a3 {
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
 		a3_BindProgram(m_ShaderProgram);
-		a3GL(glActiveTexture(GL_TEXTURE0));
+		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
 		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontAtlasGlId));
-		a3GL(glUniform1i(m_FontAtlas, 0));
 		a3GL(glUniform3fv(m_Color, 1, color.values));
 
 		u8* t = (u8*)font;
@@ -456,9 +468,8 @@ namespace a3 {
 		a3_UnmapVertexPointer();
 		a3_UnmapElementPointer();
 		a3_BindProgram(m_ShaderProgram);
-		a3GL(glActiveTexture(GL_TEXTURE1));
+		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.UITextureSlot));
 		a3GL(glBindTexture(GL_TEXTURE_2D, texture));
-		a3GL(glUniform1i(m_UITexture, 1));
 		a3GL(glDrawElements(GL_TRIANGLES, m_Count * 6, GL_UNSIGNED_INT, A3NULL));
 		m_Count = 0;
 	}

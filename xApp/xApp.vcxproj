@@ -284,6 +284,7 @@
     <ClInclude Include="Platform\GL\GLExtensions.h" />
     <ClInclude Include="Platform\GL\KHR\KHRPlatform.h" />
     <ClInclude Include="Platform\GL\LoadOpenGL.h" />
+    <ClInclude Include="Platform\Memory.h" />
     <ClInclude Include="Platform\Platform.h" />
     <ClInclude Include="Utility\String.h" />
   </ItemGroup>
