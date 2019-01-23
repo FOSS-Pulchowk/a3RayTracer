@@ -67,13 +67,13 @@ void a3_asset::LoadFontFromFile(u64 id, s8 file, f32 scale)
 void a3_asset::LoadTextureFromBuffer(u64 id, void* buffer, i32 length, u32 type, u32 filter, u32 wrap)
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
-	a3IsBufferTooLarge(sizeof(a3::Texture));
+	a3IsBufferTooLarge(sizeof(a3::texture));
 	u64 size = a3::QueryImageSize(buffer, length);
 	u8* dest = new u8[size];
 	a3::image img = a3::LoadImageFromBufer(buffer, length, dest);
-	m_Assets[id] = a3::Platform.Realloc(m_Assets[id], sizeof(a3::Texture));
+	m_Assets[id] = a3::Platform.Realloc(m_Assets[id], sizeof(a3::texture));
 	a3IsOutOfMemory(m_Assets[id]);
-	a3::Texture* m = (a3::Texture*)m_Assets[id];
+	a3::texture* m = (a3::texture*)m_Assets[id];
 	*m = a3::GLMakeTextureFromBuffer(type, filter, wrap, img.Pixels, img.Width, img.Height, img.Channels);
 	delete[] dest;
 }

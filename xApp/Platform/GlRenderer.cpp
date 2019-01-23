@@ -285,7 +285,7 @@ namespace a3 {
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
-	void basic2d_renderer::Render(v3 position, v2 dimension, v3 color[4], a3::Texture* texture)
+	void basic2d_renderer::Render(v3 position, v2 dimension, v3 color[4], a3::texture* texture)
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
@@ -412,9 +412,9 @@ namespace a3 {
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
-	void batch2d_renderer::SetTexture(a3::Texture * texture)
+	void batch2d_renderer::SetTexture(a3::texture * tex)
 	{
-		m_Texture = texture;
+		m_Texture = tex;
 	}
 
 	void batch2d_renderer::Push(v2 position, v2 dimension, v3 color[4], v2 texCoords)

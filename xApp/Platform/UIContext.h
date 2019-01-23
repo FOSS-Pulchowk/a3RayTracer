@@ -2,6 +2,8 @@
 #include "Common/Core.h"
 #include "GlRenderer.h"
 #include "GLSL/GLSLShaders.h"
+#include "AssetManager.h"
+#include "Assets.h"
 
 namespace a3 {
 
@@ -17,7 +19,7 @@ namespace a3 {
 		batch2d_renderer m_Batch2DRenderer;
 		font_renderer m_FontRenderer;
 	public:
-		ui_context():
+		ui_context(f32 left, f32 right, f32 bottom, f32 top):
 			m_Batch2DRenderer(a3::Renderer.CreateBatch2DRenderer(Shaders::GLBatch2DVertex, Shaders::GLBatch2DFragment)),
 			m_FontRenderer(a3::Renderer.CreateFontRenderer(Shaders::GLFontVertex, Shaders::GLFontFragment))
 		{
@@ -25,6 +27,12 @@ namespace a3 {
 			m_MouseY = 0.0f;
 			m_Active = -1;
 			m_Hot = -1;
+			m_FontRenderer.SetRegion(left, right, bottom, top);
+			a3::Asset.LoadFontFromFile(a3::asset_id::UIFont, "Resources/McLetters.ttf", 30.0f);
+			m_FontRenderer.SetFont(a3::Asset.Get<a3::font>(a3::asset_id::UIFont));
+			m_Batch2DRenderer.SetRegion(left, right, bottom, top);
+			//a3::Asset.LoadTextureFromFile(a3::asset_id::UITexture, "Resources/UIAtlas.png", GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE);
+			//m_Batch2DRenderer.SetTexture(a3::Asset.Get<a3::texture>(a3::asset_id::UITexture));
 		}
 
 		void UpdateIO(a3_input_system& io)

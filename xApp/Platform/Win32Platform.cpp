@@ -446,36 +446,16 @@ i32 a3Main()
 
 	a3GL(glViewport(0, 0, A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT));
 
-	//a3::file_content r2dVS = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DVertexShader.glsl");
-	//a3::file_content r2dFS = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DFragmentShader.glsl");
-	//a3Assert(r2dVS.Buffer);
-	//a3Assert(r2dFS.Buffer);
-	//a3::file_content fVS = a3::Platform.LoadFileContent("Platform/GLSL/FontVertexShader.glsl");
-	//a3::file_content fFS = a3::Platform.LoadFileContent("Platform/GLSL/FontFragmentShader.glsl");
-	//a3Assert(fVS.Buffer);
-	//a3Assert(fFS.Buffer);
-	//a3::file_content uiVS = a3::Platform.LoadFileContent("Platform/GLSL/UIVertexShader.glsl");
-	//a3::file_content uiFS = a3::Platform.LoadFileContent("Platform/GLSL/UIFragmentShader.glsl");
-	//a3Assert(uiVS.Buffer);
-	//a3Assert(uiFS.Buffer);
-
 	a3::basic2d_renderer renderer2d = a3::Renderer.Create2DRenderer(a3::Shaders::GLBasic2DVertex, a3::Shaders::GLBasic2DFragment);
 	renderer2d.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 
-	a3::Asset.LoadFontFromFile(2, "Resources/HackRegular.ttf", 50.0f);
+	a3::Asset.LoadFontFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
 	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::Shaders::GLFontVertex, a3::Shaders::GLFontFragment);
 	fontRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
-	fontRenderer.SetFont(a3::Asset.Get<a3::font>(2));
+	fontRenderer.SetFont(a3::Asset.Get<a3::font>(a3::asset_id::DebugFont));
 
 	a3::batch2d_renderer uiRenderer = a3::Renderer.CreateBatch2DRenderer(a3::Shaders::GLBatch2DVertex, a3::Shaders::GLBatch2DFragment);
 	uiRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
-
-	//a3::Platform.FreeFileContent(r2dVS);
-	//a3::Platform.FreeFileContent(r2dFS);
-	//a3::Platform.FreeFileContent(fFS);
-	//a3::Platform.FreeFileContent(fFS);
-	//a3::Platform.FreeFileContent(uiFS);
-	//a3::Platform.FreeFileContent(uiFS);
 
 	f32 value = 0.0f;
 
@@ -502,9 +482,10 @@ i32 a3Main()
 	rect.isMoving = false;
 	rect.moveFinalPosition = v2{ 0.0f, 0.0f };
 
-	a3::Asset.LoadTextureFromFile(0, "Resources/BigSmile.png", GL_TEXTURE_2D, GL_LINEAR, GL_REPEAT);
+	a3::Asset.LoadTextureFromFile(a3::asset_id::BigSmile, "Resources/BigSmile.png", GL_TEXTURE_2D, GL_LINEAR, GL_REPEAT);
 
-	a3::ui_context uiContext;
+	a3::ui_context uiContext(0.0f, 800.0f, 0.0f, 600.0f);
+	b32 renderDebugInformation = true;
 
 	f32 deltaTime = 0.0f;
 
@@ -541,9 +522,8 @@ i32 a3Main()
 
 		if (uiContext.Button(1, { 200.0f, 200.0f }, { 100.0f, 50.0f }, { 1.0f, 0.25f, 0.5f }))
 		{
-
+			renderDebugInformation = !renderDebugInformation;
 		}
-
 
 		oldInput = input;
 
@@ -567,26 +547,29 @@ i32 a3Main()
 		a3GL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
 		v2 dimension = { 100.0f, 100.0f };
-		renderer2d.Render(rect.position, dimension, rect.acolor, a3::Asset.Get<a3::Texture>(0));
+		renderer2d.Render(rect.position, dimension, rect.acolor, a3::Asset.Get<a3::texture>(a3::asset_id::BigSmile));
 
 		LARGE_INTEGER currentPerformanceCounter;
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
 
+		if (renderDebugInformation)
+		{
 #if defined(A3DEBUG) || defined(A3INTERNAL)
-		utf8 buffer[256];
-		_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
-		fontRenderer.Render(buffer, { 0.0f, 580.0f }, 0.6f, { 0.8f, 0.9f, 0.2f });
-		_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
-		fontRenderer.Render(buffer, { 0.0f, 560.0f }, 0.4f, { 0.8f, 0.9f, 0.2f });
-		_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
-		fontRenderer.Render(buffer, { 0.0f, 540.0f }, 0.4f, { 0.8f, 0.9f, 0.2f });
-		//_snprintf_s(buffer, 256, 256, "Total Application Memory: %.2fMB", (f32)memory.Capacity / (1024.0f * 1024.0f));
-		//fontRenderer.Render(buffer, { 0.0f, 520.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
-		//_snprintf_s(buffer, 256, 256, "Used Application Memory: %.2fMB", (f32)memory.Consumed / (1024.0f * 1024.0f));
-		//fontRenderer.Render(buffer, { 0.0f, 500.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+			utf8 buffer[256];
+			_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
+			fontRenderer.Render(buffer, { 0.0f, 580.0f }, 0.6f, { 0.8f, 0.9f, 0.2f });
+			_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
+			fontRenderer.Render(buffer, { 0.0f, 560.0f }, 0.4f, { 0.8f, 0.9f, 0.2f });
+			_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
+			fontRenderer.Render(buffer, { 0.0f, 540.0f }, 0.4f, { 0.8f, 0.9f, 0.2f });
+			//_snprintf_s(buffer, 256, 256, "Total Application Memory: %.2fMB", (f32)memory.Capacity / (1024.0f * 1024.0f));
+			//fontRenderer.Render(buffer, { 0.0f, 520.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+			//_snprintf_s(buffer, 256, 256, "Used Application Memory: %.2fMB", (f32)memory.Consumed / (1024.0f * 1024.0f));
+			//fontRenderer.Render(buffer, { 0.0f, 500.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 #endif
+		}
 
 		SwapBuffers(hDC);
 		value += 0.01f;

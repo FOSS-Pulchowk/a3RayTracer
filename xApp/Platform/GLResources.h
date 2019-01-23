@@ -6,11 +6,11 @@
 
 namespace a3 {
 
-	using Texture = u32;
+	using texture = u32;
 
-	inline Texture GLMakeTexture(GLenum type, GLenum filter, GLenum wrap)
+	inline texture GLMakeTexture(GLenum type, GLenum filter, GLenum wrap)
 	{
-		Texture texture;
+		texture texture;
 		a3GL(glGenTextures(1, &texture));
 		a3GL(glBindTexture(type, texture));
 		a3GL(glTexParameteri(type, GL_TEXTURE_MIN_FILTER, filter));
@@ -20,9 +20,9 @@ namespace a3 {
 		return texture;
 	}
 
-	inline Texture GLMakeTextureFromBuffer(GLenum type, GLenum filter, GLenum wrap, void* buffer, i32 w, i32 h, i32 n)
+	inline texture GLMakeTextureFromBuffer(GLenum type, GLenum filter, GLenum wrap, void* buffer, i32 w, i32 h, i32 n)
 	{
-		Texture result = GLMakeTexture(type, filter, wrap);
+		texture result = GLMakeTexture(type, filter, wrap);
 		GLenum format;
 		GLenum internal;
 		switch (n)
