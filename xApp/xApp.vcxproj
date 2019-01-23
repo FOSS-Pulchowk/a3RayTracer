@@ -257,6 +257,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="Platform\GLSL\GLSL.cpp" />
     <ClCompile Include="Utility\Resource.cpp" />
     <ClCompile Include="Math\Matrix4.cpp" />
     <ClCompile Include="Math\Quaterniod.cpp" />
@@ -271,6 +272,8 @@
     <ClInclude Include="External\STBImage.h" />
     <ClInclude Include="External\STBImageWrite.h" />
     <ClInclude Include="External\STBTrueType.h" />
+    <ClInclude Include="Platform\GLSL\GLSLShaders.h" />
+    <ClInclude Include="Platform\UIContext.h" />
     <ClInclude Include="Utility\Resource.h" />
     <ClInclude Include="Utility\STBImplementation.h" />
     <ClInclude Include="Math\Math.h" />

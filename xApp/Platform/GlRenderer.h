@@ -8,7 +8,7 @@ struct a3_renderer;
 
 namespace a3 {
 
-	struct basic2drenderer
+	struct basic2d_renderer
 	{
 	private:
 		u32 m_VertexArrayObject;
@@ -17,7 +17,7 @@ namespace a3 {
 		u32 m_ShaderProgram;
 		u32 m_Projection;
 		u32 m_TextureDiffuse;
-		basic2drenderer(){}
+		basic2d_renderer(){}
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
@@ -48,7 +48,7 @@ namespace a3 {
 		friend struct a3_renderer;
 	};
 
-	struct ui_renderer
+	struct batch2d_renderer
 	{
 	private:
 		u32 m_VertexArrayObject;
@@ -56,14 +56,15 @@ namespace a3 {
 		u32 m_ElementArrayBuffer;
 		u32 m_ShaderProgram;
 		u32 m_Projection;
-		u32 m_UITexture;
-
+		u32 m_TextureAtlas;
 		u32 m_Count;
+		Texture* m_Texture;
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
-		void Push(v2 position, v2 dimension, v3 color[4], v2 texCoords, a3::Texture* texture);
-		void Flush(a3::Texture* texture);
+		void SetTexture(a3::Texture* texture);
+		void Push(v2 position, v2 dimension, v3 color[4], v2 texCoords);
+		void Flush();
 
 		friend struct a3_renderer;
 	};
@@ -72,9 +73,9 @@ namespace a3 {
 struct a3_renderer
 {
 	void Initialize() const;
-	a3::basic2drenderer Create2DRenderer(s8 vSource, s8 fSource) const;
+	a3::basic2d_renderer Create2DRenderer(s8 vSource, s8 fSource) const;
 	a3::font_renderer CreateFontRenderer(s8 vSource, s8 fSource) const;
-	a3::ui_renderer CreateUIRenderer(s8 vSource, s8 fSource) const;
+	a3::batch2d_renderer CreateBatch2DRenderer(s8 vSource, s8 fSource) const;
 };
 
 namespace a3 {

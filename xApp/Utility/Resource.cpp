@@ -137,6 +137,7 @@ a3::font a3::LoadFontFromBuffer(void * buffer, f32 scale, void * destination)
 	stbtt_InitFont(&info, (u8*)buffer, stbtt_GetFontOffsetForIndex((u8*)buffer, 0));
 	a3::font result;
 	result.Info = info;
+	result.HeightInPixels = scale;
 
 	// NOTE(Zero):
 	// These temp buffers are used to store extracted bitmap from stb

@@ -192,9 +192,9 @@ void a3_renderer::Initialize() const
 	a3GL(glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &s_CurrentBound.MaxTextureUnits));
 }
 
-a3::basic2drenderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
+a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 {
-	a3::basic2drenderer r;
+	a3::basic2d_renderer r;
 	a3_GenerateAndBind(&r.m_VertexArrayObject, &r.m_VertexArrayBuffer, &r.m_ElementArrayBuffer);
 
 	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex2d) * 4, A3NULL, GL_DYNAMIC_DRAW));
@@ -242,16 +242,15 @@ a3::font_renderer a3_renderer::CreateFontRenderer(s8 vSource, s8 fSource) const
 	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_Color = glGetUniformLocation(r.m_ShaderProgram, "u_Color"));
 	a3GL(r.m_FontAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_FontAtlas"));
-	a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
 	a3GL(glUniform1i(r.m_FontAtlas, s_CurrentBound.FontTextureAtlasSlot));
 	r.m_FontAtlasGlId = 0;
 
 	return r;
 }
 
-a3::ui_renderer a3_renderer::CreateUIRenderer(s8 vSource, s8 fSource) const
+a3::batch2d_renderer a3_renderer::CreateBatch2DRenderer(s8 vSource, s8 fSource) const
 {
-	a3::ui_renderer r;
+	a3::batch2d_renderer r;
 	a3_GenerateAndBind(&r.m_VertexArrayObject, &r.m_VertexArrayBuffer, &r.m_ElementArrayBuffer);
 
 	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex_ui) * A3_VERTICES_UI_MAX, A3NULL, GL_DYNAMIC_DRAW));
@@ -266,9 +265,8 @@ a3::ui_renderer a3_renderer::CreateUIRenderer(s8 vSource, s8 fSource) const
 	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
-	a3GL(r.m_UITexture = glGetUniformLocation(r.m_ShaderProgram, "u_UITexture"));
-	a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.UITextureSlot));
-	a3GL(glUniform1i(r.m_UITexture, s_CurrentBound.UITextureSlot));
+	a3GL(r.m_TextureAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_TextureAtlas"));
+	a3GL(glUniform1i(r.m_TextureAtlas, s_CurrentBound.UITextureSlot));
 	r.m_Count = 0;
 
 	return r;
@@ -276,18 +274,18 @@ a3::ui_renderer a3_renderer::CreateUIRenderer(s8 vSource, s8 fSource) const
 
 namespace a3 {
 
-	void basic2drenderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
+	void basic2d_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
 	{
 		SetRegion(m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f));
 	}
 
-	void basic2drenderer::SetRegion(const m4x4& p)
+	void basic2d_renderer::SetRegion(const m4x4& p)
 	{
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
-	void basic2drenderer::Render(v3 position, v2 dimension, v3 color[4], a3::Texture* texture)
+	void basic2d_renderer::Render(v3 position, v2 dimension, v3 color[4], a3::Texture* texture)
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
@@ -331,7 +329,7 @@ namespace a3 {
 		a3_BindProgram(m_ShaderProgram);
 		if (m_FontAtlasGlId)
 		{
-			glDeleteTextures(1, &m_FontAtlasGlId);
+			a3GL(glDeleteTextures(1, &m_FontAtlasGlId));
 		}
 		m_RawFontData = font;
 		m_FontAtlasGlId = a3::GLMakeTextureFromBuffer(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE, font->Atlas, font->AtlasWidth, font->AtlasHeight, 1);
@@ -403,20 +401,25 @@ namespace a3 {
 		}
 	}
 
-	void ui_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
+	void batch2d_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
 	{
 		SetRegion(m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f));
 	}
 
-	void ui_renderer::SetRegion(const m4x4& p)
+	void batch2d_renderer::SetRegion(const m4x4& p)
 	{
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
-	void ui_renderer::Push(v2 position, v2 dimension, v3 color[4], v2 texCoords, a3::Texture* texture)
+	void batch2d_renderer::SetTexture(a3::Texture * texture)
 	{
-		if (m_Count == A3_UI_RENDER_MAX) Flush(texture);
+		m_Texture = texture;
+	}
+
+	void batch2d_renderer::Push(v2 position, v2 dimension, v3 color[4], v2 texCoords)
+	{
+		if (m_Count == A3_UI_RENDER_MAX) Flush();
 
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
@@ -452,7 +455,7 @@ namespace a3 {
 		m_Count++;
 	}
 
-	void ui_renderer::Flush(a3::Texture* texture)
+	void batch2d_renderer::Flush()
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
@@ -461,7 +464,7 @@ namespace a3 {
 		a3_UnmapElementPointer();
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.UITextureSlot));
-		a3GL(glBindTexture(GL_TEXTURE_2D, *texture));
+		a3GL(glBindTexture(GL_TEXTURE_2D, *m_Texture));
 		a3GL(glDrawElements(GL_TRIANGLES, m_Count * 6, GL_UNSIGNED_INT, A3NULL));
 		m_Count = 0;
 	}

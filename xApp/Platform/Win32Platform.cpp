@@ -7,13 +7,12 @@
 #include "Platform/AssetManager.h"
 
 #include "Math/Math.h"
+#include "UIContext.h"
 
 #include "GLResources.h"
 #include "Utility/Resource.h"
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
-
-#include "a3Interface.h"
 
 // Needed only for Debug and internal build
 #if defined(A3DEBUG) || defined(A3INTERNAL)
@@ -447,36 +446,36 @@ i32 a3Main()
 
 	a3GL(glViewport(0, 0, A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT));
 
-	a3::file_content r2dVS = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DVertexShader.glsl");
-	a3::file_content r2dFS = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DFragmentShader.glsl");
-	a3Assert(r2dVS.Buffer);
-	a3Assert(r2dFS.Buffer);
-	a3::file_content fVS = a3::Platform.LoadFileContent("Platform/GLSL/FontVertexShader.glsl");
-	a3::file_content fFS = a3::Platform.LoadFileContent("Platform/GLSL/FontFragmentShader.glsl");
-	a3Assert(fVS.Buffer);
-	a3Assert(fFS.Buffer);
-	a3::file_content uiVS = a3::Platform.LoadFileContent("Platform/GLSL/UIVertexShader.glsl");
-	a3::file_content uiFS = a3::Platform.LoadFileContent("Platform/GLSL/UIFragmentShader.glsl");
-	a3Assert(uiVS.Buffer);
-	a3Assert(uiFS.Buffer);
+	//a3::file_content r2dVS = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DVertexShader.glsl");
+	//a3::file_content r2dFS = a3::Platform.LoadFileContent("Platform/GLSL/Basic2DFragmentShader.glsl");
+	//a3Assert(r2dVS.Buffer);
+	//a3Assert(r2dFS.Buffer);
+	//a3::file_content fVS = a3::Platform.LoadFileContent("Platform/GLSL/FontVertexShader.glsl");
+	//a3::file_content fFS = a3::Platform.LoadFileContent("Platform/GLSL/FontFragmentShader.glsl");
+	//a3Assert(fVS.Buffer);
+	//a3Assert(fFS.Buffer);
+	//a3::file_content uiVS = a3::Platform.LoadFileContent("Platform/GLSL/UIVertexShader.glsl");
+	//a3::file_content uiFS = a3::Platform.LoadFileContent("Platform/GLSL/UIFragmentShader.glsl");
+	//a3Assert(uiVS.Buffer);
+	//a3Assert(uiFS.Buffer);
 
-	a3::basic2drenderer renderer2d = a3::Renderer.Create2DRenderer((s8)r2dVS.Buffer, (s8)r2dFS.Buffer);
+	a3::basic2d_renderer renderer2d = a3::Renderer.Create2DRenderer(a3::Shaders::GLBasic2DVertex, a3::Shaders::GLBasic2DFragment);
 	renderer2d.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 
 	a3::Asset.LoadFontFromFile(2, "Resources/HackRegular.ttf", 50.0f);
-	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer((s8)fVS.Buffer, (s8)fFS.Buffer);
+	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::Shaders::GLFontVertex, a3::Shaders::GLFontFragment);
 	fontRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font>(2));
 
-	a3::ui_renderer uiRenderer = a3::Renderer.CreateUIRenderer((s8)uiVS.Buffer, (s8)uiFS.Buffer);
+	a3::batch2d_renderer uiRenderer = a3::Renderer.CreateBatch2DRenderer(a3::Shaders::GLBatch2DVertex, a3::Shaders::GLBatch2DFragment);
 	uiRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 
-	a3::Platform.FreeFileContent(r2dVS);
-	a3::Platform.FreeFileContent(r2dFS);
-	a3::Platform.FreeFileContent(fFS);
-	a3::Platform.FreeFileContent(fFS);
-	a3::Platform.FreeFileContent(uiFS);
-	a3::Platform.FreeFileContent(uiFS);
+	//a3::Platform.FreeFileContent(r2dVS);
+	//a3::Platform.FreeFileContent(r2dFS);
+	//a3::Platform.FreeFileContent(fFS);
+	//a3::Platform.FreeFileContent(fFS);
+	//a3::Platform.FreeFileContent(uiFS);
+	//a3::Platform.FreeFileContent(uiFS);
 
 	f32 value = 0.0f;
 
@@ -504,6 +503,8 @@ i32 a3Main()
 	rect.moveFinalPosition = v2{ 0.0f, 0.0f };
 
 	a3::Asset.LoadTextureFromFile(0, "Resources/BigSmile.png", GL_TEXTURE_2D, GL_LINEAR, GL_REPEAT);
+
+	a3::ui_context uiContext;
 
 	f32 deltaTime = 0.0f;
 
@@ -535,6 +536,15 @@ i32 a3Main()
 			rect.moveFinalPosition.y = input.MouseY - rect.dimension.y / 2;
 			rect.moveFrameTime = 0.0f;
 		}
+
+		uiContext.UpdateIO(input);
+
+		if (uiContext.Button(1, { 200.0f, 200.0f }, { 100.0f, 50.0f }, { 1.0f, 0.25f, 0.5f }))
+		{
+
+		}
+
+
 		oldInput = input;
 
 		if (rect.isMoving)

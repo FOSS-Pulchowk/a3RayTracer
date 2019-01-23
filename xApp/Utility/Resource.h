@@ -37,6 +37,7 @@ struct font
 	u32 AtlasHeight;
 	u8* Atlas;
 	f32 ScalingFactor;
+	f32 HeightInPixels;
 	character Characters[A3MAXLOADGLYPHX * A3MAXLOADGLYPHY];
 };
 
