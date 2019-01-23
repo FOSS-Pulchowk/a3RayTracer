@@ -12,7 +12,8 @@ public:
 	void LoadImageFromFile(u64 id, s8 file);
 	void LoadFontFromBuffer(u64 id, void* buffer, u64 length, f32 scale);
 	void LoadFontFromFile(u64 id, s8 file, f32 scale);
-	void LoadTexture(u64 id);
+	void LoadTextureFromBuffer(u64 id, void* buffer, i32 length, u32 type, u32 filter, u32 wrap);
+	void LoadTextureFromFile(u64 id, s8 file, u32 type, u32 filter, u32 wrap);
 
 	void Free(u64 id);
 

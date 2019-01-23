@@ -278,6 +278,7 @@
     <ClInclude Include="Math\Quaterniod.h" />
     <ClInclude Include="Platform\AssetManager.h" />
     <ClInclude Include="Platform\GlRenderer.h" />
+    <ClInclude Include="Platform\GLResources.h" />
     <ClInclude Include="Platform\GLSL\UIFragmentShader.glsl" />
     <ClInclude Include="Platform\GL\Glad.h" />
     <ClInclude Include="Platform\GL\GLDebug.h" />

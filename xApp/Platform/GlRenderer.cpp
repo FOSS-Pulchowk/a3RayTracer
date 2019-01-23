@@ -287,13 +287,13 @@ namespace a3 {
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
-	void basic2drenderer::Render(v3 position, v2 dimension, v3 color[4], u32 texture)
+	void basic2drenderer::Render(v3 position, v2 dimension, v3 color[4], a3::Texture* texture)
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0));
-		a3GL(glBindTexture(GL_TEXTURE_2D, texture));
+		a3GL(glBindTexture(GL_TEXTURE_2D, *texture));
 		a3GL(glUniform1i(m_TextureDiffuse, 0));
 		a3_vertex2d v[4];
 		v[0].position = position;
@@ -334,15 +334,7 @@ namespace a3 {
 			glDeleteTextures(1, &m_FontAtlasGlId);
 		}
 		m_RawFontData = font;
-		a3GL(glGenTextures(1, &m_FontAtlasGlId));
-		a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
-		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontAtlasGlId));
-		a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-		a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-		a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-		a3GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-		a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, font->AtlasWidth, font->AtlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, font->Atlas));
-		a3GL(glBindTexture(GL_TEXTURE_2D, 0));
+		m_FontAtlasGlId = a3::GLMakeTextureFromBuffer(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE, font->Atlas, font->AtlasWidth, font->AtlasHeight, 1);
 	}
 
 	void font_renderer::Render(s8 font, v2 position, f32 scale, v3 color)
@@ -422,7 +414,7 @@ namespace a3 {
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
-	void ui_renderer::Push(v2 position, v2 dimension, v3 color[4], v2 texCoords, u32 texture)
+	void ui_renderer::Push(v2 position, v2 dimension, v3 color[4], v2 texCoords, a3::Texture* texture)
 	{
 		if (m_Count == A3_UI_RENDER_MAX) Flush(texture);
 
@@ -460,7 +452,7 @@ namespace a3 {
 		m_Count++;
 	}
 
-	void ui_renderer::Flush(u32 texture)
+	void ui_renderer::Flush(a3::Texture* texture)
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
@@ -469,7 +461,7 @@ namespace a3 {
 		a3_UnmapElementPointer();
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.UITextureSlot));
-		a3GL(glBindTexture(GL_TEXTURE_2D, texture));
+		a3GL(glBindTexture(GL_TEXTURE_2D, *texture));
 		a3GL(glDrawElements(GL_TRIANGLES, m_Count * 6, GL_UNSIGNED_INT, A3NULL));
 		m_Count = 0;
 	}

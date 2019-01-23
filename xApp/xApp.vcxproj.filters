@@ -104,6 +104,9 @@
     <ClInclude Include="Platform\Memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Platform\GLResources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Platform\sample.vert" />

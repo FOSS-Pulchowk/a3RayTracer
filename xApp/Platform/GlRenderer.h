@@ -2,6 +2,7 @@
 #include "Common/Core.h"
 #include "Math/Math.h"
 #include "Graphics/Image.h"
+#include "GLResources.h"
 
 struct a3_renderer;
 
@@ -20,7 +21,7 @@ namespace a3 {
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
-		void Render(v3 position, v2 dimension, v3 color[4], u32 texture);
+		void Render(v3 position, v2 dimension, v3 color[4], a3::Texture* texture);
 
 		friend struct a3_renderer;
 	};
@@ -61,8 +62,8 @@ namespace a3 {
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
-		void Push(v2 position, v2 dimension, v3 color[4], v2 texCoords, u32 texture);
-		void Flush(u32 texture);
+		void Push(v2 position, v2 dimension, v3 color[4], v2 texCoords, a3::Texture* texture);
+		void Flush(a3::Texture* texture);
 
 		friend struct a3_renderer;
 	};
