@@ -14,12 +14,13 @@ namespace a3 {
 		f32 m_MouseY;
 		b32 m_MouseUp;
 		b32 m_MouseDown;
+		b32 m_MouseDragging;
 		i32 m_Active;
 		i32 m_Hot;
 		batch2d_renderer m_Batch2DRenderer;
 		font_renderer m_FontRenderer;
 	public:
-		ui_context(f32 left, f32 right, f32 bottom, f32 top):
+		ui_context(f32 left, f32 right, f32 bottom, f32 top) :
 			m_Batch2DRenderer(a3::Renderer.CreateBatch2DRenderer(Shaders::GLBatch2DVertex, Shaders::GLBatch2DFragment)),
 			m_FontRenderer(a3::Renderer.CreateFontRenderer(Shaders::GLFontVertex, Shaders::GLFontFragment))
 		{
@@ -27,6 +28,7 @@ namespace a3 {
 			m_MouseY = 0.0f;
 			m_Active = -1;
 			m_Hot = -1;
+			m_MouseDragging = false;
 			m_FontRenderer.SetRegion(left, right, bottom, top);
 			a3::Asset.LoadFontFromFile(a3::asset_id::UIFont, "Resources/HackRegular.ttf", 30.0f);
 			m_FontRenderer.SetFont(a3::Asset.Get<a3::font>(a3::asset_id::UIFont));
@@ -60,29 +62,40 @@ namespace a3 {
 			}
 			else if (m_Hot == uid)
 			{
-				if (m_MouseDown) m_Active = uid;
+				if (m_MouseDown && !m_MouseDragging)
+				{
+					m_Active = uid;
+				}
 			}
 
-			if (m_Active == -1)
+			if (m_MouseDown && m_Hot == -1)
 			{
-				if (m_MouseX > position.x && m_MouseX < (position.x + dimension.x))
+				m_MouseDragging = true;
+			}
+			else if (m_MouseUp && m_MouseDragging)
+			{
+				a3LogTrace("Mouse dragging reset");
+				m_MouseDragging = false;
+			}
+
+			if (m_MouseX > position.x && m_MouseX < (position.x + dimension.x) &&
+				m_MouseY > position.y && m_MouseY < (position.y + dimension.y))
+			{
+				if (m_Active == -1)
 				{
-					if (m_MouseY > position.y && m_MouseY < (position.y + dimension.y))
-					{
-						m_Hot = uid;
-					}
-					else
-					{
-						m_Hot = -1;
-					}
+					m_Hot = uid;
 				}
+			}
+			else if (m_Hot == uid)
+			{
+				m_Hot = -1;
 			}
 
 			v3 acolor[4];
 			v3 finalColor;
 			if (m_Active == uid)
 			{
-				finalColor = { 0.0f, 1.0f, 0.0f };
+				finalColor = { 0.0f, 0.0f, 1.0f };
 				acolor[0] = finalColor;
 				acolor[1] = finalColor;
 				acolor[2] = finalColor;

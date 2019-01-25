@@ -492,6 +492,7 @@ i32 a3Main()
 
 	a3::ui_context uiContext(0.0f, 800.0f, 0.0f, 600.0f);
 	b32 renderDebugInformation = true;
+	b32 renderSmiley = true;
 
 	f32 deltaTime = 0.0f;
 
@@ -536,6 +537,11 @@ i32 a3Main()
 		{
 			renderDebugInformation = !renderDebugInformation;
 		}
+		
+		if (uiContext.Button(2, { 200.0f, 250.0f }, { 300.0f, 50.0f }, { 1.0f, 0.0f, 0.0f }, "Show/Hide Smiley"))
+		{
+			renderSmiley = !renderSmiley;
+		}
 
 		oldInput = input;
 
@@ -552,10 +558,12 @@ i32 a3Main()
 		//	}
 		//}
 
-		v2 dimensiond = { 100.0f, 100.0f };
-		renderer2d.BeginFrame();
-		renderer2d.EndFrame(rect.position, dimensiond, rect.acolor, a3::Asset.Get<a3::texture>(a3::asset_id::BigSmile));
-
+		if (renderSmiley)
+		{
+			v2 dimensiond = { 100.0f, 100.0f };
+			renderer2d.BeginFrame();
+			renderer2d.EndFrame(rect.position, dimensiond, rect.acolor, a3::Asset.Get<a3::texture>(a3::asset_id::BigSmile));
+		}
 		LARGE_INTEGER currentPerformanceCounter;
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
