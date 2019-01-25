@@ -285,11 +285,15 @@ namespace a3 {
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
-	void basic2d_renderer::Render(v3 position, v2 dimension, v3 color[4], a3::texture* texture)
+	void basic2d_renderer::BeginFrame()
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
 		a3_BindProgram(m_ShaderProgram);
+	}
+
+	void basic2d_renderer::EndFrame(v3 position, v2 dimension, v3 color[4], a3::texture* texture)
+	{
 		a3GL(glActiveTexture(GL_TEXTURE0));
 		a3GL(glBindTexture(GL_TEXTURE_2D, *texture));
 		a3GL(glUniform1i(m_TextureDiffuse, 0));
@@ -419,13 +423,7 @@ namespace a3 {
 
 	void batch2d_renderer::Push(v2 position, v2 dimension, v3 color[4], v2 texCoords)
 	{
-		if (m_Count == A3_UI_RENDER_MAX) Flush();
-
-		a3_BindVertexArrayObject(m_VertexArrayObject);
-		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
-		a3_BindElementArrayBuffer(m_ElementArrayBuffer);
-		a3_MapVertexPointer();
-		a3_MapElementPointer();
+		if (m_Count == A3_UI_RENDER_MAX) EndFrame();
 		a3_vertex_ui* v = a3GetMappedVertexPointer(a3_vertex_ui);
 		u32* i = a3GetMappedElementPointer();
 
@@ -455,7 +453,16 @@ namespace a3 {
 		m_Count++;
 	}
 
-	void batch2d_renderer::Flush()
+	void batch2d_renderer::BeginFrame()
+	{
+		a3_BindVertexArrayObject(m_VertexArrayObject);
+		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
+		a3_BindElementArrayBuffer(m_ElementArrayBuffer);
+		a3_MapVertexPointer();
+		a3_MapElementPointer();
+	}
+
+	void batch2d_renderer::EndFrame()
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);

@@ -21,7 +21,9 @@ namespace a3 {
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
-		void Render(v3 position, v2 dimension, v3 color[4], a3::texture* texture);
+		void BeginFrame();
+		// TODO(Zero): Implement a Push function, EndFrame should only draw the sprites
+		void EndFrame(v3 position, v2 dimension, v3 color[4], a3::texture* texture);
 
 		friend struct a3_renderer;
 	};
@@ -64,7 +66,8 @@ namespace a3 {
 		void SetRegion(const m4x4& p);
 		void SetTexture(a3::texture* texture);
 		void Push(v2 position, v2 dimension, v3 color[4], v2 texCoords);
-		void Flush();
+		void BeginFrame();
+		void EndFrame();
 
 		friend struct a3_renderer;
 	};

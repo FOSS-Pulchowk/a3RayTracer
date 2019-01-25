@@ -547,7 +547,8 @@ i32 a3Main()
 		a3GL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
 		v2 dimension = { 100.0f, 100.0f };
-		renderer2d.Render(rect.position, dimension, rect.acolor, a3::Asset.Get<a3::texture>(a3::asset_id::BigSmile));
+		renderer2d.BeginFrame();
+		renderer2d.EndFrame(rect.position, dimension, rect.acolor, a3::Asset.Get<a3::texture>(a3::asset_id::BigSmile));
 
 		LARGE_INTEGER currentPerformanceCounter;
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
