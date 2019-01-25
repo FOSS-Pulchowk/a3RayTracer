@@ -69,7 +69,7 @@ namespace a3 {
 			"{																	"
 			"	fColor = vColor;												"
 			"	fTexCoords = vTexCoords;										"
-			"	gl_Position = u_Projection * vec4(vPosition, 1.0f, 1.0f);		"
+			"	gl_Position = u_Projection * vec4(vPosition, 0.0f, 1.0f);		"
 			"}																	"
 			;
 

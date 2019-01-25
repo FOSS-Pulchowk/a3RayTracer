@@ -45,7 +45,7 @@ namespace a3 {
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void SetFont(a3::font* font);
-		void Render(s8 font, v2 position, f32 scale, v3 color);
+		void Render(s8 font, v2 position, f32 height, v3 color);
 
 		friend struct a3_renderer;
 	};
@@ -65,7 +65,7 @@ namespace a3 {
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void SetTexture(a3::texture* texture);
-		void Push(v2 position, v2 dimension, v3 color[4], v2 texCoords);
+		void Push(v2 position, v2 dimension, v3 color[4], v4 texDimension);
 		void BeginFrame();
 		void EndFrame();
 

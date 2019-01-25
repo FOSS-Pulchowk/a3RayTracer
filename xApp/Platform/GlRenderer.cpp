@@ -339,7 +339,7 @@ namespace a3 {
 		m_FontAtlasGlId = a3::GLMakeTextureFromBuffer(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE, font->Atlas, font->AtlasWidth, font->AtlasHeight, 1);
 	}
 
-	void font_renderer::Render(s8 font, v2 position, f32 scale, v3 color)
+	void font_renderer::Render(s8 font, v2 position, f32 height, v3 color)
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
@@ -354,6 +354,7 @@ namespace a3 {
 		a3_MapElementPointer();
 		a3_vertex_font* vertices = a3GetMappedVertexPointer(a3_vertex_font);
 		u32* indices = a3GetMappedElementPointer();
+		f32 scale = height / m_RawFontData->HeightInPixels;
 
 		u32 counter = 0;
 		for ( ; ; ++t)
@@ -421,11 +422,20 @@ namespace a3 {
 		m_Texture = tex;
 	}
 
-	void batch2d_renderer::Push(v2 position, v2 dimension, v3 color[4], v2 texCoords)
+	void batch2d_renderer::Push(v2 position, v2 dimension, v3 color[4], v4 texDimension)
 	{
-		if (m_Count == A3_UI_RENDER_MAX) EndFrame();
+		if (m_Count == A3_UI_RENDER_MAX)
+		{
+			EndFrame();
+			BeginFrame();
+		}
 		a3_vertex_ui* v = a3GetMappedVertexPointer(a3_vertex_ui);
 		u32* i = a3GetMappedElementPointer();
+
+		f32 tx0 = texDimension.x;
+		f32 ty0 = texDimension.y;
+		f32 tx1 = texDimension.z;
+		f32 ty1 = texDimension.w;
 
 		v[m_Count * 4 + 0].position = position;
 		v[m_Count * 4 + 1].position = position;
@@ -438,10 +448,10 @@ namespace a3 {
 		v[m_Count * 4 + 1].color = color[1];
 		v[m_Count * 4 + 2].color = color[2];
 		v[m_Count * 4 + 3].color = color[3];
-		v[m_Count * 4 + 0].texCoords = { 0.0f, 0.0f };
-		v[m_Count * 4 + 1].texCoords = { 1.0f, 0.0f };
-		v[m_Count * 4 + 2].texCoords = { 1.0f, 1.0f };
-		v[m_Count * 4 + 3].texCoords = { 0.0f, 1.0f };
+		v[m_Count * 4 + 0].texCoords = { tx0, ty0 };
+		v[m_Count * 4 + 1].texCoords = { tx1, ty0 };
+		v[m_Count * 4 + 2].texCoords = { tx1, ty1 };
+		v[m_Count * 4 + 3].texCoords = { tx0, ty1 };
 
 		i[m_Count * 4 + 0] = m_Count * 4 + 0;
 		i[m_Count * 4 + 1] = m_Count * 4 + 1;
@@ -464,9 +474,6 @@ namespace a3 {
 
 	void batch2d_renderer::EndFrame()
 	{
-		a3_BindVertexArrayObject(m_VertexArrayObject);
-		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
-		a3_BindElementArrayBuffer(m_ElementArrayBuffer);
 		a3_UnmapVertexPointer();
 		a3_UnmapElementPointer();
 		a3_BindProgram(m_ShaderProgram);
