@@ -118,7 +118,7 @@ static inline void a3_CalculateFontBitmapMaxDimension(stbtt_fontinfo& info, f32 
 			if (maxWidth < w)maxWidth = w;
 		}
 	}
-	*w = maxWidth;
+	*w = maxWidth+5; // NOTE(Zero): Similarly for width as well
 	*h = maxHeight;
 }
 
@@ -129,6 +129,82 @@ u64 a3::QueryFontSize(void * buffer, i32 length, f32 scale)
 	i32 mw, mh;
 	a3_CalculateFontBitmapMaxDimension(info, scale, &mw, &mh);
 	return (sizeof(u8) * A3_MAX_LOAD_GLYPH * mw * mh);
+}
+
+void a3::QueryMaxFontDimension(void * buffer, i32 length, f32 scale, i32* x, i32* y)
+{
+	stbtt_fontinfo info;
+	stbtt_InitFont(&info, (u8*)buffer, stbtt_GetFontOffsetForIndex((u8*)buffer, 0));
+	a3_CalculateFontBitmapMaxDimension(info, scale, x, y);
+}
+
+void a3::QueryAtlasSizeForFontSize(i32 x, i32 y, i32* w, i32* h)
+{
+	*w = x * A3MAXLOADGLYPHX * A3MAXLOADGLYPHY;
+	*h = y;
+}
+
+void a3::ResterizeFonts(font_atlas_info* i, void * buffer, i32 length, f32 scale, void * drawBuffer, RasterizeFontCallback callback)
+{
+	stbtt_fontinfo info;
+	stbtt_InitFont(&info, (u8*)buffer, stbtt_GetFontOffsetForIndex((u8*)buffer, 0));
+	i32 w, h;
+	a3_CalculateFontBitmapMaxDimension(info, scale, &w, &h);
+	f32 pscale = stbtt_ScaleForPixelHeight(&info, scale);
+	i->ScalingFactor = pscale;
+	i->Info = info;
+	i->HeightInPixels = scale;
+	i32 atlasWidth = w * A3MAXLOADGLYPHX * A3MAXLOADGLYPHY;
+	i32 atlasHeight = h;
+
+	i32 widthAdvance = 0;
+	u8* flippedYBuffer = new u8[atlasWidth * atlasHeight];
+	for (i32 blockY = 0; blockY < A3MAXLOADGLYPHY; ++blockY)
+	{
+		for (i32 blockX = 0; blockX < A3MAXLOADGLYPHX; ++blockX)
+		{
+			i32 index = blockY * A3MAXLOADGLYPHX + blockX;
+			a3::character* c = &i->Characters[index];
+			c->GlyphIndex = stbtt_FindGlyphIndex(&i->Info, index);
+			i32 leftSizeBearing; // NOTE(Zero): Ignored
+			i32 advance;
+			stbtt_GetGlyphHMetrics(&i->Info, c->GlyphIndex, &advance, &leftSizeBearing);
+			c->Advance = (f32)advance * pscale;
+			i32 bw = w;
+			i32 bh = h;
+			if (stbtt_IsGlyphEmpty(&i->Info, c->GlyphIndex))
+			{
+				c->HasBitmap = false;
+			}
+			else
+			{
+				c->HasBitmap = true;
+				i32 x0, x1, y0, y1;
+				stbtt_GetGlyphBitmapBox(&i->Info, c->GlyphIndex, pscale, pscale, &x0, &y0, &x1, &y1);
+				i32 bw = x1 - x0; i32 bh = y1 - y0;
+				
+				// NOTE(Zero): Here stride is equal to width because OpenGL wants packed pixels
+				i32 stride = bw;
+				stbtt_MakeGlyphBitmap(&i->Info, (u8*)drawBuffer, bw, bh, stride, pscale, pscale, c->GlyphIndex);
+				c->OffsetX = x0;
+				c->OffsetY = -y1;
+				c->Width = w;
+				c->Height = h;
+				c->NormalX0 = (f32)widthAdvance / (f32)atlasWidth;
+				// NOTE (Zero):
+				// Here 1 is reduced to no dispaly a single column of the texture
+				// This does not effect the final dislay because we actually increase
+				// the max width for each font bitmap in `a3_CalculateFontBitmapMaxDimension` 
+				c->NormalX1 = (f32)(widthAdvance + w - 1) / (f32)atlasWidth;
+				c->NormalY0 = 0.0f;
+				c->NormalY1 = 1.0f;
+				a3::ReverseRectCopy(flippedYBuffer, drawBuffer, bw, bh);
+				callback(bw, bh, flippedYBuffer, widthAdvance, 0);
+				widthAdvance += w;
+			}
+		}
+	}
+	delete[] flippedYBuffer;
 }
 
 a3::font a3::LoadFontFromBuffer(void * buffer, f32 scale, void * destination)
@@ -198,6 +274,7 @@ a3::font a3::LoadFontFromBuffer(void * buffer, f32 scale, void * destination)
 		}
 	}
 	a3::Platform.Free(tempBuffer);
+	maxWidth++; // NOTE(Zero): Similar case as in height
 
 	// NOTE(Zero):
 	// Here we multiple max dimensions by 16 to get altas dimension
@@ -239,8 +316,8 @@ a3::font a3::LoadFontFromBuffer(void * buffer, f32 scale, void * destination)
 	return result;
 }
 
-f32 a3::GetTTFontKernalAdvance(const font & font, i32 glyph0, i32 glyph1)
+f32 a3::GetTTFontKernalAdvance(const stbtt_fontinfo & info, f32 scalingFactor, i32 glyph0, i32 glyph1)
 {
-	i32 res = stbtt_GetGlyphKernAdvance(&font.Info, glyph0, glyph1);
-	return res * font.ScalingFactor;
+	i32 res = stbtt_GetGlyphKernAdvance(&info, glyph0, glyph1);
+	return res * scalingFactor;
 }

@@ -243,7 +243,6 @@ a3::font_renderer a3_renderer::CreateFontRenderer(s8 vSource, s8 fSource) const
 	a3GL(r.m_Color = glGetUniformLocation(r.m_ShaderProgram, "u_Color"));
 	a3GL(r.m_FontAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_FontAtlas"));
 	a3GL(glUniform1i(r.m_FontAtlas, s_CurrentBound.FontTextureAtlasSlot));
-	r.m_FontAtlasGlId = 0;
 
 	return r;
 }
@@ -328,15 +327,9 @@ namespace a3 {
 		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
 	}
 
-	void font_renderer::SetFont(a3::font * font)
+	void font_renderer::SetFont(a3::font_texture * ft)
 	{
-		a3_BindProgram(m_ShaderProgram);
-		if (m_FontAtlasGlId)
-		{
-			a3GL(glDeleteTextures(1, &m_FontAtlasGlId));
-		}
-		m_RawFontData = font;
-		m_FontAtlasGlId = a3::GLMakeTextureFromBuffer(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE, font->Atlas, font->AtlasWidth, font->AtlasHeight, 1);
+		m_FontTexture = ft;
 	}
 
 	void font_renderer::Render(s8 font, v2 position, f32 height, v3 color)
@@ -345,7 +338,7 @@ namespace a3 {
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
-		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontAtlasGlId));
+		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontTexture->Texture));
 		a3GL(glUniform3fv(m_Color, 1, color.values));
 
 		u8* t = (u8*)font;
@@ -354,7 +347,7 @@ namespace a3 {
 		a3_MapElementPointer();
 		a3_vertex_font* vertices = a3GetMappedVertexPointer(a3_vertex_font);
 		u32* indices = a3GetMappedElementPointer();
-		f32 scale = height / m_RawFontData->HeightInPixels;
+		f32 scale = height / m_FontTexture->AtlasInfo.HeightInPixels;
 
 		u32 counter = 0;
 		for ( ; ; ++t)
@@ -373,7 +366,7 @@ namespace a3 {
 				u32* indices = a3GetMappedElementPointer();
 			}
 
-			const a3::character& c = m_RawFontData->Characters[*t];
+			const a3::character& c = m_FontTexture->AtlasInfo.Characters[*t];
 			if (c.HasBitmap)
 			{
 				f32 x = hBegin + c.OffsetX * scale;
@@ -402,7 +395,7 @@ namespace a3 {
 			}
 			hBegin += c.Advance * scale;
 			if (*(t + 1))
-				hBegin += (a3::GetTTFontKernalAdvance(*m_RawFontData, c.GlyphIndex, (m_RawFontData->Characters[*(t + 1)]).GlyphIndex) * scale);
+				hBegin += (a3::GetTTFontKernalAdvance(m_FontTexture->AtlasInfo.Info, m_FontTexture->AtlasInfo.ScalingFactor, c.GlyphIndex, (m_FontTexture->AtlasInfo.Characters[*(t + 1)]).GlyphIndex) * scale);
 		}
 	}
 

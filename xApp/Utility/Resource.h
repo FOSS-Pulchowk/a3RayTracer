@@ -7,6 +7,8 @@
 
 namespace a3 {
 
+typedef void(*RasterizeFontCallback)(i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
+
 struct image
 {
 	u8* Pixels;
@@ -41,11 +43,22 @@ struct font
 	character Characters[A3MAXLOADGLYPHX * A3MAXLOADGLYPHY];
 };
 
+struct font_atlas_info
+{
+	stbtt_fontinfo Info;
+	f32 ScalingFactor;
+	f32 HeightInPixels;
+	character Characters[A3MAXLOADGLYPHX * A3MAXLOADGLYPHY];
+};
+
 u64 QueryImageSize(void* buffer, i32 length);
 image LoadImageFromBufer(void* imgeBuffer, i32 length, void* destination);
 b32 WriteImageToBuffer(void* buffer, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
 u64 QueryFontSize(void* buffer, i32 length, f32 scale);
+void QueryMaxFontDimension(void * buffer, i32 length, f32 scale, i32* x, i32* y);
+void QueryAtlasSizeForFontSize(i32 x, i32 y, i32* w, i32* h);
+void ResterizeFonts(font_atlas_info* i, void* buffer, i32 length, f32 scale, void* drawBuffer, RasterizeFontCallback callback);
 font LoadFontFromBuffer(void* buffer, f32 scale, void* destination);
-f32 GetTTFontKernalAdvance(const font& font, i32 glyph0, i32 glyph1);
+f32 GetTTFontKernalAdvance(const stbtt_fontinfo & info, f32 scalingFactor, i32 glyph0, i32 glyph1);
 
 }

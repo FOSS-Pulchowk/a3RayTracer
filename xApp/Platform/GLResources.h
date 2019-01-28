@@ -20,9 +20,9 @@ namespace a3 {
 		return texture;
 	}
 
-	inline texture GLMakeTextureFromBuffer(GLenum type, GLenum filter, GLenum wrap, void* buffer, i32 w, i32 h, i32 n)
+	inline texture GLMakeTexture2DFromBuffer(GLenum filter, GLenum wrap, void* buffer, i32 w, i32 h, i32 n)
 	{
-		texture result = GLMakeTexture(type, filter, wrap);
+		texture result = GLMakeTexture(GL_TEXTURE_2D, filter, wrap);
 		GLenum format;
 		GLenum internal;
 		switch (n)
@@ -50,7 +50,7 @@ namespace a3 {
 			return 0;
 		}
 		}
-		a3GL(glTexImage2D(type, 0, internal, w, h, 0, format, GL_UNSIGNED_BYTE, buffer));
+		a3GL(glTexImage2D(GL_TEXTURE_2D, 0, internal, w, h, 0, format, GL_UNSIGNED_BYTE, buffer));
 		if (n == 1) a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
 		return result;
 	}

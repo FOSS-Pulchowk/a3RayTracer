@@ -1,8 +1,7 @@
 #pragma once
 #include "Common/Core.h"
 #include "Math/Math.h"
-#include "Utility/Resource.h"
-#include "GLResources.h"
+#include "Assets.h"
 
 struct a3_renderer;
 
@@ -38,13 +37,13 @@ namespace a3 {
 		u32 m_Projection;
 		u32 m_FontAtlas;
 		u32 m_Color;
-		u32 m_FontAtlasGlId;
-		a3::font* m_RawFontData;
+		a3::font_texture* m_FontTexture;
+		
 		font_renderer(){}
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
-		void SetFont(a3::font* font);
+		void SetFont(a3::font_texture* ft);
 		void Render(s8 font, v2 position, f32 height, v3 color);
 
 		friend struct a3_renderer;

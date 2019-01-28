@@ -30,10 +30,10 @@ namespace a3 {
 			m_Hot = -1;
 			m_MouseDragging = false;
 			m_FontRenderer.SetRegion(left, right, bottom, top);
-			a3::Asset.LoadFontFromFile(a3::asset_id::UIFont, "Resources/HackRegular.ttf", 30.0f);
-			m_FontRenderer.SetFont(a3::Asset.Get<a3::font>(a3::asset_id::UIFont));
+			a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::UIFont, "Resources/HackRegular.ttf", 30.0f);
+			m_FontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::UIFont));
 			m_Batch2DRenderer.SetRegion(left, right, bottom, top);
-			a3::Asset.LoadTextureFromFile(a3::asset_id::UITexture, "Resources/UIAtlas.png", GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE);
+			a3::Asset.LoadTexture2DFromFile(a3::asset_id::UITexture, "Resources/UIAtlas.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
 			m_Batch2DRenderer.SetTexture(a3::Asset.Get<a3::texture>(a3::asset_id::UITexture));
 		}
 

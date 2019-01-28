@@ -1,7 +1,5 @@
 #include "AssetManager.h"
 #include "Platform/Platform.h"
-#include "Utility/Resource.h"
-#include "GLResources.h"
 
 #define A3_ASSET_NUM_JUMP_ON_FULL 10
 
@@ -64,7 +62,7 @@ void a3_asset::LoadFontFromFile(u64 id, s8 file, f32 scale)
 	a3::Platform.FreeFileContent(fc);
 }
 
-void a3_asset::LoadTextureFromBuffer(u64 id, void* buffer, i32 length, u32 type, u32 filter, u32 wrap)
+void a3_asset::LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap)
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
 	a3IsBufferTooLarge(sizeof(a3::texture));
@@ -74,14 +72,43 @@ void a3_asset::LoadTextureFromBuffer(u64 id, void* buffer, i32 length, u32 type,
 	m_Assets[id] = a3::Platform.Realloc(m_Assets[id], sizeof(a3::texture));
 	a3IsOutOfMemory(m_Assets[id]);
 	a3::texture* m = (a3::texture*)m_Assets[id];
-	*m = a3::GLMakeTextureFromBuffer(type, filter, wrap, img.Pixels, img.Width, img.Height, img.Channels);
+	*m = a3::GLMakeTexture2DFromBuffer(filter, wrap, img.Pixels, img.Width, img.Height, img.Channels);
 	delete[] dest;
 }
 
-void a3_asset::LoadTextureFromFile(u64 id, s8 file, u32 type, u32 filter, u32 wrap)
+void a3_asset::LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap)
 {
 	a3::file_content fc = a3::Platform.LoadFileContent(file);
-	LoadTextureFromBuffer(id, fc.Buffer, (i32)fc.Size, type, filter, wrap);
+	LoadTexture2DFromBuffer(id, fc.Buffer, (i32)fc.Size, filter, wrap);
+	a3::Platform.FreeFileContent(fc);
+}
+
+void a3_asset::LoadFontTextureAtlasFromBuffer(u64 id, void * buffer, i32 length, f32 scale)
+{
+	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
+	a3IsBufferTooLarge(sizeof(a3::font_texture));
+	m_Assets[id] = a3::Platform.Realloc(m_Assets[id], sizeof(a3::font_texture));
+	a3IsOutOfMemory(m_Assets[id]);
+	a3::font_texture* ft = (a3::font_texture*)m_Assets[id];
+	i32 x, y, w, h;
+	a3::QueryMaxFontDimension(buffer, length, scale, &x, &y);
+	a3::QueryAtlasSizeForFontSize(x, y, &w, &h);
+	u8* temp = new u8[x*y];
+	ft->Texture = a3::GLMakeTexture(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, w, h, 0, GL_RED, GL_UNSIGNED_BYTE, A3NULL));
+	a3::ResterizeFonts(&ft->AtlasInfo, buffer, length, scale, temp, [](i32 w, i32 h, u8* data, i32 xoffset, i32 yoffset)
+	{
+		a3GL(glTexSubImage2D(GL_TEXTURE_2D, 0, xoffset, yoffset, w, h, GL_RED, GL_UNSIGNED_BYTE, data));
+	});
+	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
+	delete[] temp;
+}
+
+void a3_asset::LoadFontTextureAtlasFromFile(u64 id, s8 file, f32 scale)
+{
+	a3::file_content fc = a3::Platform.LoadFileContent(file);
+	a3::Asset.LoadFontTextureAtlasFromBuffer(id, fc.Buffer, (i32)fc.Size, scale);
 	a3::Platform.FreeFileContent(fc);
 }
 

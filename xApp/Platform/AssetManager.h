@@ -1,5 +1,6 @@
 #pragma once
 #include "Common/Core.h"
+#include "Assets.h"
 
 struct a3_asset
 {
@@ -12,8 +13,10 @@ public:
 	void LoadImageFromFile(u64 id, s8 file);
 	void LoadFontFromBuffer(u64 id, void* buffer, u64 length, f32 scale);
 	void LoadFontFromFile(u64 id, s8 file, f32 scale);
-	void LoadTextureFromBuffer(u64 id, void* buffer, i32 length, u32 type, u32 filter, u32 wrap);
-	void LoadTextureFromFile(u64 id, s8 file, u32 type, u32 filter, u32 wrap);
+	void LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap);
+	void LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap);
+	void LoadFontTextureAtlasFromBuffer(u64 id, void* buffer, i32 length, f32 scale);
+	void LoadFontTextureAtlasFromFile(u64 id, s8 file, f32 scale);
 
 	void Free(u64 id);
 
