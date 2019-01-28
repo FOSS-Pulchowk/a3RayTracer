@@ -558,6 +558,14 @@ i32 a3Main()
 		//	}
 		//}
 
+		v4 region;
+		region.x = 200.0f;
+		region.y = 300.0f;
+		region.z = 390.0f;
+		region.w = 500.0f;
+		s8 text = "This is a regional font rendering. This should be present in a box. The dimension of the region is (200, 100) to (500, 400)";
+		fontRenderer.Render(text, region, 20.0f, { 1.0f, 0.25f, 0.25f });
+
 		if (renderSmiley)
 		{
 			v2 dimensiond = { 100.0f, 100.0f };
@@ -574,11 +582,11 @@ i32 a3Main()
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 			utf8 buffer[256];
 			_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
-			fontRenderer.Render(buffer, { 0.0f, 580.0f }, 30.0f, { 0.8f, 0.9f, 0.2f });
+			fontRenderer.Render(buffer, v2{ 0.0f, 580.0f }, 30.0f, { 0.8f, 0.9f, 0.2f });
 			_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
-			fontRenderer.Render(buffer, { 0.0f, 560.0f }, 20.0f, { 0.8f, 0.9f, 0.2f });
+			fontRenderer.Render(buffer, v2{ 0.0f, 560.0f }, 20.0f, { 0.8f, 0.9f, 0.2f });
 			_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
-			fontRenderer.Render(buffer, { 0.0f, 540.0f }, 20.0f, { 0.8f, 0.9f, 0.2f });
+			fontRenderer.Render(buffer, v2{ 0.0f, 540.0f }, 20.0f, { 0.8f, 0.9f, 0.2f });
 			//_snprintf_s(buffer, 256, 256, "Total Application Memory: %.2fMB", (f32)memory.Capacity / (1024.0f * 1024.0f));
 			//fontRenderer.Render(buffer, { 0.0f, 520.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
 			//_snprintf_s(buffer, 256, 256, "Used Application Memory: %.2fMB", (f32)memory.Consumed / (1024.0f * 1024.0f));

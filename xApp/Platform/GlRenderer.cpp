@@ -399,6 +399,80 @@ namespace a3 {
 		}
 	}
 
+	void font_renderer::Render(s8 font, v4 rect, f32 height, v3 color)
+	{
+		a3_BindVertexArrayObject(m_VertexArrayObject);
+		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
+		a3_BindProgram(m_ShaderProgram);
+		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
+		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontTexture->Texture));
+		a3GL(glUniform3fv(m_Color, 1, color.values));
+
+		u8* t = (u8*)font;
+		f32 hBegin = rect.x;
+		f32 vBegin = rect.w - height;
+		a3_MapVertexPointer();
+		a3_MapElementPointer();
+		a3_vertex_font* vertices = a3GetMappedVertexPointer(a3_vertex_font);
+		u32* indices = a3GetMappedElementPointer();
+		f32 scale = height / m_FontTexture->AtlasInfo.HeightInPixels;
+
+		u32 counter = 0;
+		for (; ; ++t)
+		{
+			// Flush
+			if (counter == A3_FONT_RENDER_MAX || *t == 0 || vBegin < rect.y)
+			{
+				a3_UnmapVertexPointer();
+				a3_UnmapElementPointer();
+				a3GL(glDrawElements(GL_TRIANGLES, counter * 6, GL_UNSIGNED_INT, A3NULL));
+				if (*t == 0) break;
+				counter = 0;
+				a3_MapVertexPointer();
+				a3_MapElementPointer();
+				a3_vertex_font* vertices = a3GetMappedVertexPointer(a3_vertex_font);
+				u32* indices = a3GetMappedElementPointer();
+			}
+			if (vBegin < rect.y) return;
+
+			const a3::character& c = m_FontTexture->AtlasInfo.Characters[*t];
+			if (c.HasBitmap)
+			{
+				f32 x = hBegin + c.OffsetX * scale;
+				f32 y = vBegin + c.OffsetY * scale;
+				f32 w = c.Width * scale;
+				f32 h = c.Height * scale;
+
+				f32 tx0 = c.NormalX0;
+				f32 tx1 = c.NormalX1;
+				f32 ty0 = c.NormalY0;
+				f32 ty1 = c.NormalY1;
+
+				vertices[counter * 4 + 0].posTexCoords = { x, y, tx0, ty0 };
+				vertices[counter * 4 + 1].posTexCoords = { x + w, y, tx1, ty0 };
+				vertices[counter * 4 + 2].posTexCoords = { x + w, y + h, tx1, ty1 };
+				vertices[counter * 4 + 3].posTexCoords = { x, y + h, tx0, ty1 };
+
+				indices[counter * 6 + 0] = counter * 4 + 0;
+				indices[counter * 6 + 1] = counter * 4 + 1;
+				indices[counter * 6 + 2] = counter * 4 + 2;
+				indices[counter * 6 + 3] = counter * 4 + 0;
+				indices[counter * 6 + 4] = counter * 4 + 2;
+				indices[counter * 6 + 5] = counter * 4 + 3;
+
+				counter++;
+			}
+			hBegin += c.Advance * scale;
+			if (*(t + 1))
+				hBegin += (a3::GetTTFontKernalAdvance(m_FontTexture->AtlasInfo.Info, m_FontTexture->AtlasInfo.ScalingFactor, c.GlyphIndex, (m_FontTexture->AtlasInfo.Characters[*(t + 1)]).GlyphIndex) * scale);
+			if (hBegin > rect.z)
+			{
+				hBegin = rect.x;
+				vBegin -= height;
+			}
+		}
+	}
+
 	void batch2d_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
 	{
 		SetRegion(m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f));
