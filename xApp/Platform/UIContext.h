@@ -124,7 +124,7 @@ namespace a3 {
 			m_Batch2DRenderer.EndFrame();
 			position.x += 20.0f;
 			position.y += 20.0f;
-			m_FontRenderer.Render(desc, position, dimension.y * 0.8f, { 1.0f, 1.0f, 1.0f });
+			m_FontRenderer.Render(desc, position, dimension.y * 0.5f, { 1.0f, 1.0f, 1.0f });
 
 			return result;
 		}
