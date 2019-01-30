@@ -45,7 +45,7 @@ namespace a3 {
 		void SetRegion(const m4x4& p);
 		void SetFont(a3::font_texture* ft);
 		void Render(s8 font, v2 position, f32 height, v3 color);
-		void Render(s8 font, v4 rect, f32 height, v3 color);
+		void Render(s8 font, v2 c1, v2 c2, f32 height, v3 color);
 
 		friend struct a3_renderer;
 	};

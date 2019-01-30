@@ -74,7 +74,6 @@ namespace a3 {
 			}
 			else if (m_MouseUp && m_MouseDragging)
 			{
-				a3LogTrace("Mouse dragging reset");
 				m_MouseDragging = false;
 			}
 
@@ -124,8 +123,9 @@ namespace a3 {
 			m_Batch2DRenderer.EndFrame();
 			position.x += 20.0f;
 			position.y += 20.0f;
-			m_FontRenderer.Render(desc, position, dimension.y * 0.5f, { 1.0f, 1.0f, 1.0f });
-
+			v2 fontRegionDim = dimension;
+			fontRegionDim.y *= 0.5f;
+			m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, { 1.0f, 1.0f, 1.0f });
 			return result;
 		}
 	};

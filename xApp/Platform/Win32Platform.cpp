@@ -529,6 +529,7 @@ i32 a3Main()
 			rect.moveFinalPosition.x = input.MouseX - rect.dimension.x / 2;
 			rect.moveFinalPosition.y = input.MouseY - rect.dimension.y / 2;
 			rect.moveFrameTime = 0.0f;
+			a3LogTrace("Pressed position: ({i}, {i})", input.MouseX, input.MouseY);
 		}
 
 		uiContext.UpdateIO(input);
@@ -558,13 +559,8 @@ i32 a3Main()
 		//	}
 		//}
 
-		v4 region;
-		region.x = 200.0f;
-		region.y = 300.0f;
-		region.z = 390.0f;
-		region.w = 500.0f;
 		s8 text = "This is a regional font rendering. This should be present in a box. The dimension of the region is (200, 100) to (500, 400)";
-		fontRenderer.Render(text, region, 20.0f, { 1.0f, 0.25f, 0.25f });
+		fontRenderer.Render(text, { 200.0f, 300.0f }, { 390.0f, 500.0f }, 20.0f, { 1.0f, 0.25f, 0.25f });
 
 		if (renderSmiley)
 		{
