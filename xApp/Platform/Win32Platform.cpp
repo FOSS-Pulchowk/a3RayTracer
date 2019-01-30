@@ -550,6 +550,7 @@ i32 a3Main()
 	a3Log("Window displayed.");
 
 	win32_user_data* userData = Win32GetUserData();
+	userData->windowHandle = hWnd;
 
 	a3_input_system oldInput = {};
 	LARGE_INTEGER performanceFrequency;
