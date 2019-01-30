@@ -186,11 +186,13 @@ namespace a3 {
 		ButtonUp,
 		ButtonDown
 	};
-}
 
-struct a3_input_system
-{
-	i32 MouseX;
-	i32 MouseY;
-	a3::state Buttons[a3::ButtonCount];
-};
+	struct input_info
+	{
+		f32 MouseX;
+		f32 MouseY;
+		i32 WindowWidth;
+		i32 WindowHeight;
+		a3::state Buttons[a3::ButtonCount];
+	};
+}

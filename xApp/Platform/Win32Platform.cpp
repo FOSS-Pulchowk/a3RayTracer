@@ -40,16 +40,16 @@ namespace a3 {
 	const a3_platform Platform;
 }
 
+static const HANDLE s_HeapHandle = GetProcessHeap();
+
 // TODO(Zero):
 // Make keyboard input system
 // Input system should be moved from platforn layer and needs to be made proper
 struct win32_user_data
 {
 	HWND windowHandle;
-	a3_input_system inputSystem;
+	a3::input_info inputSystem;
 };
-
-static const HANDLE s_HeapHandle = GetProcessHeap();
 
 win32_user_data* Win32GetUserData()
 {
@@ -349,6 +349,18 @@ memory_arena NewMemoryBlock(u32 size)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	win32_user_data& userData = *(win32_user_data*)Win32GetUserData();
+
+	auto l_StoreInputData = [&userData](LPARAM lParam)
+	{
+		i32 mx = GET_X_LPARAM(lParam);
+		i32 my = GET_Y_LPARAM(lParam);
+		i32 ww = userData.inputSystem.WindowWidth;
+		i32 wh = userData.inputSystem.WindowHeight;
+		userData.inputSystem.MouseX = (f32)mx / (f32)ww;
+		// TODO(Zero): Y coordinate for mouse position is inversed
+		userData.inputSystem.MouseY = (f32)(wh - my) / (f32)wh;
+	};
+
 	switch (msg)
 	{
 	case WM_CREATE:
@@ -357,72 +369,50 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 
-	// TODO(Zero): Inverse mouse Y co-ordinate?
 	case WM_MOUSEMOVE:
 	{
-		i32 mx = GET_X_LPARAM(lParam);
-		i32 my = GET_Y_LPARAM(lParam);
-		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
+		l_StoreInputData(lParam);
 		break;
 	}
 
 	case WM_LBUTTONDOWN:
 	{
-		i32 mx = GET_X_LPARAM(lParam);
-		i32 my = GET_Y_LPARAM(lParam);
-		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
+		l_StoreInputData(lParam);
 		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonDown;
 		break;
 	}
 
 	case WM_LBUTTONUP:
 	{
-		i32 mx = GET_X_LPARAM(lParam);
-		i32 my = GET_Y_LPARAM(lParam);
-		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
+		l_StoreInputData(lParam);
 		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonUp;
 		break;
 	}
 
 	case WM_RBUTTONDOWN:
 	{
-		i32 mx = GET_X_LPARAM(lParam);
-		i32 my = GET_Y_LPARAM(lParam);
-		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
+		l_StoreInputData(lParam);
 		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonDown;
 		break;
 	}
 
 	case WM_RBUTTONUP:
 	{
-		i32 mx = GET_X_LPARAM(lParam);
-		i32 my = GET_Y_LPARAM(lParam);
-		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
+		l_StoreInputData(lParam);
 		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonUp;
 		break;
 	}
 
 	case WM_MBUTTONDOWN:
 	{
-		i32 mx = GET_X_LPARAM(lParam);
-		i32 my = GET_Y_LPARAM(lParam);
-		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
+		l_StoreInputData(lParam);
 		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonDown;
 		break;
 	}
 
 	case WM_MBUTTONUP:
 	{
-		i32 mx = GET_X_LPARAM(lParam);
-		i32 my = GET_Y_LPARAM(lParam);
-		userData.inputSystem.MouseX = mx;
-		userData.inputSystem.MouseY = A3_WINDOW_HEIGHT - my;
+		l_StoreInputData(lParam);
 		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonUp;
 		break;
 	}
@@ -434,11 +424,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			a3Log("Window minimized");
 		}
-		else if (wParam == SIZE_RESTORED)
-		{
-			a3Log("Window restored");
-			a3Log("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
-		}
+		a3Log("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
+		userData.inputSystem.WindowWidth = LOWORD(lParam);
+		userData.inputSystem.WindowHeight = HIWORD(lParam);
 		HDC hDC = GetDC(hWnd);
 		SwapBuffers(hDC);
 		ReleaseDC(hWnd, hDC);
@@ -552,7 +540,7 @@ i32 a3Main()
 	win32_user_data* userData = Win32GetUserData();
 	userData->windowHandle = hWnd;
 
-	a3_input_system oldInput = {};
+	a3::input_info oldInput = {};
 	LARGE_INTEGER performanceFrequency;
 	a3Assert(QueryPerformanceFrequency(&performanceFrequency));
 	LARGE_INTEGER performanceCounter;
@@ -571,7 +559,7 @@ i32 a3Main()
 
 	a3::Asset.LoadTexture2DFromFile(a3::asset_id::BigSmile, "Resources/BigSmile.png", GL_LINEAR, GL_REPEAT);
 
-	a3::ui_context uiContext(0.0f, 800.0f, 0.0f, 600.0f);
+	a3::ui_context uiContext(800.0f, 600.0f);
 	b32 renderDebugInformation = true;
 	b32 renderSmiley = true;
 
@@ -601,7 +589,12 @@ i32 a3Main()
 		a3GL(glEnable(GL_BLEND));
 		a3GL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-		a3_input_system& input = userData->inputSystem;
+		// TODO(Zero):
+		// Only change the viewport if the window has been resized
+		// Should we setup callbacks for window resizing?
+		a3GL(glViewport(0, 0, userData->inputSystem.WindowWidth, userData->inputSystem.WindowHeight));
+
+		a3::input_info& input = userData->inputSystem;
 		if (oldInput.Buttons[a3::ButtonLeft] && input.Buttons[a3::ButtonLeft] == a3::ButtonUp)
 		{
 			//rect.position.x = (f32)input.MouseX - rect.dimension.x / 2;
