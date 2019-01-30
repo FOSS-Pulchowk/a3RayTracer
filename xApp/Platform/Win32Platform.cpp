@@ -13,6 +13,9 @@
 #include "Utility/Resource.h"
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
+// for windows dialogue windows/boxes
+#include <objbase.h>
+#include <shobjidl_core.h>
 
 // Needed only for Debug and internal build
 #if defined(A3DEBUG) || defined(A3INTERNAL)
@@ -25,6 +28,7 @@
 #ifdef LoadImage
 #undef LoadImage
 #endif
+
 #ifdef CreateWindow
 #undef CreateWindow
 #endif
@@ -36,7 +40,22 @@ namespace a3 {
 	const a3_platform Platform;
 }
 
+// TODO(Zero):
+// Make keyboard input system
+// Input system should be moved from platforn layer and needs to be made proper
+struct win32_user_data
+{
+	HWND windowHandle;
+	a3_input_system inputSystem;
+};
+
 static const HANDLE s_HeapHandle = GetProcessHeap();
+
+win32_user_data* Win32GetUserData()
+{
+	static win32_user_data s_Win32UserData;
+	return &s_Win32UserData;
+}
 
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 static u64 s_TotalHeapAllocated;
@@ -228,6 +247,66 @@ b32 a3_platform::Free(void* ptr) const
 	return false;
 }
 
+utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
+{
+	IFileOpenDialog *pOpenDialog = A3NULL;
+	HRESULT hr;
+
+	hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, (void**)&pOpenDialog);
+	if (SUCCEEDED(hr))
+	{
+		utf16* wTitle = A3NULL;
+		i32 size = MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, 0);
+		wTitle = new utf16[size];
+		MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, size);
+		pOpenDialog->SetTitle(wTitle);
+		delete[] wTitle;
+
+		if (type == a3::FileTypePNG)
+		{
+			COMDLG_FILTERSPEC filterTypes = {
+				L"Portable Network Graphics",
+				L"*.png"
+			};
+			pOpenDialog->SetFileTypes(1, &filterTypes);
+			pOpenDialog->SetFileTypeIndex(1);
+		}
+
+		hr = pOpenDialog->Show(Win32GetUserData()->windowHandle);
+		utf8* resultPath = A3NULL;
+		if (SUCCEEDED(hr))
+		{
+			IShellItem *pShellItem;
+			hr = pOpenDialog->GetResult(&pShellItem);
+			if (SUCCEEDED(hr))
+			{
+				utf16* wFilePath;
+				hr = pShellItem->GetDisplayName(SIGDN_FILESYSPATH, &wFilePath);
+				if (SUCCEEDED(hr))
+				{
+					// NOTE(Zero):
+					// MAX_PATH is used here because when I query the length information and use it
+					// it didn't work, and I don't know why, could be because the WideChar string given
+					// might not be null terminated, I could not find information on this in the documentation
+					resultPath = new utf8[MAX_PATH];
+					i32 v = WideCharToMultiByte(CP_UTF8, 0, wFilePath, -1, resultPath, MAX_PATH, 0, 0);
+					i32 err = GetLastError();
+					CoTaskMemFree(wFilePath);
+				}
+				pShellItem->Release();
+			}
+		}
+		pOpenDialog->Release();
+		return resultPath;
+	}
+	return A3NULL;
+}
+
+void a3_platform::FreeDialogueData(utf8 * data) const
+{
+	delete[] data;
+}
+
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 u64 a3_platform::GetTotalHeapAllocated() const
 {
@@ -267,17 +346,9 @@ memory_arena NewMemoryBlock(u32 size)
 	return arena;
 }
 
-// TODO(Zero):
-// Make keyboard input system
-// Input system should be moved from platforn layer and needs to be made proper
-struct win32_user_data
-{
-	a3_input_system inputSystem;
-};
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	win32_user_data& userData = *(win32_user_data*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+	win32_user_data& userData = *(win32_user_data*)Win32GetUserData();
 	switch (msg)
 	{
 	case WM_CREATE:
@@ -444,6 +515,15 @@ i32 a3Main()
 	a3Log("Window of resolution {i} X {i} created.", A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT);
 	HDC hDC = GetDC(hWnd);
 
+	HRESULT hr = CoInitializeEx(0, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+	if (FAILED(hr))
+	{
+		a3LogError("Could not initialize COM objects!");
+		return -1;
+	}
+	
+
 	a3GL(glViewport(0, 0, A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT));
 
 	a3::basic2d_renderer renderer2d = a3::Renderer.Create2DRenderer(a3::Shaders::GLBasic2DVertex, a3::Shaders::GLBasic2DFragment);
@@ -469,8 +549,8 @@ i32 a3Main()
 	UpdateWindow(hWnd);
 	a3Log("Window displayed.");
 
-	win32_user_data userData = {};
-	SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)&userData);
+	win32_user_data* userData = Win32GetUserData();
+
 	a3_input_system oldInput = {};
 	LARGE_INTEGER performanceFrequency;
 	a3Assert(QueryPerformanceFrequency(&performanceFrequency));
@@ -520,7 +600,7 @@ i32 a3Main()
 		a3GL(glEnable(GL_BLEND));
 		a3GL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-		a3_input_system& input = userData.inputSystem;
+		a3_input_system& input = userData->inputSystem;
 		if (oldInput.Buttons[a3::ButtonLeft] && input.Buttons[a3::ButtonLeft] == a3::ButtonUp)
 		{
 			//rect.position.x = (f32)input.MouseX - rect.dimension.x / 2;
@@ -529,19 +609,24 @@ i32 a3Main()
 			rect.moveFinalPosition.x = input.MouseX - rect.dimension.x / 2;
 			rect.moveFinalPosition.y = input.MouseY - rect.dimension.y / 2;
 			rect.moveFrameTime = 0.0f;
-			a3LogTrace("Pressed position: ({i}, {i})", input.MouseX, input.MouseY);
+			//a3LogTrace("Pressed position: ({i}, {i})", input.MouseX, input.MouseY);
 		}
 
 		uiContext.UpdateIO(input);
-		
+
 		if (uiContext.Button(1, { 200.0f, 200.0f }, { 300.0f, 50.0f }, { 1.0f, 0.0f, 0.0f }, "Show/Hide Debug Info"))
 		{
 			renderDebugInformation = !renderDebugInformation;
 		}
-		
-		if (uiContext.Button(2, { 200.0f, 250.0f }, { 300.0f, 50.0f }, { 1.0f, 0.0f, 0.0f }, "Show/Hide Smiley"))
+
+		if (uiContext.Button(2, { 200.0f, 250.0f }, { 300.0f, 50.0f }, { 1.0f, 0.0f, 0.0f }, "Load Simely Image"))
 		{
-			renderSmiley = !renderSmiley;
+			utf8* path = a3::Platform.LoadFromDialogue("Load Simely", a3::FileTypePNG);
+			if (path)
+			{
+				a3::Asset.LoadTexture2DFromFile(a3::asset_id::BigSmile, path, GL_LINEAR, GL_REPEAT);
+				a3::Platform.FreeDialogueData(path);
+			}
 		}
 
 		oldInput = input;

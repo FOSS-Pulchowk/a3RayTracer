@@ -46,6 +46,10 @@ a3::image a3::LoadImageFromBufer(void * imgeBuffer, i32 length, void * destinati
 	i32 x, y, n;
 	stbi_info_from_memory((u8*)imgeBuffer, length, &x, &y, &n);
 	u8* pixels = stbi_load_from_memory((u8*)imgeBuffer, length, &x, &y, &n, n);
+	if (!pixels)
+	{
+		return {};
+	}
 	a3::image result;
 	result.Width = x;
 	result.Height = y;

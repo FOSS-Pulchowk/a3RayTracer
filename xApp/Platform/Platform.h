@@ -130,6 +130,12 @@ namespace a3 {
 		void* Buffer;
 		u64 Size;
 	};
+	enum file_type
+	{
+		FileTypeAny,
+		FileTypePNG,
+		FileTypeOBJ
+	};
 }
 
 struct a3_platform
@@ -138,11 +144,16 @@ struct a3_platform
 	void FreeFileContent(a3::file_content fileReadInfo) const;
 	b32 WriteFileContent(s8 fileName, const a3::file_content& file) const;
 	b32 ReplaceFileContent(s8 fileName, const a3::file_content& file) const;
+
 	void* Malloc(u64 size) const;
 	void* Calloc(u64 size) const;
 	void* Realloc(void* ptr, u64 size) const;
 	void* Recalloc(void* ptr, u64 size) const;
 	b32 Free(void* ptr) const;
+
+	utf8* LoadFromDialogue(s8 title, a3::file_type type) const;
+	void FreeDialogueData(utf8* data) const;
+
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 	u64 GetTotalHeapAllocated() const;
 	u64 GetTotalHeapFreed() const;
