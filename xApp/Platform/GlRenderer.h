@@ -14,8 +14,8 @@ namespace a3 {
 		u32 m_VertexArrayBuffer;
 		u32 m_ElementArrayBuffer;
 		u32 m_ShaderProgram;
-		u32 m_Projection;
-		u32 m_TextureDiffuse;
+		u32 m_uProjection;
+		u32 m_uTextureDiffuse;
 		basic2d_renderer(){}
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
@@ -34,9 +34,9 @@ namespace a3 {
 		u32 m_VertexArrayBuffer;
 		u32 m_ElementArrayBuffer;
 		u32 m_ShaderProgram;
-		u32 m_Projection;
-		u32 m_FontAtlas;
-		u32 m_Color;
+		u32 m_uProjection;
+		u32 m_uFontAtlas;
+		u32 m_uColor;
 		a3::font_texture* m_FontTexture;
 		
 		font_renderer(){}
@@ -57,14 +57,19 @@ namespace a3 {
 		u32 m_VertexArrayBuffer;
 		u32 m_ElementArrayBuffer;
 		u32 m_ShaderProgram;
-		u32 m_Projection;
-		u32 m_TextureAtlas;
+		u32 m_uProjection;
+		u32 m_uTextureAtlas;
+		u32 m_uSpotLightPosition;
+		u32 m_uSpotLightColor;
+		u32 m_uSpotLightIntensity;
 		u32 m_Count;
 		texture* m_Texture;
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void SetTexture(a3::texture* texture);
+		void SetSpotLightProperties(v3 color, f32 intensity);
+		void SetSpotLightPosition(v2 position);
 		void Push(v2 position, v2 dimension, v3 color[4], v4 texDimension);
 		void BeginFrame();
 		void EndFrame();

@@ -596,15 +596,6 @@ i32 a3Main()
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
 
-	a3::batch2d_renderer batchRenderer = a3::Renderer.CreateBatch2DRenderer(a3::Shaders::GLBasic2DVertex, a3::Shaders::GLBatch2DFragment);
-	batchRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
-	a3::Asset.LoadTexture2DFromFile(10, "Resources/UIAtlas.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
-	batchRenderer.SetTexture(a3::Asset.Get<a3::texture>(10));
-
-	a3::font_renderer uiFontRenderer = a3::Renderer.CreateFontRenderer(a3::Shaders::GLFontVertex, a3::Shaders::GLFontFragment);
-	uiFontRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
-	uiFontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
-
 	f32 value = 0.0f;
 
 	ShowWindow(hWnd, SW_SHOW);

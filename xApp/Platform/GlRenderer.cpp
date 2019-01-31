@@ -132,7 +132,7 @@ inline u32 a3_CreateShaderProgramFromBuffer(s8 vSource, s8 fSource)
 		i32 len;
 		utf8 errMsg[1024];
 		a3GL(glGetProgramInfoLog(program, 1024, &len, errMsg));
-		a3GL(a3LogWarn("Shaders could not be linked!\n"));
+		a3GL(a3LogWarn("Shaders could not be linked: {s}", errMsg));
 		a3GL(glDeleteProgram(program));
 		return 0;
 	}
@@ -221,8 +221,8 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 
 	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
-	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
-	a3GL(r.m_TextureDiffuse = glGetUniformLocation(r.m_ShaderProgram, "u_Diffuse"));
+	a3GL(r.m_uProjection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
+	a3GL(r.m_uTextureDiffuse = glGetUniformLocation(r.m_ShaderProgram, "u_Diffuse"));
 
 	return r;
 }
@@ -239,10 +239,10 @@ a3::font_renderer a3_renderer::CreateFontRenderer(s8 vSource, s8 fSource) const
 
 	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
-	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
-	a3GL(r.m_Color = glGetUniformLocation(r.m_ShaderProgram, "u_Color"));
-	a3GL(r.m_FontAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_FontAtlas"));
-	a3GL(glUniform1i(r.m_FontAtlas, s_CurrentBound.FontTextureAtlasSlot));
+	a3GL(r.m_uProjection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
+	a3GL(r.m_uColor = glGetUniformLocation(r.m_ShaderProgram, "u_Color"));
+	a3GL(r.m_uFontAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_FontAtlas"));
+	a3GL(glUniform1i(r.m_uFontAtlas, s_CurrentBound.FontTextureAtlasSlot));
 
 	return r;
 }
@@ -263,9 +263,12 @@ a3::batch2d_renderer a3_renderer::CreateBatch2DRenderer(s8 vSource, s8 fSource) 
 
 	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
-	a3GL(r.m_Projection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
-	a3GL(r.m_TextureAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_TextureAtlas"));
-	a3GL(glUniform1i(r.m_TextureAtlas, s_CurrentBound.UITextureSlot));
+	a3GL(r.m_uProjection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
+	a3GL(r.m_uTextureAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_TextureAtlas"));
+	a3GL(r.m_uSpotLightPosition = glGetUniformLocation(r.m_ShaderProgram, "u_SpotLightPosition"));
+	a3GL(r.m_uSpotLightColor = glGetUniformLocation(r.m_ShaderProgram, "u_SpotLightColor"));
+	a3GL(r.m_uSpotLightIntensity = glGetUniformLocation(r.m_ShaderProgram, "u_SpotLightIntensity"));
+	a3GL(glUniform1i(r.m_uTextureAtlas, s_CurrentBound.UITextureSlot));
 	r.m_Count = 0;
 
 	return r;
@@ -281,7 +284,7 @@ namespace a3 {
 	void basic2d_renderer::SetRegion(const m4x4& p)
 	{
 		a3_BindProgram(m_ShaderProgram);
-		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
+		a3GL(glUniformMatrix4fv(m_uProjection, 1, GL_FALSE, p.elements));
 	}
 
 	void basic2d_renderer::BeginFrame()
@@ -295,7 +298,7 @@ namespace a3 {
 	{
 		a3GL(glActiveTexture(GL_TEXTURE0));
 		a3GL(glBindTexture(GL_TEXTURE_2D, *texture));
-		a3GL(glUniform1i(m_TextureDiffuse, 0));
+		a3GL(glUniform1i(m_uTextureDiffuse, 0));
 		a3_vertex2d v[4];
 		v[0].position = position;
 		v[1].position = position;
@@ -324,7 +327,7 @@ namespace a3 {
 	void font_renderer::SetRegion(const m4x4& p)
 	{
 		a3_BindProgram(m_ShaderProgram);
-		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
+		a3GL(glUniformMatrix4fv(m_uProjection, 1, GL_FALSE, p.elements));
 	}
 
 	void font_renderer::SetFont(a3::font_texture * ft)
@@ -340,7 +343,7 @@ namespace a3 {
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
 		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontTexture->Texture));
-		a3GL(glUniform3fv(m_Color, 1, color.values));
+		a3GL(glUniform3fv(m_uColor, 1, color.values));
 
 		u8* t = (u8*)font;
 		f32 hBegin = position.x;
@@ -408,7 +411,7 @@ namespace a3 {
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
 		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontTexture->Texture));
-		a3GL(glUniform3fv(m_Color, 1, color.values));
+		a3GL(glUniform3fv(m_uColor, 1, color.values));
 
 		u8* t = (u8*)font;
 		f32 hBegin = c1.x;
@@ -482,12 +485,25 @@ namespace a3 {
 	void batch2d_renderer::SetRegion(const m4x4& p)
 	{
 		a3_BindProgram(m_ShaderProgram);
-		a3GL(glUniformMatrix4fv(m_Projection, 1, GL_FALSE, p.elements));
+		a3GL(glUniformMatrix4fv(m_uProjection, 1, GL_FALSE, p.elements));
 	}
 
 	void batch2d_renderer::SetTexture(a3::texture * tex)
 	{
 		m_Texture = tex;
+	}
+
+	void batch2d_renderer::SetSpotLightProperties(v3 color, f32 intensity)
+	{
+		a3_BindProgram(m_ShaderProgram);
+		a3GL(glUniform3fv(m_uSpotLightColor, 1, color.values));
+		a3GL(glUniform1f(m_uSpotLightIntensity, intensity));
+	}
+
+	void batch2d_renderer::SetSpotLightPosition(v2 position)
+	{
+		a3_BindProgram(m_ShaderProgram);
+		a3GL(glUniform2fv(m_uSpotLightPosition, 1, position.values));
 	}
 
 	void batch2d_renderer::Push(v2 position, v2 dimension, v3 color[4], v4 texDimension)

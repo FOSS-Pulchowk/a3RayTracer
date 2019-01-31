@@ -28,10 +28,10 @@ namespace a3 {
 		batch2d_renderer m_Batch2DRenderer;
 		font_renderer m_FontRenderer;
 
-		static v3 s_UIColor;
-		static v3 s_ActiveUIColor;
-		static v3 s_HotUIColor;
-		static v3 s_UIFontColor;
+		v3 m_UIColor;
+		v3 m_ActiveUIColor;
+		v3 m_HotUIColor;
+		v3 m_UIFontColor;
 	public:
 		ui_context(f32 width, f32 height) :
 			m_Batch2DRenderer(a3::Renderer.CreateBatch2DRenderer(Shaders::GLBatch2DVertex, Shaders::GLBatch2DFragment)),
@@ -48,6 +48,7 @@ namespace a3 {
 			m_Batch2DRenderer.SetRegion(0.0f, m_Width, 0.0f, m_Height);
 			a3::Asset.LoadTexture2DFromFile(a3::asset_id::UITexture, "Resources/UIAtlas.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
 			m_Batch2DRenderer.SetTexture(a3::Asset.Get<a3::texture>(a3::asset_id::UITexture));
+			SetColor(a3::color::Aqua, a3::color::Aqua, a3::color::Blurple, a3::color::WhiteSmoke);
 		}
 
 		void UpdateIO(const input_info& input)
@@ -107,53 +108,53 @@ namespace a3 {
 			v3 finalColor;
 			if (m_Active == uid)
 			{
-				finalColor = s_ActiveUIColor;
+				finalColor = m_ActiveUIColor;
 				acolor[0] = finalColor;
 				acolor[1] = finalColor;
 				acolor[2] = finalColor;
 				acolor[3] = finalColor;
+				m_Batch2DRenderer.SetSpotLightProperties(m_HotUIColor, 5.0f);
 			}
 			else if (m_Hot == uid)
 			{
-				finalColor = s_HotUIColor;
+				finalColor = m_HotUIColor;
 				acolor[0] = finalColor;
 				acolor[1] = finalColor;
 				acolor[2] = finalColor;
 				acolor[3] = finalColor;
+				m_Batch2DRenderer.SetSpotLightProperties(m_HotUIColor, 5.0f);
 			}
 			else
 			{
-				finalColor = s_UIColor;
+				finalColor = m_UIColor;
 				acolor[0] = finalColor;
 				acolor[1] = finalColor;
 				acolor[2] = finalColor;
 				acolor[3] = finalColor;
+				m_Batch2DRenderer.SetSpotLightProperties(m_HotUIColor, 2.0f);
 			}
 
 			v4 texDimension = { 0.0f, 0.35f, 1.0f, 0.57f };
 			m_Batch2DRenderer.BeginFrame();
+			m_Batch2DRenderer.SetSpotLightPosition(v2{ m_Input.mouseX, m_Input.mouseY });
 			m_Batch2DRenderer.Push(position, dimension, acolor, texDimension);
 			m_Batch2DRenderer.EndFrame();
 			position.x += 20.0f;
 			position.y += 20.0f;
 			v2 fontRegionDim = dimension;
 			fontRegionDim.y *= 0.5f;
-			m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, s_UIFontColor);
+			m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, m_UIFontColor);
 			return result;
 		}
 
-		inline static void SetColor(v3 color, v3 hot, v3 active, v3 font)
+		void SetColor(v3 color, v3 hot, v3 active, v3 font)
 		{
-			s_UIColor = color;
-			s_HotUIColor = hot;
-			s_ActiveUIColor = active;
-			s_UIFontColor = font;
+			m_UIColor = color;
+			m_HotUIColor = hot;
+			m_ActiveUIColor = active;
+			m_UIFontColor = font;
+			//m_Batch2DRenderer.SetSpotLightProperties(hot, 20.3f);
 		}
 	};
-
-	v3 ui_context::s_UIColor = a3::color::DarkNotBlack;
-	v3 ui_context::s_HotUIColor = a3::color::NotQuiteBlack;
-	v3 ui_context::s_ActiveUIColor = a3::color::Blurple;
-	v3 ui_context::s_UIFontColor = a3::color::WhiteSmoke;
 
 }
