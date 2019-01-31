@@ -145,11 +145,20 @@ struct a3_platform
 	b32 WriteFileContent(s8 fileName, const a3::file_content& file) const;
 	b32 ReplaceFileContent(s8 fileName, const a3::file_content& file) const;
 
+	// NOTE(Zero):
+	// These use generic heap allocators
+	// These should be used for general and temporary purposes
 	void* Malloc(u64 size) const;
 	void* Calloc(u64 size) const;
 	void* Realloc(void* ptr, u64 size) const;
 	void* Recalloc(void* ptr, u64 size) const;
 	b32 Free(void* ptr) const;
+
+	// NOTE(Zero):
+	// Use these for persistancy application resources
+	void* AllocMemory(u64 size) const;
+	void* ResizeMemory(void* usrPtr, u64 size) const;
+	b32 Release(void* ptr) const;
 
 	utf8* LoadFromDialogue(s8 title, a3::file_type type) const;
 	void FreeDialogueData(utf8* data) const;
@@ -157,6 +166,8 @@ struct a3_platform
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 	u64 GetTotalHeapAllocated() const;
 	u64 GetTotalHeapFreed() const;
+	u64 GetPersistantHeapAllocated() const;
+	u64 GetPersistantHeapFreed() const;
 #endif
 };
 namespace a3 {

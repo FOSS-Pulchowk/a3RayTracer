@@ -40,7 +40,8 @@ namespace a3 {
 	const a3_platform Platform;
 }
 
-static const HANDLE s_HeapHandle = GetProcessHeap();
+static const HANDLE s_GenericHeapHandle = GetProcessHeap();
+static const HANDLE s_PersistentHeapHandle = HeapCreate(0, a3MegaBytes(512), 0);
 
 // TODO(Zero):
 // Make keyboard input system
@@ -60,9 +61,13 @@ win32_user_data* Win32GetUserData()
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 static u64 s_TotalHeapAllocated;
 static u64 s_TotalHeapFreed;
+static u64 s_PersistantHeapAllocated;
+static u64 s_PersistantHeapFreed;
 #define a3Main() main()
+
 #define a3InternalAllocationSize(x) ((x) + sizeof(u64))
 #define a3InternalGetActualPtr(p) ((void*)((u8*)(p) - sizeof(u64)))
+
 #define a3InternalHeapAllocation(x) x;\
 			 if(ptr) { \
 				if(size > a3MegaBytes(1)) \
@@ -87,6 +92,32 @@ static u64 s_TotalHeapFreed;
 			x;\
 			if(result) { \
 				s_TotalHeapFreed += freed; \
+			}
+
+#define a3InternalPersistantHeapAllocation(x) x;\
+			 if(ptr) { \
+				if(size > a3MegaBytes(1)) \
+					a3LogWarn("Large Heap Allocation of {u} bytes", size); \
+				s_PersistantHeapAllocated += size;\
+				u64* loc = (u64*)ptr; \
+				*loc = size; \
+				ptr = ((u8*)loc + sizeof(u64)); \
+			} \
+			else \
+				 a3LogWarn("Nullptr returned by heap allocation");
+#define a3InternalPersistantHeapReAllocation(x) x;\
+			 if(ptr) { \
+				if(size > a3MegaBytes(1)) \
+					a3LogWarn("Large Heap Re Allocation of {u} bytes", size); \
+				s_PersistantHeapAllocated += (size - *(u64*)ptr);\
+				u64* loc = (u64*)ptr; \
+				*loc = size; \
+				ptr = ((u8*)loc + sizeof(u64)); \
+			}
+#define a3InternalPersistantHeapFree(x) u64 freed = *(u64*)(a3InternalGetActualPtr(ptr)); \
+			x;\
+			if(result) { \
+				s_PersistantHeapFreed += freed; \
 			}
 #else
 #define a3Main() CALLBACK wWinMain(HINSTANCE, HINSTANCE, LPWSTR, i32)
@@ -193,7 +224,7 @@ b32 a3_platform::ReplaceFileContent(s8 fileName, const a3::file_content & file) 
 void* a3_platform::Malloc(u64 size) const
 {
 	a3InternalHeapAllocation(
-		void* ptr = HeapAlloc(s_HeapHandle, 0, a3InternalAllocationSize(size))
+		void* ptr = HeapAlloc(s_GenericHeapHandle, 0, a3InternalAllocationSize(size))
 	);
 	return ptr;
 }
@@ -201,7 +232,7 @@ void* a3_platform::Malloc(u64 size) const
 void* a3_platform::Calloc(u64 size) const
 {
 	a3InternalHeapAllocation(
-		void* ptr = HeapAlloc(s_HeapHandle, HEAP_ZERO_MEMORY, a3InternalAllocationSize(size))
+		void* ptr = HeapAlloc(s_GenericHeapHandle, HEAP_ZERO_MEMORY, a3InternalAllocationSize(size))
 	);
 	return ptr;
 }
@@ -211,7 +242,7 @@ void* a3_platform::Realloc(void* usrPtr, u64 size) const
 	if (usrPtr)
 	{
 		a3InternalHeapReAllocation(
-			void* ptr = HeapReAlloc(s_HeapHandle, 0, a3InternalGetActualPtr(usrPtr), a3InternalAllocationSize(size))
+			void* ptr = HeapReAlloc(s_GenericHeapHandle, 0, a3InternalGetActualPtr(usrPtr), a3InternalAllocationSize(size))
 		);
 		return ptr;
 	}
@@ -226,7 +257,7 @@ void* a3_platform::Recalloc(void* usrPtr, u64 size) const
 	if (usrPtr)
 	{
 		a3InternalHeapReAllocation(
-			void* ptr = HeapReAlloc(s_HeapHandle, HEAP_ZERO_MEMORY, a3InternalGetActualPtr(usrPtr), a3InternalAllocationSize(size))
+			void* ptr = HeapReAlloc(s_GenericHeapHandle, HEAP_ZERO_MEMORY, a3InternalGetActualPtr(usrPtr), a3InternalAllocationSize(size))
 		);
 		return ptr;
 	}
@@ -240,7 +271,41 @@ b32 a3_platform::Free(void* ptr) const
 {
 	if (ptr)
 	{
-		a3InternalHeapFree(b32 result = (b32)HeapFree(s_HeapHandle, 0, a3InternalGetActualPtr(ptr)));
+		a3InternalHeapFree(b32 result = (b32)HeapFree(s_GenericHeapHandle, 0, a3InternalGetActualPtr(ptr)));
+		return result;
+	}
+	a3LogWarn("Attempt to free null pointer");
+	return false;
+}
+
+void * a3_platform::AllocMemory(u64 size) const
+{
+	a3InternalPersistantHeapAllocation(
+		void* ptr = HeapAlloc(s_PersistentHeapHandle, HEAP_ZERO_MEMORY, a3InternalAllocationSize(size))
+	);
+	return ptr;
+}
+
+void * a3_platform::ResizeMemory(void * usrPtr, u64 size) const
+{
+	if (usrPtr)
+	{
+		a3InternalPersistantHeapReAllocation(
+			void* ptr = HeapReAlloc(s_PersistentHeapHandle, HEAP_ZERO_MEMORY, a3InternalGetActualPtr(usrPtr), a3InternalAllocationSize(size))
+		);
+		return ptr;
+	}
+	// NOTE(Zero):
+	// If the usrPtr is null, Malloc is called
+	// Following the Standard Library
+	return a3::Platform.AllocMemory(size);
+}
+
+b32 a3_platform::Release(void * ptr) const
+{
+	if (ptr)
+	{
+		a3InternalPersistantHeapFree(b32 result = (b32)HeapFree(s_PersistentHeapHandle, 0, a3InternalGetActualPtr(ptr)));
 		return result;
 	}
 	a3LogWarn("Attempt to free null pointer");
@@ -315,6 +380,14 @@ u64 a3_platform::GetTotalHeapAllocated() const
 u64 a3_platform::GetTotalHeapFreed() const
 {
 	return s_TotalHeapFreed;
+}
+u64 a3_platform::GetPersistantHeapAllocated() const
+{
+	return s_PersistantHeapAllocated;
+}
+u64 a3_platform::GetPersistantHeapFreed() const
+{
+	return s_PersistantHeapFreed;
 }
 #endif
 
@@ -583,7 +656,7 @@ i32 a3Main()
 			}
 		}
 
-		a3GL(glClearColor(0.2f, 0.2f, 0.2f, 1.0f));
+		a3GL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 		a3GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		a3GL(glDisable(GL_DEPTH_TEST));
 		a3GL(glEnable(GL_BLEND));
@@ -657,15 +730,16 @@ i32 a3Main()
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 			utf8 buffer[256];
 			_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
-			fontRenderer.Render(buffer, v2{ 0.0f, 580.0f }, 30.0f, { 0.8f, 0.9f, 0.2f });
+			fontRenderer.Render(buffer, v2{ 0.0f, 580.0f }, 20.0f, { 0.8f, 0.9f, 0.2f });
+			
 			_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
-			fontRenderer.Render(buffer, v2{ 0.0f, 560.0f }, 20.0f, { 0.8f, 0.9f, 0.2f });
+			fontRenderer.Render(buffer, v2{ 0.0f, 565.0f }, 15.0f, { 0.8f, 0.9f, 0.2f });
 			_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
-			fontRenderer.Render(buffer, v2{ 0.0f, 540.0f }, 20.0f, { 0.8f, 0.9f, 0.2f });
-			//_snprintf_s(buffer, 256, 256, "Total Application Memory: %.2fMB", (f32)memory.Capacity / (1024.0f * 1024.0f));
-			//fontRenderer.Render(buffer, { 0.0f, 520.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
-			//_snprintf_s(buffer, 256, 256, "Used Application Memory: %.2fMB", (f32)memory.Consumed / (1024.0f * 1024.0f));
-			//fontRenderer.Render(buffer, { 0.0f, 500.0f }, 0.4f, { 0.8f, 0.9f, 0.2f }, fontTexture, *font);
+			fontRenderer.Render(buffer, v2{ 0.0f, 550.0f }, 15.0f, { 0.8f, 0.9f, 0.2f });
+			_snprintf_s(buffer, 256, 256, "Total App Memory Used: %.2fKB", (f32)a3::Platform.GetPersistantHeapAllocated() / (1024.0f));
+			fontRenderer.Render(buffer, v2{ 0.0f, 535.0f }, 15.0f, { 0.8f, 0.9f, 0.2f });
+			_snprintf_s(buffer, 256, 256, "Total App Memory Freed: %.2fKB", (f32)a3::Platform.GetPersistantHeapFreed() / (1024.0f));
+			fontRenderer.Render(buffer, v2{ 0.0f, 520.0f }, 15.0f, { 0.8f, 0.9f, 0.2f });
 #endif
 		}
 
