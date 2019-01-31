@@ -78,10 +78,11 @@ namespace a3 {
 			"in vec3 fColor;																"
 			"in vec2 fTexCoords;															"
 			"out vec4 FragmentColor;														"
-			"uniform sampler2D u_TextureAtlas;													"
+			"uniform sampler2D u_TextureAtlas;												"
 			"void main()																	"
 			"{																				"
-			"	vec4 sampled = texture(u_TextureAtlas, fTexCoords);	"
+			"	vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);									"
+			"	vec4 sampled = texture(u_TextureAtlas, fTexCoords);							"
 			"	FragmentColor = sampled * vec4(fColor, 1.0f);								"
 			"}																				"
 			;

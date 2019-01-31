@@ -27,6 +27,11 @@ namespace a3 {
 
 		batch2d_renderer m_Batch2DRenderer;
 		font_renderer m_FontRenderer;
+
+		static v3 s_UIColor;
+		static v3 s_ActiveUIColor;
+		static v3 s_HotUIColor;
+		static v3 s_UIFontColor;
 	public:
 		ui_context(f32 width, f32 height) :
 			m_Batch2DRenderer(a3::Renderer.CreateBatch2DRenderer(Shaders::GLBatch2DVertex, Shaders::GLBatch2DFragment)),
@@ -53,7 +58,7 @@ namespace a3 {
 			m_Input.mouseDown = input.Buttons[a3::ButtonLeft] == a3::ButtonDown;
 		}
 
-		b32 Button(i32 uid, v2 position, v2 dimension, v3 color, s8 desc)
+		b32 Button(i32 uid, v2 position, v2 dimension, s8 desc)
 		{
 			a3Assert(uid != -1);
 			i32 result = false;
@@ -102,7 +107,7 @@ namespace a3 {
 			v3 finalColor;
 			if (m_Active == uid)
 			{
-				finalColor = { 0.0f, 0.0f, 1.0f };
+				finalColor = s_ActiveUIColor;
 				acolor[0] = finalColor;
 				acolor[1] = finalColor;
 				acolor[2] = finalColor;
@@ -110,7 +115,7 @@ namespace a3 {
 			}
 			else if (m_Hot == uid)
 			{
-				finalColor = { 0.0f, 1.0f, 0.0f };
+				finalColor = s_HotUIColor;
 				acolor[0] = finalColor;
 				acolor[1] = finalColor;
 				acolor[2] = finalColor;
@@ -118,7 +123,7 @@ namespace a3 {
 			}
 			else
 			{
-				finalColor = color;
+				finalColor = s_UIColor;
 				acolor[0] = finalColor;
 				acolor[1] = finalColor;
 				acolor[2] = finalColor;
@@ -133,9 +138,22 @@ namespace a3 {
 			position.y += 20.0f;
 			v2 fontRegionDim = dimension;
 			fontRegionDim.y *= 0.5f;
-			m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, { 1.0f, 1.0f, 1.0f });
+			m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, s_UIFontColor);
 			return result;
 		}
+
+		inline static void SetColor(v3 color, v3 hot, v3 active, v3 font)
+		{
+			s_UIColor = color;
+			s_HotUIColor = hot;
+			s_ActiveUIColor = active;
+			s_UIFontColor = font;
+		}
 	};
+
+	v3 ui_context::s_UIColor = a3::color::DarkNotBlack;
+	v3 ui_context::s_HotUIColor = a3::color::NotQuiteBlack;
+	v3 ui_context::s_ActiveUIColor = a3::color::Blurple;
+	v3 ui_context::s_UIFontColor = a3::color::WhiteSmoke;
 
 }
