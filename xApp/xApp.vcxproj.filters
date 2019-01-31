@@ -122,6 +122,9 @@
     <ClInclude Include="Platform\Assets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Math\Color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Platform\sample.vert" />

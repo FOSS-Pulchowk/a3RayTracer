@@ -272,6 +272,7 @@
     <ClInclude Include="External\STBImage.h" />
     <ClInclude Include="External\STBImageWrite.h" />
     <ClInclude Include="External\STBTrueType.h" />
+    <ClInclude Include="Math\Color.h" />
     <ClInclude Include="Platform\Assets.h" />
     <ClInclude Include="Platform\GLSL\GLSLShaders.h" />
     <ClInclude Include="Platform\UIContext.h" />

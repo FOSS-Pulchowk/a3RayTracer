@@ -7,6 +7,7 @@
 #include "Platform/AssetManager.h"
 
 #include "Math/Math.h"
+#include "Math/Color.h"
 #include "UIContext.h"
 
 #include "GLResources.h"
@@ -656,7 +657,8 @@ i32 a3Main()
 			}
 		}
 
-		a3GL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+		v3 cc = a3::color::NotQuiteBlack;
+		a3GL(glClearColor(cc.r, cc.g, cc.b, 1.0f));
 		a3GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		a3GL(glDisable(GL_DEPTH_TEST));
 		a3GL(glEnable(GL_BLEND));
@@ -730,16 +732,16 @@ i32 a3Main()
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 			utf8 buffer[256];
 			_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
-			fontRenderer.Render(buffer, v2{ 0.0f, 580.0f }, 20.0f, { 0.8f, 0.9f, 0.2f });
+			fontRenderer.Render(buffer, v2{ 0.0f, 580.0f }, 20.0f, a3::color::GreenYellow);
 			
 			_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
-			fontRenderer.Render(buffer, v2{ 0.0f, 565.0f }, 15.0f, { 0.8f, 0.9f, 0.2f });
+			fontRenderer.Render(buffer, v2{ 0.0f, 565.0f }, 15.0f, a3::color::GreenYellow);
 			_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
-			fontRenderer.Render(buffer, v2{ 0.0f, 550.0f }, 15.0f, { 0.8f, 0.9f, 0.2f });
+			fontRenderer.Render(buffer, v2{ 0.0f, 550.0f }, 15.0f, a3::color::GreenYellow);
 			_snprintf_s(buffer, 256, 256, "Total App Memory Used: %.2fKB", (f32)a3::Platform.GetPersistantHeapAllocated() / (1024.0f));
-			fontRenderer.Render(buffer, v2{ 0.0f, 535.0f }, 15.0f, { 0.8f, 0.9f, 0.2f });
+			fontRenderer.Render(buffer, v2{ 0.0f, 535.0f }, 15.0f, a3::color::GreenYellow);
 			_snprintf_s(buffer, 256, 256, "Total App Memory Freed: %.2fKB", (f32)a3::Platform.GetPersistantHeapFreed() / (1024.0f));
-			fontRenderer.Render(buffer, v2{ 0.0f, 520.0f }, 15.0f, { 0.8f, 0.9f, 0.2f });
+			fontRenderer.Render(buffer, v2{ 0.0f, 520.0f }, 15.0f, a3::color::GreenYellow);
 #endif
 		}
 
