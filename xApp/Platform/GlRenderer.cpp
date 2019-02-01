@@ -3,10 +3,6 @@
 #include "GL/Glad.h"
 #include "GL/GLDebug.h"
 
-// TODO(Zero):
-// Retain texture binds
-// Make the rendering system more efficient by pushing and drawing maximum sprites in single draw call
-
 struct a3_current_bound
 {
 	u32 VertexArrayObject;

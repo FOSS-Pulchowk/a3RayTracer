@@ -670,10 +670,14 @@ i32 a3Main()
 			rect.moveFinalPosition.x = input.MouseX - rect.dimension.x / 2;
 			rect.moveFinalPosition.y = input.MouseY - rect.dimension.y / 2;
 			rect.moveFrameTime = 0.0f;
-			//a3LogTrace("Pressed position: ({i}, {i})", input.MouseX, input.MouseY);
 		}
 
 		uiContext.UpdateIO(input);
+
+		if (uiContext.Checkbox(0, { 600.0f, 150.0f }, { 300.0f, 50.0f }, renderSmiley, "Render Simely"))
+		{
+			renderSmiley = !renderSmiley;
+		}
 
 		if (uiContext.Checkbox(1, { 600.0f, 200.0f }, { 300.0f, 50.0f }, renderDebugInformation, "Debug Info"))
 		{
