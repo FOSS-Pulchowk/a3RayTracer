@@ -91,7 +91,7 @@ namespace a3 {
 			"	vec3 finalColor = sampled.rgb;												"
 			"	float len = length(u_SpotLightPosition - fFragmentPos.xy);					"
 			"	float intensity = u_SpotLightIntensity / (1.0f + 0.2 * len);"
-			"	finalColor = intensity * finalColor * u_SpotLightColor + 0.02f * finalColor;"
+			"	finalColor = intensity * finalColor * u_SpotLightColor + 0.2f * finalColor;	"
 			"	FragmentColor = vec4(finalColor, sampled.a);								"
 			"}																				"
 			;

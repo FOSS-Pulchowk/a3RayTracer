@@ -68,9 +68,11 @@ namespace a3 {
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void SetTexture(a3::texture* texture);
-		void SetSpotLightProperties(v3 color, f32 intensity);
+		void SetSpotLightIntensity(f32 intensity);
+		void SetSpotLightColor(v3 color);
 		void SetSpotLightPosition(v2 position);
-		void Push(v2 position, v2 dimension, v3 color[4], v4 texDimension);
+		void SetSpotLightMaterial(v3 color, f32 intensity);
+		void Push(v2 position, v2 dimension, v3 color, v4 texDimension);
 		void BeginFrame();
 		void EndFrame();
 

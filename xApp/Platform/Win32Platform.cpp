@@ -624,7 +624,7 @@ i32 a3Main()
 
 	a3::Asset.LoadTexture2DFromFile(a3::asset_id::BigSmile, "Resources/BigSmile.png", GL_LINEAR, GL_REPEAT);
 
-	a3::ui_context uiContext(800.0f, 600.0f);
+	a3::ui_context uiContext(1280.0f, 720.0f);
 
 	b32 renderDebugInformation = true;
 	b32 renderSmiley = true;
@@ -675,12 +675,12 @@ i32 a3Main()
 
 		uiContext.UpdateIO(input);
 
-		if (uiContext.Button(1, { 200.0f, 200.0f }, { 300.0f, 50.0f }, "Show/Hide Debug Info"))
+		if (uiContext.Checkbox(1, { 600.0f, 200.0f }, { 300.0f, 50.0f }, renderDebugInformation, "Debug Info"))
 		{
 			renderDebugInformation = !renderDebugInformation;
 		}
 
-		if (uiContext.Button(2, { 200.0f, 250.0f }, { 300.0f, 50.0f }, "Load Simely Image"))
+		if (uiContext.Button(2, { 600.0f, 250.0f }, { 300.0f, 50.0f }, "Load Simely Image"))
 		{
 			utf8* path = a3::Platform.LoadFromDialogue("Load Simely", a3::FileTypePNG);
 			if (path)

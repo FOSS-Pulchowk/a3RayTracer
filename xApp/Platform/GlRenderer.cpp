@@ -493,11 +493,16 @@ namespace a3 {
 		m_Texture = tex;
 	}
 
-	void batch2d_renderer::SetSpotLightProperties(v3 color, f32 intensity)
+	void batch2d_renderer::SetSpotLightIntensity(f32 intensity)
+	{
+		a3_BindProgram(m_ShaderProgram);
+		a3GL(glUniform1f(m_uSpotLightIntensity, intensity));
+	}
+
+	void batch2d_renderer::SetSpotLightColor(v3 color)
 	{
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glUniform3fv(m_uSpotLightColor, 1, color.values));
-		a3GL(glUniform1f(m_uSpotLightIntensity, intensity));
 	}
 
 	void batch2d_renderer::SetSpotLightPosition(v2 position)
@@ -506,7 +511,14 @@ namespace a3 {
 		a3GL(glUniform2fv(m_uSpotLightPosition, 1, position.values));
 	}
 
-	void batch2d_renderer::Push(v2 position, v2 dimension, v3 color[4], v4 texDimension)
+	void batch2d_renderer::SetSpotLightMaterial(v3 color, f32 intensity)
+	{
+		a3_BindProgram(m_ShaderProgram);
+		a3GL(glUniform3fv(m_uSpotLightColor, 1, color.values));
+		a3GL(glUniform1f(m_uSpotLightIntensity, intensity));
+	}
+
+	void batch2d_renderer::Push(v2 position, v2 dimension, v3 color, v4 texDimension)
 	{
 		if (m_Count == A3_UI_RENDER_MAX)
 		{
@@ -528,10 +540,10 @@ namespace a3 {
 		v[m_Count * 4 + 1].position.x += dimension.x;
 		v[m_Count * 4 + 2].position += dimension;
 		v[m_Count * 4 + 3].position.y += dimension.y;
-		v[m_Count * 4 + 0].color = color[0];
-		v[m_Count * 4 + 1].color = color[1];
-		v[m_Count * 4 + 2].color = color[2];
-		v[m_Count * 4 + 3].color = color[3];
+		v[m_Count * 4 + 0].color = color;
+		v[m_Count * 4 + 1].color = color;
+		v[m_Count * 4 + 2].color = color;
+		v[m_Count * 4 + 3].color = color;
 		v[m_Count * 4 + 0].texCoords = { tx0, ty0 };
 		v[m_Count * 4 + 1].texCoords = { tx1, ty0 };
 		v[m_Count * 4 + 2].texCoords = { tx1, ty1 };
