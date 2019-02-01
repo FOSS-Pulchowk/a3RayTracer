@@ -256,16 +256,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="App.cpp" />
+    <ClCompile Include="a3Implementation.cpp" />
     <ClCompile Include="Platform\GLSL\GLSL.cpp" />
-    <ClCompile Include="Utility\Resource.cpp" />
-    <ClCompile Include="Math\Matrix4.cpp" />
-    <ClCompile Include="Math\Quaterniod.cpp" />
-    <ClCompile Include="Platform\AssetManager.cpp" />
-    <ClCompile Include="Platform\GlRenderer.cpp" />
     <ClCompile Include="Platform\gl\Glad.cpp" />
     <ClCompile Include="Platform\Win32Platform.cpp" />
     <ClCompile Include="Platform\Win32Debug.cpp" />
+    <ClCompile Include="Utility\Resource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\Core.h" />
@@ -285,7 +281,6 @@
     <ClInclude Include="Platform\AssetManager.h" />
     <ClInclude Include="Platform\GlRenderer.h" />
     <ClInclude Include="Platform\GLResources.h" />
-    <ClInclude Include="Platform\GLSL\UIFragmentShader.glsl" />
     <ClInclude Include="Platform\GL\Glad.h" />
     <ClInclude Include="Platform\GL\GLDebug.h" />
     <ClInclude Include="Platform\GL\GLExtensions.h" />
@@ -294,17 +289,6 @@
     <ClInclude Include="Utility\Memory.h" />
     <ClInclude Include="Platform\Platform.h" />
     <ClInclude Include="Utility\String.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Platform\font.frag" />
-    <None Include="Platform\font.vert" />
-    <None Include="Platform\GLSL\Basic2DFragmentShader.glsl" />
-    <None Include="Platform\GLSL\Basic2DVertexShader.glsl" />
-    <None Include="Platform\GLSL\FontFragmentShader.glsl" />
-    <None Include="Platform\GLSL\FontVertexShader.glsl" />
-    <None Include="Platform\GLSL\UIVertexShader.glsl" />
-    <None Include="Platform\sample.frag" />
-    <None Include="Platform\sample.vert" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\BigSmile.png" />

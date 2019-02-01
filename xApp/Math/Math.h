@@ -7,6 +7,76 @@
 #define a3ToRadians(deg) ((deg)*a3Pi32 / 180)
 #define a3ToDegrees(rad) ((rad)*180 / a3Pi32)
 
+//
+// DECLARATIONS
+//
+
+inline v4 operator*(v4 vec, const m4x4 &mat);
+inline v3 operator*(v3 vec, const m4x4 &mat); // Treats w as 1.0f
+inline v4 operator*(const m4x4 &mat, v4 vec);
+inline v3 operator*(const m4x4 &mat, v3 vec); // Treats w as 1.0f
+
+/*
+	- Construct Quaternion from euler angles
+	- Euler angles should be provided using `v3` class
+	- Angles should be provided in radians
+	- [USAGE] Euler angles take the Order Yaw-Pitch-Roll (X-Y-Z in `v3` class)
+	- [IMLPEMENTATION] Roll does rotation along Z, Pitch along X and Yaw along Y
+*/
+inline quat EulerAnglesToQuat(v3 eulerAngles);
+
+/*
+	- Returns Euler Angles of given Quaternion
+	- Angles returned are in radians
+	- Euler angles is be provided using `v3` class
+	- [USAGE] Euler angles take the Order Yaw-Pitch-Roll (X-Y-Z in `v3` class)
+	- [IMLPEMENTATION] Roll does rotation along Z, Pitch along X and Yaw along Y
+*/
+inline v3 QuatToEulerAngles(const quat &q);
+
+/*
+	- Returns a 4x4 Rotation Matrix
+	- The matrix can be used as rotation matrix in 3D space
+	- Errors can occurs if the provided Quaternion is either null or not unit quaternion
+*/
+inline m4x4 QuatToMat4x4R(const quat &q);
+inline m4x4 QuatMat4x4C(const quat &q);
+
+/*
+	- Constructs Quaternion from angle and axis
+	- Angle should be provided in radians
+	- Axis must be unit vector, this does not normalize the axis
+*/
+inline quat AngleAxisToQuat(f32 angle, v3 axis);
+
+/*
+	- Returns angles and axis representation by the unit quaternion
+	- Unit quaternion should be provided, this does not normalize the quaternion
+	- If the provided Quaternion is not unit Quaternion, returned value may cause errors
+	- Pointer for `f32` and `v3` is used for returning
+	- Angle returned will be in radians
+*/
+inline void QuatToAngleAxis(const quat &q, f32 *angle, v3 *axis);
+
+/*
+	- Rotates the given Vector 3 using quaternion multiplication
+	- This function does not check if the quaternion is normalized or not
+	- Normalize the quaternion if it is not; unless you know what you are doing
+*/
+inline v3 operator*(const quat &lhs, v3 vec);
+
+/*
+	- Rotates Vector 3 but takes Vector 4 as paramater
+	- Discards the `w` component of the Vector 4 while rotating
+	- When Vector 4 is returned, the `w` component will always be set to `1.0f`
+*/
+inline v4 operator*(const quat &lhs, v4 vec);
+
+
+//
+// IMPLEMENTATION
+//
+
 ////////////////////// Matrix Vector operations ///////////////////////////////////////
 
 inline v4 operator*(v4 vec, const m4x4 &mat)
@@ -19,7 +89,6 @@ inline v4 operator*(v4 vec, const m4x4 &mat)
 	return result;
 }
 
-// Treats w as 1.0f
 inline v3 operator*(v3 vec, const m4x4 &mat)
 {
 	v4 result;
@@ -39,7 +108,6 @@ inline v4 operator*(const m4x4 &mat, v4 vec)
 	return result;
 }
 
-// Treats w as 1.0f
 inline v3 operator*(const m4x4 &mat, v3 vec)
 {
 	v4 result;
@@ -51,13 +119,7 @@ inline v3 operator*(const m4x4 &mat, v3 vec)
 
 ////////////////////////// Quaternions, Vector, Matrix operations ///////////////////////////
 
-/*
-			- Construct Quaternion from euler angles
-			- Euler angles should be provided using `v3` class
-			- Angles should be provided in radians
-			- [USAGE] Euler angles take the Order Yaw-Pitch-Roll (X-Y-Z in `v3` class)
-			- [IMLPEMENTATION] Roll does rotation along Z, Pitch along X and Yaw along Y
-		*/
+
 inline quat EulerAnglesToQuat(v3 eulerAngles)
 {
 	quat q;
@@ -74,13 +136,6 @@ inline quat EulerAnglesToQuat(v3 eulerAngles)
 	return q;
 }
 
-/*
-			- Returns Euler Angles of given Quaternion
-			- Angles returned are in radians
-			- Euler angles is be provided using `v3` class
-			- [USAGE] Euler angles take the Order Yaw-Pitch-Roll (X-Y-Z in `v3` class)
-			- [IMLPEMENTATION] Roll does rotation along Z, Pitch along X and Yaw along Y
-		*/
 inline v3 QuatToEulerAngles(const quat &q)
 {
 	v3 ret;
@@ -100,11 +155,6 @@ inline v3 QuatToEulerAngles(const quat &q)
 	return ret;
 }
 
-/*
-			- Returns a 4x4 Rotation Matrix
-			- The matrix can be used as rotation matrix in 3D space
-			- Errors can occurs if the provided Quaternion is either null or not unit quaternion
-		*/
 inline m4x4 QuatToMat4x4R(const quat &q)
 {
 	return m4x4(
@@ -119,11 +169,6 @@ inline m4x4 QuatMat4x4C(const quat &q)
 	return m4x4::Transpose(QuatToMat4x4R(q));
 }
 
-/*
-			- Constructs Quaternion from angle and axis
-			- Angle should be provided in radians
-			- Axis must be unit vector, this does not normalize the axis
-		*/
 inline quat AngleAxisToQuat(f32 angle, v3 axis)
 {
 	quat q;
@@ -135,13 +180,6 @@ inline quat AngleAxisToQuat(f32 angle, v3 axis)
 	return q;
 }
 
-/*
-			- Returns angles and axis representation by the unit quaternion
-			- Unit quaternion should be provided, this does not normalize the quaternion
-			- If the provided Quaternion is not unit Quaternion, returned value may cause errors
-			- Pointer for `f32` and `v3` is used for returning
-			- Angle returned will be in radians
-		*/
 inline void QuatToAngleAxis(const quat &q, f32 *angle, v3 *axis)
 {
 	f32 len = q.i * q.i + q.j * q.j + q.k * q.k;
@@ -152,11 +190,6 @@ inline void QuatToAngleAxis(const quat &q, f32 *angle, v3 *axis)
 	axis->z = q.k * len;
 }
 
-/*
-	- Rotates the given Vector 3 using quaternion multiplication
-	- This function does not check if the quaternion is normalized or not
-	- Normalize the quaternion if it is not; unless you know what you are doing
-	*/
 inline v3 operator*(const quat &lhs, v3 vec)
 {
 	quat v(0.0f, vec.x, vec.y, vec.z);
@@ -164,11 +197,7 @@ inline v3 operator*(const quat &lhs, v3 vec)
 	quat vp((lhs * v) * lhsp);
 	return v3{ vp.x, vp.y, vp.z };
 }
-/*
-	- Rotates Vector 3 but takes Vector 4 as paramater
-	- Discards the `w` component of the Vector 4 while rotating
-	- When Vector 4 is returned, the `w` component will always be set to `1.0f`
-	*/
+
 inline v4 operator*(const quat &lhs, v4 vec)
 {
 	quat v(0.0f, vec.x, vec.y, vec.z);

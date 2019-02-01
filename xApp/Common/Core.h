@@ -73,6 +73,118 @@ typedef const wchar_t* s16;
 #define a3MegaBytes(n) (a3KiloBytes(n) * (u64)1024)
 #define a3GigaBytes(n) (a3MegaBytes(n) * (u64)1024)
 
+//
+// DECLARATIONS
+//
+
+inline f32 Sqrtf(f32 x);
+inline f32 Powf(f32 n, f32 p, f32 precision = 0.000001f);
+inline f32 Floorf(f32 f);
+inline f32 Ceilf(f32 f);
+inline f32 FModf(f32 y, f32 x);
+inline f32 Squaref(f32 n);
+inline f32 Sinf(f32 n);
+inline f32 Cosf(f32 n);
+inline f32 Tanf(f32 n);
+inline f32 FAbsf(f32 n);
+inline f32 ArcSinf(f32 n);
+inline f32 ArcCosf(f32 f);
+inline f32 ArcTan2f(f32 y, f32 x);
+inline f32 CopySignf(f32 a, f32 b);
+
+// v2, v3 and v4 data types are treated as basic types
+struct v2
+{
+	union
+	{
+		struct { f32 x, y; };
+		struct { f32 u, v; };
+		f32 values[2];
+	};
+};
+
+struct v3
+{
+	union
+	{
+		struct { f32 x, y, z; };
+		struct { f32 u, v, w; };
+		struct { f32 r, g, b; };
+		struct { v2 xy; f32 z; };
+		struct { f32 x; v2 yz; };
+		f32 values[3];
+	};
+};
+
+struct v4
+{
+	union
+	{
+		struct { f32 x, y, z, w; };
+		struct { f32 r, g, b, a; };
+		struct { v2 xy, zw; };
+		struct { v3 xyz; f32 w; };
+		struct { f32 x; v3 yzw; };
+		f32 values[4];
+	};
+};
+
+inline v2 operator-(v2 v);
+inline f32 Length(v2 vec);
+inline f32 Distance2(v2 lhs, v2 rhs);
+inline f32 Dot(v2 lhs, v2 rhs);
+inline v3 Cross(v2 lhs, v2 rhs);
+inline v2 Normalize(v2 vec);
+inline v2& operator*=(v2& v, f32 scalar);
+inline v2& operator+=(v2& v, v2 vec);
+inline v2& operator-=(v2& v, v2 vec);
+inline v2 operator*(v2 vec, f32 scalar);
+inline v2 operator*(f32 scalar, v2 vec);
+inline v2 operator*(v2 vec1, v2 vec2);
+inline v2 operator+(v2 lhs, v2 rhs);
+inline v2 operator-(v2 lhs, v2 rhs);
+inline b32 operator==(v2 lhs, v2 rhs);
+inline b32 operator!=(v2 lhs, v2 rhs);
+
+inline v3 operator-(v3 v);
+inline f32 Length(v3 vec);
+inline f32 Distance2(v3 lhs, v3 rhs);
+inline f32 Dot(v3 lhs, v3 rhs);
+inline v3 Cross(v3 lhs, v3 rhs);
+inline v3 Normalize(v3 vec);
+inline v3& operator*=(v3& v, f32 scalar);
+inline v3& operator+=(v3& v, v3 vec);
+inline v3& operator-=(v3& v, v3 vec);
+inline v3 operator*(v3 vec, f32 scalar);
+inline v3 operator*(f32 scalar, v3 vec);
+inline v3 operator*(v3 lhs, v3 rhs);
+inline v3 operator+(v3 lhs, v3 rhs);
+inline v3 operator-(v3 lhs, v3 rhs);
+inline b32 operator==(v3 lhs, v3 rhs);
+inline b32 operator!=(v3 lhs, v3 rhs);
+
+inline v4 operator-(v4 v);
+inline f32 Length(v4 vec);
+inline f32 Distance2(v4 lhs, v4 rhs);
+inline f32 Dot(v4 lhs, v4 rhs);
+inline v4 Cross(v4 lhs, v4 rhs);
+inline v4 Normalize(v4 vec);
+inline v4& operator*=(v4& v, f32 scalar);
+inline v4& operator+=(v4& v, v4 vec);
+inline v4& operator-=(v4& v, v4 vec);
+inline v4 operator*(v4 vec, f32 scalar);
+inline v4 operator*(f32 scalar, v4 vec);
+inline v4 operator*(v4 lhs, v4 rhs);
+inline v4 operator+(v4 lhs, v4 rhs);
+inline v4 operator-(v4 lhs, v4 rhs);
+inline b32 operator==(v4 lhs, v4 rhs);
+inline b32 operator!=(v4 lhs, v4 rhs);
+
+
+//
+// IMPLEMENTATION
+//
+
 #ifndef A3STDLIB
 #include <xmmintrin.h>
 // TODO(Zero): Remove this, self implement
@@ -85,7 +197,7 @@ inline f32 Sqrtf(f32 x)
 	return _mm_cvtss_f32(mx);
 }
 
-inline f32 Powf(f32 n, f32 p, f32 precision = 0.000001f)
+inline f32 Powf(f32 n, f32 p, f32 precision)
 {
 	if (p < 0) return 1 / Powf(n, -p);
 	if (p >= 10) return Sqrtf(Powf(n, p / 2, precision / 2));
@@ -210,45 +322,6 @@ inline f32 a3CopySignf(f32 a, f32 b)
 }
 
 #endif
-
-
-// v2, v3 and v4 data types are treated as basic types
-
-struct v2
-{
-	union
-	{
-		struct { f32 x, y; };
-		struct { f32 u, v; };
-		f32 values[2];
-	};
-};
-
-struct v3
-{
-	union
-	{
-		struct { f32 x, y, z; };
-		struct { f32 u, v, w; };
-		struct { f32 r, g, b; };
-		struct { v2 xy; f32 z; };
-		struct { f32 x; v2 yz; };
-		f32 values[3];
-	};
-};
-
-struct v4
-{
-	union
-	{
-		struct { f32 x, y, z, w; };
-		struct { f32 r, g, b, a; };
-		struct { v2 xy, zw; };
-		struct { v3 xyz; f32 w; };
-		struct { f32 x; v3 yzw; };
-		f32 values[4];
-	};
-};
 
 
 ////////////////// Vector 2 operations ///////////////////////////////////////////
@@ -507,15 +580,6 @@ inline f32 Length(v4 vec)
 inline f32 Distance2(v4 lhs, v4 rhs)
 {
 	return Squaref(lhs.x - rhs.x) + Squaref(lhs.y - rhs.y) + Squaref(lhs.z - rhs.z) + Squaref(lhs.w - rhs.w);
-}
-
-inline v3 GetXYZ(v4 vec)
-{
-	v3 result;
-	result.x = vec.x;
-	result.y = vec.y;
-	result.z = vec.z;
-	return result;
 }
 
 inline f32 Dot(v4 lhs, v4 rhs)

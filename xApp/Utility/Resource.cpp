@@ -122,7 +122,7 @@ static inline void a3_CalculateFontBitmapMaxDimension(stbtt_fontinfo& info, f32 
 			if (maxWidth < w)maxWidth = w;
 		}
 	}
-	*w = maxWidth+5; // NOTE(Zero): Similarly for width as well
+	*w = maxWidth + 5; // NOTE(Zero): Similarly for width as well
 	*h = maxHeight;
 }
 
@@ -148,7 +148,7 @@ void a3::QueryAtlasSizeForFontSize(i32 x, i32 y, i32* w, i32* h)
 	*h = y;
 }
 
-void a3::ResterizeFonts(font_atlas_info* i, void * buffer, i32 length, f32 scale, void * drawBuffer, RasterizeFontCallback callback)
+void a3::ResterizeFontsToBuffer(font_atlas_info* i, void * buffer, i32 length, f32 scale, void * drawBuffer, RasterizeFontCallback callback)
 {
 	stbtt_fontinfo info;
 	stbtt_InitFont(&info, (u8*)buffer, stbtt_GetFontOffsetForIndex((u8*)buffer, 0));
@@ -186,7 +186,7 @@ void a3::ResterizeFonts(font_atlas_info* i, void * buffer, i32 length, f32 scale
 				i32 x0, x1, y0, y1;
 				stbtt_GetGlyphBitmapBox(&i->Info, c->GlyphIndex, pscale, pscale, &x0, &y0, &x1, &y1);
 				i32 bw = x1 - x0; i32 bh = y1 - y0;
-				
+
 				// NOTE(Zero): Here stride is equal to width because OpenGL wants packed pixels
 				i32 stride = bw;
 				stbtt_MakeGlyphBitmap(&i->Info, (u8*)drawBuffer, bw, bh, stride, pscale, pscale, c->GlyphIndex);
@@ -320,7 +320,7 @@ a3::font a3::LoadFontFromBuffer(void * buffer, f32 scale, void * destination)
 	return result;
 }
 
-f32 a3::GetTTFontKernalAdvance(const stbtt_fontinfo & info, f32 scalingFactor, i32 glyph0, i32 glyph1)
+f32 a3::QueryTTFontKernalAdvance(const stbtt_fontinfo & info, f32 scalingFactor, i32 glyph0, i32 glyph1)
 {
 	i32 res = stbtt_GetGlyphKernAdvance(&info, glyph0, glyph1);
 	return res * scalingFactor;

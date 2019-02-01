@@ -174,24 +174,36 @@ namespace a3 { namespace color {
 
 } }
 
+//
+// DECLARATION
+//
+
 namespace a3 {
 
-	inline v3 MixColor(v3 c1, v3 c2)
-	{
-		v3 result;
-		result.r = c1.r * c2.r;
-		result.g = c1.g * c2.g;
-		result.b = c1.b * c2.b;
-		return result;
-	}
+	inline v3 MixColor(v3 c1, v3 c2);
+	inline v3 GrayScaleColor(v3 c);
 
-	inline v3 GrayScaleColor(v3 c)
-	{
-		v3 result;
-		result.r = c.r * 0.2627f;
-		result.g = c.g * 0.6780f;
-		result.b = c.b * 0.0593f;
-		return result;
-	}
+}
 
+
+//
+// IMPLEMENTATION
+//
+
+inline v3 a3::MixColor(v3 c1, v3 c2)
+{
+	v3 result;
+	result.r = c1.r * c2.r;
+	result.g = c1.g * c2.g;
+	result.b = c1.b * c2.b;
+	return result;
+}
+
+inline v3 a3::GrayScaleColor(v3 c)
+{
+	v3 result;
+	result.r = c.r * 0.2627f;
+	result.g = c.g * 0.6780f;
+	result.b = c.b * 0.0593f;
+	return result;
 }

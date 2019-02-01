@@ -1,13 +1,33 @@
 #pragma once
 #include "Common/Core.h"
 
+//
+// DECLARATIONS
+//
+
 namespace a3 {
 
-inline i32 ParseU32(utf8* buffer, u32 length, u32 number, u32 base)
+	inline i32 ParseU32(utf8* buffer, u32 length, u32 number, u32 base);
+	inline i32 ParseF32(utf8* buffer, u32 length, f32 number);
+	inline u64 GetStringLength(s8 s);
+	inline void MemoryCopy(void* dst, const void* src, u64 size);
+	inline void ReverseMemoryCopy(void* dst, const void* src, u64 size);
+	inline void ReverseRectCopy(void* dst, const void* src, i32 w, i32 h);
+	inline void* MemoryMove(void* dst, const void* src, u64 size);
+	inline void* MemorySet(void* dst, i32 val, u64 size);
+
+}
+
+
+//
+// IMPLEMENTATION
+//
+
+inline i32 a3::ParseU32(utf8* buffer, u32 length, u32 number, u32 base)
 {
 	a3Assert(length > 0);
 	a3Assert(base == 2 || base == 8 || base == 16 || base == 10);
-	if(number == 0)
+	if (number == 0)
 	{
 		buffer[0] = '0';
 		buffer[1] = 0;
@@ -15,17 +35,17 @@ inline i32 ParseU32(utf8* buffer, u32 length, u32 number, u32 base)
 	}
 
 	i32 bufferIndex = 0;
-	while(number != 0)
+	while (number != 0)
 	{
 		u64 rem = number % base;
 		buffer[bufferIndex++] = (utf8)((rem > 9) ? (rem - 10) + 'a' : rem + '0');
-		if(bufferIndex == length) return -bufferIndex;
+		if (bufferIndex == length) return -bufferIndex;
 		number = number / base;
 	}
-	if(bufferIndex == length) return -bufferIndex;
+	if (bufferIndex == length) return -bufferIndex;
 	i32 start = 0;
 	i32 end = bufferIndex - 1;
-	while(start < end)
+	while (start < end)
 	{
 		utf8 temp = buffer[start];
 		buffer[start] = buffer[end];
@@ -37,7 +57,7 @@ inline i32 ParseU32(utf8* buffer, u32 length, u32 number, u32 base)
 	return bufferIndex;
 }
 
-inline i32 ParseF32(utf8* buffer, u32 length, f32 number)
+inline i32 a3::ParseF32(utf8* buffer, u32 length, f32 number)
 {
 	a3Assert(length > 0);
 	u32 num = *((u32*)(&number));
@@ -48,42 +68,42 @@ inline i32 ParseF32(utf8* buffer, u32 length, f32 number)
 	man |= 1 << 23;
 
 	i32 bufferIndex = 0;
-	if(sign)
+	if (sign)
 		buffer[bufferIndex++] = '-';
-	
-	if(bufferIndex == length) return -bufferIndex;
+
+	if (bufferIndex == length) return -bufferIndex;
 	i32 result = ParseU32(buffer + bufferIndex, length - bufferIndex, man >> (23 - exp), 10);
-	if(result <= 0) return result;
+	if (result <= 0) return result;
 	bufferIndex += result;
 
 	buffer[bufferIndex++] = '.';
-	if(bufferIndex == length) return -bufferIndex;
+	if (bufferIndex == length) return -bufferIndex;
 
 	u32 frac = man & ((1 << (23 - exp)) - 1);
 	u32 base = 1 << (23 - exp);
 	i32 c = 0;
 
-	if(!frac)
+	if (!frac)
 	{
 		buffer[bufferIndex++] = '0';
-		if(bufferIndex == length) return -bufferIndex;
+		if (bufferIndex == length) return -bufferIndex;
 	}
 
-	while(frac != 0 && c++ < 6)
+	while (frac != 0 && c++ < 6)
 	{
 		frac *= 10;
 		result = ParseU32(buffer + bufferIndex, length - bufferIndex, (u32)(frac / base), 10);
-		if(result <= 0) return result;
+		if (result <= 0) return result;
 		bufferIndex += result;
 		frac %= base;
 	}
-	if(bufferIndex == length) return -bufferIndex;
+	if (bufferIndex == length) return -bufferIndex;
 	buffer[bufferIndex] = 0;
 
 	return bufferIndex;
 }
 
-inline u64 GetStringLength(s8 s)
+inline u64 a3::GetStringLength(s8 s)
 {
 	u64 len = 0;
 	for (utf8 c = s[0]; c != '\0'; ++c)
@@ -91,7 +111,7 @@ inline u64 GetStringLength(s8 s)
 	return (len + 1);
 }
 
-inline void MemoryCopy(void* dst, const void* src, u64 size)
+inline void a3::MemoryCopy(void* dst, const void* src, u64 size)
 {
 	u8* dp = (u8*)dst;
 	u8* sp = (u8*)src;
@@ -99,7 +119,7 @@ inline void MemoryCopy(void* dst, const void* src, u64 size)
 		*dp++ = *sp++;
 }
 
-inline void ReverseMemoryCopy(void* dst, const void* src, u64 size)
+inline void a3::ReverseMemoryCopy(void* dst, const void* src, u64 size)
 {
 	u8* dp = (u8*)dst;
 	u8* sp = (u8*)src + size - 1;
@@ -107,7 +127,7 @@ inline void ReverseMemoryCopy(void* dst, const void* src, u64 size)
 		*dp++ = *sp--;
 }
 
-inline void ReverseRectCopy(void* dst, const void* src, i32 w, i32 h)
+inline void a3::ReverseRectCopy(void* dst, const void* src, i32 w, i32 h)
 {
 	u8* sp = (u8*)src;
 	u8* rowDP = (u8*)dst + w * h - w;
@@ -122,7 +142,7 @@ inline void ReverseRectCopy(void* dst, const void* src, i32 w, i32 h)
 	}
 }
 
-inline void* MemoryMove(void* dst, const void* src, u64 size)
+inline void* a3::MemoryMove(void* dst, const void* src, u64 size)
 {
 	u8* pd = (u8*)dst;
 	u8* sp = (u8*)src;
@@ -131,12 +151,10 @@ inline void* MemoryMove(void* dst, const void* src, u64 size)
 	return dst;
 }
 
-inline void* MemorySet(void* dst, i32 val, u64 size)
+inline void* a3::MemorySet(void* dst, i32 val, u64 size)
 {
 	u8* p = (u8*)dst;
 	for (u64 i = 0; i < size; ++i)
 		*p++ = val;
 	return dst;
-}
-
 }
