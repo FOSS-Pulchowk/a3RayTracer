@@ -4,6 +4,7 @@
 #include "GLSL/GLSLShaders.h"
 #include "AssetManager.h"
 #include "Assets.h"
+#include "Math/Color.h"
 
 //
 // DECLARATIONS

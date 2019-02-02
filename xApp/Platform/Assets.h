@@ -9,7 +9,7 @@ namespace a3 {
 	{
 		UIFont,
 		UITexture,
-		BigSmile,
+		UserFont,
 		DebugFont
 	};
 

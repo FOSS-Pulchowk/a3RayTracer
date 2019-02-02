@@ -12,6 +12,9 @@
 
 #include "GLResources.h"
 #include "Utility/Resource.h"
+
+#include "a3Interface.h"
+
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
 // for windows dialogue windows/boxes
@@ -406,8 +409,8 @@ void operator delete(void* ptr)
 // Do not force window resolution
 // Make the window size fixed
 // Make application independent to window resolution
-#define A3_WINDOW_WIDTH 800
-#define A3_WINDOW_HEIGHT 600
+#define A3_WINDOW_WIDTH 1280
+#define A3_WINDOW_HEIGHT 720
 
 memory_arena NewMemoryBlock(u32 size)
 {
@@ -507,6 +510,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 
+	case WM_SETCURSOR:
+		SetCursor(LoadCursorW(A3NULL, IDC_ARROW));
+		return 0;
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
@@ -568,7 +575,6 @@ i32 a3Main()
 	width = wrc.right - wrc.left;
 	height = wrc.bottom - wrc.top;
 	HWND hWnd = CreateWindowExW(0, A3_WINDOW_CLASS_NAME, L"a3 Ray Tracer", wndStyles, CW_USEDEFAULT, CW_USEDEFAULT, width, height, A3NULL, A3NULL, hInstance, 0);
-
 	if (!hWnd)
 	{
 		a3LogError("Window could not be created!");
@@ -585,18 +591,10 @@ i32 a3Main()
 		return -1;
 	}
 	
-
-	a3GL(glViewport(0, 0, A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT));
-
-	a3::basic2d_renderer renderer2d = a3::Renderer.Create2DRenderer(a3::Shaders::GLBasic2DVertex, a3::Shaders::GLBasic2DFragment);
-	renderer2d.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
-
 	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::Shaders::GLFontVertex, a3::Shaders::GLFontFragment);
 	fontRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
-
-	f32 value = 0.0f;
 
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
@@ -611,25 +609,11 @@ i32 a3Main()
 	LARGE_INTEGER performanceCounter;
 	QueryPerformanceCounter(&performanceCounter);
 
-	entity rect = {};
-	rect.position = { 100.0f, 100.0f, 0.0f };
-	rect.dimension = { 100.0f, 100.0f };
-	rect.color = { 1.0f, 0.0f, 0.f };
-	rect.acolor[0] = { 1.0f, 0.0f, 0.0f };
-	rect.acolor[1] = { 0.0f, 1.0f, 0.0f };
-	rect.acolor[2] = { 0.0f, 0.0f, 1.0f };
-	rect.acolor[3] = { 1.0f, 1.0f, 1.0f };
-	rect.isMoving = false;
-	rect.moveFinalPosition = v2{ 0.0f, 0.0f };
-
-	a3::Asset.LoadTexture2DFromFile(a3::asset_id::BigSmile, "Resources/BigSmile.png", GL_LINEAR, GL_REPEAT);
-
-	a3::ui_context uiContext(1280.0f, 720.0f);
-
 	b32 renderDebugInformation = true;
-	b32 renderSmiley = true;
 
 	f32 deltaTime = 0.0f;
+	App application;
+	application.Init();
 
 	b32 shouldRun = true;
 	while (shouldRun)
@@ -649,6 +633,8 @@ i32 a3Main()
 			}
 		}
 
+		application.Update(userData->inputSystem);
+
 		v3 cc = a3::color::NotQuiteBlack;
 		a3GL(glClearColor(cc.r, cc.g, cc.b, 1.0f));
 		a3GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -661,63 +647,9 @@ i32 a3Main()
 		// Should we setup callbacks for window resizing?
 		a3GL(glViewport(0, 0, userData->inputSystem.WindowWidth, userData->inputSystem.WindowHeight));
 
-		a3::input_info& input = userData->inputSystem;
-		if (oldInput.Buttons[a3::ButtonLeft] && input.Buttons[a3::ButtonLeft] == a3::ButtonUp)
-		{
-			//rect.position.x = (f32)input.MouseX - rect.dimension.x / 2;
-			//rect.position.y = (f32)input.MouseY - rect.dimension.y / 2;
-			rect.isMoving = true;
-			rect.moveFinalPosition.x = input.MouseX - rect.dimension.x / 2;
-			rect.moveFinalPosition.y = input.MouseY - rect.dimension.y / 2;
-			rect.moveFrameTime = 0.0f;
-		}
 
-		uiContext.UpdateIO(input);
+		application.Render();
 
-		if (uiContext.Checkbox(0, { 600.0f, 150.0f }, { 300.0f, 50.0f }, renderSmiley, "Render Simely"))
-		{
-			renderSmiley = !renderSmiley;
-		}
-
-		if (uiContext.Checkbox(1, { 600.0f, 200.0f }, { 300.0f, 50.0f }, renderDebugInformation, "Debug Info"))
-		{
-			renderDebugInformation = !renderDebugInformation;
-		}
-
-		if (uiContext.Button(2, { 600.0f, 250.0f }, { 300.0f, 50.0f }, "Load Simely Image"))
-		{
-			utf8* path = a3::Platform.LoadFromDialogue("Load Simely", a3::FileTypePNG);
-			if (path)
-			{
-				a3::Asset.LoadTexture2DFromFile(a3::asset_id::BigSmile, path, GL_LINEAR, GL_REPEAT);
-				a3::Platform.FreeDialogueData(path);
-			}
-		}
-
-		oldInput = input;
-
-		//if (rect.isMoving)
-		//{
-		//	rect.position.xy += (rect.moveFrameTime * deltaTime * Normalize(rect.moveFinalPosition - rect.position.xy) * 450.0f);
-		//	rect.moveFrameTime += deltaTime;
-		//	f32 distance = FAbsf(Sqrtf(Distance2(rect.position.xy, rect.moveFinalPosition)));
-		//	if (distance < 0.01f)
-		//	{
-		//		rect.isMoving = false;
-		//		rect.moveFrameTime = 0.0f;
-		//		rect.moveFinalPosition = v2{ 0.0f, 0.0f };
-		//	}
-		//}
-
-		s8 text = "This is a regional font rendering. This should be present in a box. The dimension of the region is (200, 100) to (500, 400)";
-		fontRenderer.Render(text, { 200.0f, 300.0f }, { 390.0f, 500.0f }, 20.0f, a3::color::Aqua);
-
-		if (renderSmiley)
-		{
-			v2 dimensiond = { 100.0f, 100.0f };
-			renderer2d.BeginFrame();
-			renderer2d.EndFrame(rect.position, dimensiond, rect.acolor, a3::Asset.Get<a3::texture>(a3::asset_id::BigSmile));
-		}
 		LARGE_INTEGER currentPerformanceCounter;
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
@@ -742,8 +674,6 @@ i32 a3Main()
 		}
 
 		SwapBuffers(hDC);
-		value += 0.01f;
-
 	}
 
 	return 0;
