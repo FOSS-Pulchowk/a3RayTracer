@@ -11,6 +11,7 @@ struct a3_renderer;
 
 namespace a3 {
 
+#define A3_BASIC_RENDERER_MAX_COUNT 50
 	struct basic2d_renderer
 	{
 	private:
@@ -19,14 +20,15 @@ namespace a3 {
 		u32 m_ElementArrayBuffer;
 		u32 m_ShaderProgram;
 		u32 m_uProjection;
-		u32 m_uTextureDiffuse;
+		u32 m_uTextureDiffuse[A3_BASIC_RENDERER_MAX_COUNT];
+		u32 m_Count;
 		basic2d_renderer(){}
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void BeginFrame();
-		// TODO(Zero): Implement a Push function, EndFrame should only draw the sprites
-		void EndFrame(v3 position, v2 dimension, v3 color[4], a3::texture* texture);
+		void Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture);
+		void EndFrame();
 
 		friend struct a3_renderer;
 	};
@@ -119,8 +121,8 @@ struct a3_current_bound
 	u32* MappedElementArrayPointer;
 
 	i32 MaxTextureUnits; // 80 is gaurenteed, use more if available
-	const i32 FontTextureAtlasSlot = 4;
-	const i32 UITextureSlot = 5;
+	const i32 FontTextureAtlasSlot = 50;
+	const i32 UITextureSlot = 51;
 };
 
 static a3_current_bound s_CurrentBound;
@@ -294,9 +296,10 @@ void a3_renderer::Initialize() const
 a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 {
 	a3::basic2d_renderer r;
+	r.m_Count = 0;
 	a3_GenerateAndBind(&r.m_VertexArrayObject, &r.m_VertexArrayBuffer, &r.m_ElementArrayBuffer);
 
-	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex2d) * 4, A3NULL, GL_DYNAMIC_DRAW));
+	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex2d) * 4 * A3_BASIC_RENDERER_MAX_COUNT, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glVertexAttribPointer(a3_vertex2d::POSITION, 3, GL_FLOAT,
 		GL_FALSE, sizeof(a3_vertex2d),
 		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::position))));
@@ -309,11 +312,7 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 		GL_FALSE, sizeof(a3_vertex2d),
 		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texCoords))));
 
-	u32 indices[] = {
-		0, 1, 2, 0, 2, 3
-	};
-
-	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6, indices, GL_STATIC_DRAW));
+	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * A3_BASIC_RENDERER_MAX_COUNT, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::POSITION));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::COLOR));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::TEXCOORDS));
@@ -321,7 +320,19 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_uProjection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
-	a3GL(r.m_uTextureDiffuse = glGetUniformLocation(r.m_ShaderProgram, "u_Diffuse"));
+	char name09[] = "u_Diffuse[-]";
+	for (i32 i = 0; i < 10; ++i)
+	{
+		name09[10] = i + 48;
+		a3GL(r.m_uTextureDiffuse[0] = glGetUniformLocation(r.m_ShaderProgram, name09));
+	}
+	char nameg9[] = "u_Diffuse[--]";
+	for (i32 i = 10; i < A3_BASIC_RENDERER_MAX_COUNT; ++i)
+	{
+		nameg9[10] = i / 10;
+		nameg9[11] = (i % 10) + 48;
+		a3GL(r.m_uTextureDiffuse[0] = glGetUniformLocation(r.m_ShaderProgram, nameg9));
+	}
 
 	return r;
 }
@@ -390,32 +401,59 @@ namespace a3 {
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
 		a3_BindVertexArrayBuffer(m_VertexArrayBuffer);
+		a3_BindElementArrayBuffer(m_ElementArrayBuffer);
 		a3_BindProgram(m_ShaderProgram);
+		a3_MapVertexPointer();
+		a3_MapElementPointer();
+		m_Count = 0;
 	}
 
-	void basic2d_renderer::EndFrame(v3 position, v2 dimension, v3 color[4], a3::texture* texture)
+	void basic2d_renderer::Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture)
 	{
+		if (m_Count == A3_BASIC_RENDERER_MAX_COUNT)
+		{
+			EndFrame();
+			BeginFrame();
+		}
+
+		a3_vertex2d* v = a3GetMappedVertexPointer(a3_vertex2d);
+		u32* i = a3GetMappedElementPointer();
+
 		a3GL(glActiveTexture(GL_TEXTURE0));
 		a3GL(glBindTexture(GL_TEXTURE_2D, *texture));
-		a3GL(glUniform1i(m_uTextureDiffuse, 0));
-		a3_vertex2d v[4];
-		v[0].position = position;
-		v[1].position = position;
-		v[2].position = position;
-		v[3].position = position;
-		v[1].position.x += dimension.x;
-		v[2].position.xy += dimension;
-		v[3].position.y += dimension.y;
-		v[0].color = color[0];
-		v[1].color = color[1];
-		v[2].color = color[2];
-		v[3].color = color[3];
-		v[0].texCoords = { 0.0f, 0.0f };
-		v[1].texCoords = { 1.0f, 0.0f };
-		v[2].texCoords = { 1.0f, 1.0f };
-		v[3].texCoords = { 0.0f, 1.0f };
-		a3GL(glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(a3_vertex2d) * 4, v));
-		a3GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, A3NULL));
+		a3GL(glUniform1i(m_uTextureDiffuse[m_Count], m_Count));
+		v[m_Count * 4 + 0].position = position;
+		v[m_Count * 4 + 1].position = position;
+		v[m_Count * 4 + 2].position = position;
+		v[m_Count * 4 + 3].position = position;
+		v[m_Count * 4 + 1].position.x += dimension.x;
+		v[m_Count * 4 + 2].position.xy += dimension;
+		v[m_Count * 4 + 3].position.y += dimension.y;
+		v[m_Count * 4 + 0].color = color[0];
+		v[m_Count * 4 + 1].color = color[1];
+		v[m_Count * 4 + 2].color = color[2];
+		v[m_Count * 4 + 3].color = color[3];
+		v[m_Count * 4 + 0].texCoords = { 0.0f, 0.0f };
+		v[m_Count * 4 + 1].texCoords = { 1.0f, 0.0f };
+		v[m_Count * 4 + 2].texCoords = { 1.0f, 1.0f };
+		v[m_Count * 4 + 3].texCoords = { 0.0f, 1.0f };
+
+		i[m_Count * 4 + 0] = m_Count * 4 + 0;
+		i[m_Count * 4 + 1] = m_Count * 4 + 1;
+		i[m_Count * 4 + 2] = m_Count * 4 + 2;
+		i[m_Count * 4 + 3] = m_Count * 4 + 0;
+		i[m_Count * 4 + 4] = m_Count * 4 + 2;
+		i[m_Count * 4 + 5] = m_Count * 4 + 3;
+
+		m_Count++;
+	}
+
+	inline void basic2d_renderer::EndFrame()
+	{
+		a3_UnmapVertexPointer();
+		a3_UnmapElementPointer();
+		a3GL(glDrawElements(GL_TRIANGLES, m_Count * 6, GL_UNSIGNED_INT, A3NULL));
+		m_Count = 0;
 	}
 
 	void font_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
@@ -665,6 +703,7 @@ namespace a3 {
 		a3_BindElementArrayBuffer(m_ElementArrayBuffer);
 		a3_MapVertexPointer();
 		a3_MapElementPointer();
+		m_Count = 0;
 	}
 
 	void batch2d_renderer::EndFrame()

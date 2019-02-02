@@ -20,6 +20,13 @@ using namespace std;
 
 #define ADD_COMPONENT(x) struct x { string name; }
 
+static const v3 WhiteColorArray[4] = {
+	{1.0f, 1.0f, 1.0f},
+	{1.0f, 1.0f, 1.0f},
+	{1.0f, 1.0f, 1.0f},
+	{1.0f, 1.0f, 1.0f}
+};
+
 class App
 {
 private:
@@ -48,6 +55,7 @@ private:
 	a3::ui_context uiContext;
 	pc_components currentlyOpen;
 	a3::font_renderer fontRenderer;
+	a3::basic2d_renderer renderer2D;
 
 	vector<motherboard> vMotherBoards;
 	vector<processor> vProcessors;
@@ -78,18 +86,31 @@ const char* App::s_ComponentNames[App::pc_components::Total - 1] =
 
 App::App() :
 	uiContext(1280.0f, 720.0f),
-	fontRenderer(a3::Renderer.CreateFontRenderer(a3::Shaders::GLFontVertex, a3::Shaders::GLFontFragment))
+	fontRenderer(a3::Renderer.CreateFontRenderer(a3::Shaders::GLFontVertex, a3::Shaders::GLFontFragment)),
+	renderer2D(a3::Renderer.Create2DRenderer(a3::Shaders::GLBasic2DVertex, a3::Shaders::GLBasic2DFragment))
 {
 }
 
 void App::Init()
 {
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::UserFont, "Resources/HackRegular.ttf", 100.0f);
+	a3::Asset.LoadTexture2DFromFile(12, "Resources/BigSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(12 + pc_components::Motherboard, "Resources/MotherBoard.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(12 + pc_components::Processor, "Resources/Processor.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(12 + pc_components::Memory, "Resources/Memory.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(12 + pc_components::Storage, "Resources/Storage.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(12 + pc_components::Case, "Resources/Case.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(12 + pc_components::Cooler, "Resources/Cooler.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(12 + pc_components::PowerSupply, "Resources/PowerSupply.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(12 + pc_components::VideoCard, "Resources/VideoCard.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
 
 	currentlyOpen = pc_components::None;
 	uiContext.SetColor(a3::color::Aqua, a3::color::Aqua, a3::color::Blurple, a3::color::WhiteSmoke);
 	fontRenderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::UserFont));
+
+
+	renderer2D.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 }
 
 void App::Update(const a3::input_info& input)
@@ -99,6 +120,11 @@ void App::Update(const a3::input_info& input)
 
 void App::Render()
 {
+	renderer2D.BeginFrame();
+	renderer2D.Push({ 50.0f, 50.0f }, { 500.0f, 500.0f }, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
+	renderer2D.EndFrame();
+
+
 	fontRenderer.Render("PC Parts", { 1050.0f, 670.0f }, 45.0f, a3::color::White);
 	RenderUI({ 1050.0f, 600.0f }, { 200.0f, 50.0f });
 	RenderComponentWindow(currentlyOpen);
