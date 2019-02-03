@@ -60,7 +60,35 @@ struct powerSupply {
 	float price;
 };
 
-struct casinig{
+struct casing{
 	std::string name, type;
 	float price;
+	//casing(std::string a, std::string b, float c ):name(a), type(b),price(c){}
+};
+
+std::vector<casing> vCase;
+std::vector<powerSupply> vPowerSupply;
+std::vector<videoCard> vVideoCard;
+std::vector<storage> vStorage;
+std::vector<memory> vMemory;
+std::vector<cpuCooler> vCpuCooler;
+std::vector<motherboard> vMotherboard;
+std::vector<cpu> vCpu;
+
+void setComponents() {
+	vCase.push_back(casing{});
+
+	vPowerSupply.push_back(powerSupply{});
+
+	vVideoCard.push_back(videoCard{});
+
+	vStorage.push_back(storage{});
+
+	vMemory.push_back(memory{});
+
+	vCpuCooler.push_back(cpuCooler{});
+
+	vCpu.push_back(cpu{});
+
+	vMotherboard.push_back(motherboard{});
 };
