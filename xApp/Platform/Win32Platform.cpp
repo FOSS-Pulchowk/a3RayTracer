@@ -127,9 +127,12 @@ if(result) { \
 #define a3Main() CALLBACK wWinMain(HINSTANCE, HINSTANCE, LPWSTR, i32)
 #define a3InternalAllocationSize(x) (x)
 #define a3InternalGetActualPtr(p) (p)
-#define a3InternalHeapAllocation(x) x;
-#define a3InternalHeapReAllocation(x) x;
-#define a3InternalHeapFree(x) x;
+#define a3InternalHeapAllocation(x) x
+#define a3InternalHeapReAllocation(x) x
+#define a3InternalHeapFree(x) x
+#define a3InternalPersistantHeapAllocation(x) x
+#define a3InternalPersistantHeapReAllocation(x) x
+#define a3InternalPersistantHeapFree(x) x
 #endif
 
 const a3::file_content a3_platform::LoadFileContent(s8 fileName) const
@@ -410,14 +413,12 @@ void* operator A3_DEFINE_ALLOCATION(new)
 #endif
 }
 
+#if defined(A3DEBUG) || defined(A3INTERNAL)
 void* operator new(u64 size)
 {
-#if defined(A3DEBUG) || defined(A3INTERNAL)
 	return a3::Platform.Malloc(size, __FILE__, __LINE__);
-#else
-	return a3::Platform.Malloc(size);
-#endif
 }
+#endif
 
 void operator delete(void* ptr)
 {

@@ -218,6 +218,9 @@ void operator delete(void* ptr);
 #define a3Calloc(size, type) (type*)a3::Platform.Calloc(size)
 #define a3Recalloc(ptr, size) (type*)a3::Platform.Recalloc(ptr, size)
 #define a3Free(ptr) a3::Platform.Free(ptr)
+#define a3Allocate(size, type) (type*)a3::Platform.AllocMemory(size)
+#define a3Reallocate(ptr, size, type) (type*)a3::Platform.ResizeMemory(ptr, size)
+#define a3Release(ptr) a3::Platform.Release(ptr)
 #define a3New new
 #define a3Delete delete
 #endif
