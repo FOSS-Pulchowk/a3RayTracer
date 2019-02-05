@@ -27,6 +27,8 @@ namespace a3 {
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void BeginFrame();
+		void Push(v3 position, v2 dimension, v3 color, a3::texture* texture, rect dest = rect{ 0,0,0,0 });
+		void Push(v3 position, f32 height, v3 color, a3::texture* texture, rect dest = rect{ 0,0,0,0 });
 		void Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture, rect dest = rect{ 0, 0, 0, 0 });
 		void Push(v3 position, f32 height, const v3 color[4], a3::texture* texture, rect dest = rect{ 0, 0, 0, 0 });
 		void EndFrame();
@@ -407,6 +409,26 @@ namespace a3 {
 		a3_MapVertexPointer();
 		a3_MapElementPointer();
 		m_Count = 0;
+	}
+
+	void basic2d_renderer::Push(v3 position, v2 dimension, v3 color, a3::texture * texture, rect dest)
+	{
+		static v3 acolor[4];
+		acolor[0] = color;
+		acolor[1] = color;
+		acolor[2] = color;
+		acolor[3] = color;
+		Push(position, dimension, acolor, texture, dest);
+	}
+
+	void basic2d_renderer::Push(v3 position, f32 height, v3 color, a3::texture * texture, rect dest)
+	{
+		static v3 acolor[4];
+		acolor[0] = color;
+		acolor[1] = color;
+		acolor[2] = color;
+		acolor[3] = color;
+		Push(position, height, acolor, texture, dest);
 	}
 
 	void basic2d_renderer::Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture, rect dest)
