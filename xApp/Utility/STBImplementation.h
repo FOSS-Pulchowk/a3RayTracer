@@ -36,7 +36,7 @@
 #define STBTT_REALLOC(p,newsz)	a3Realloc(p, newsz)
 #define STBTT_FREE(p)			a3Free(p)
 #define STBTT_malloc(x,u)		((void)(u),a3Malloc(x, void))
-#define STBTT_free(x,u)			((void)(u),a3Free(x, void))
+#define STBTT_free(x,u)			((void)(u),a3Free(x))
 #define STBTT_assert(x)			a3Assert(x)
 #define STBTT_STATIC
 #include "External/STBTrueType.h"

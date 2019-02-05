@@ -211,6 +211,7 @@ void operator delete(void* ptr);
 #define a3Reallocate(ptr, size, type) (type*)a3::Platform.ResizeMemory(ptr, size, __FILE__, __LINE__)
 #define a3Release(ptr) a3::Platform.Release(ptr)
 #define a3New new(__FILE__, __LINE__)
+#define a3Delete delete
 #else
 #define a3Malloc(size, type) (type*)a3::Platform.Malloc(size)
 #define a3Realloc(ptr, size, type) (type*)a3::Platform.Realloc(ptr, size)
@@ -218,6 +219,7 @@ void operator delete(void* ptr);
 #define a3Recalloc(ptr, size) (type*)a3::Platform.Recalloc(ptr, size)
 #define a3Free(ptr) a3::Platform.Free(ptr)
 #define a3New new
+#define a3Delete delete
 #endif
 
 namespace a3 {

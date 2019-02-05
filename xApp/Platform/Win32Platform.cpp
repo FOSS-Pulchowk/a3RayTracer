@@ -335,7 +335,7 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 		wTitle = a3New utf16[size];
 		MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, size);
 		pOpenDialog->SetTitle(wTitle);
-		delete[] wTitle;
+		a3Delete[] wTitle;
         
 		if (type == a3::FileTypePNG)
 		{
@@ -379,7 +379,7 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 
 void a3_platform::FreeDialogueData(utf8 * data) const
 {
-	delete[] data;
+	a3Delete[] data;
 }
 
 #if defined(A3DEBUG) || defined(A3INTERNAL)

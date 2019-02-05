@@ -83,7 +83,7 @@ b32 a3::WriteImageToBuffer(void * destination, i32 width, i32 height, i32 channe
 	if (stbi_write_png_to_func(a3_STBWriteBufferCallback, &buffer, width, height, channels, pixels, stride))
 	{
 		a3::MemoryCopy(destination, buffer.buffer, buffer.size);
-		delete[] buffer.buffer;
+		a3Delete[] buffer.buffer;
 		return true;
 	}
 	return false;
@@ -208,7 +208,7 @@ void a3::ResterizeFontsToBuffer(font_atlas_info* i, void * buffer, i32 length, f
 			}
 		}
 	}
-	delete[] flippedYBuffer;
+	a3Delete[] flippedYBuffer;
 }
 
 a3::font a3::LoadFontFromBuffer(void * buffer, f32 scale, void * destination)
@@ -313,7 +313,7 @@ a3::font a3::LoadFontFromBuffer(void * buffer, f32 scale, void * destination)
 				}
 				c->Width = maxWidth;
 				c->Height = maxHeight;
-				delete[] bitmaps[index];
+				a3Delete[] bitmaps[index];
 			}
 		}
 	}
