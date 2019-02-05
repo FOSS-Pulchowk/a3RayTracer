@@ -14,7 +14,7 @@ struct a3_buffer
 static inline void a3_STBWriteCallback(void* context, void* data, i32 size)
 {
 	a3::file_content* fc = (a3::file_content*)context;
-	fc->Buffer = new u8[size];
+	fc->Buffer = a3New u8[size];
 	if (fc->Buffer)
 	{
 		fc->Size = size;
@@ -25,7 +25,7 @@ static inline void a3_STBWriteCallback(void* context, void* data, i32 size)
 static inline void a3_STBWriteBufferCallback(void* context, void* data, i32 size)
 {
 	a3_buffer* fc = (a3_buffer*)context;
-	fc->buffer = new u8[size];
+	fc->buffer = a3New u8[size];
 	if (fc->buffer)
 	{
 		fc->size = size;
@@ -162,7 +162,7 @@ void a3::ResterizeFontsToBuffer(font_atlas_info* i, void * buffer, i32 length, f
 	i32 atlasHeight = h;
 
 	i32 widthAdvance = 0;
-	u8* flippedYBuffer = new u8[atlasWidth * atlasHeight];
+	u8* flippedYBuffer = a3New u8[atlasWidth * atlasHeight];
 	for (i32 blockY = 0; blockY < A3MAXLOADGLYPHY; ++blockY)
 	{
 		for (i32 blockX = 0; blockX < A3MAXLOADGLYPHX; ++blockX)
@@ -262,7 +262,7 @@ a3::font a3::LoadFontFromBuffer(void * buffer, f32 scale, void * destination)
 			i32 w = x1 - x0; i32 h = y1 - y0;
 			if (tempBufferSize < w*h)
 			{
-				tempBuffer = (u8*)a3::Platform.Realloc(tempBuffer, w*h);
+				tempBuffer = a3Realloc(tempBuffer, w*h, u8);
 				tempBufferSize = w * h;
 			}
 			// NOTE(Zero): Here stride is equal to width because OpenGL wants packed pixels
@@ -272,7 +272,7 @@ a3::font a3::LoadFontFromBuffer(void * buffer, f32 scale, void * destination)
 			c->OffsetY = -y1;
 			c->Width = w;
 			c->Height = h;
-			bitmaps[index] = new u8[w*h];
+			bitmaps[index] = a3New u8[w*h];
 			a3::ReverseRectCopy(bitmaps[index], tempBuffer, w, h);
 			if (maxWidth < w)maxWidth = w;
 		}

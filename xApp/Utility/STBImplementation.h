@@ -10,9 +10,9 @@
 #define STBI_NO_GIF
 #define STBI_NO_STDIO
 #define STBI_ASSERT(s)			a3Assert(s)
-#define STBI_MALLOC(sz)			a3::Platform.Malloc(sz)
-#define STBI_REALLOC(p,newsz)	a3::Platform.Realloc(p, (newsz))
-#define STBI_FREE(p)			a3::Platform.Free(p)
+#define STBI_MALLOC(sz)			a3Malloc(sz, void)
+#define STBI_REALLOC(p,newsz)	a3Realloc(p, (newsz), void)
+#define STBI_FREE(p)			a3Free(p)
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 #define STBI_FAILURE_USERMSG
 #else
@@ -32,11 +32,11 @@
 #define STBTT_strlen(x)			a3::GetStringLength(x)
 #define STBTT_memcpy			a3::MemoryCopy
 #define STBTT_memset			a3::MemorySet
-#define STBTT_MALLOC(sz)		a3::Platform.Malloc(sz)
-#define STBTT_REALLOC(p,newsz)	a3::Platform.Realloc(p, newsz)
-#define STBTT_FREE(p)			a3::Platform.Free(p)
-#define STBTT_malloc(x,u)		((void)(u),a3::Platform.Malloc(x))
-#define STBTT_free(x,u)			((void)(u),a3::Platform.Free(x))
+#define STBTT_MALLOC(sz)		a3Malloc(sz)
+#define STBTT_REALLOC(p,newsz)	a3Realloc(p, newsz)
+#define STBTT_FREE(p)			a3Free(p)
+#define STBTT_malloc(x,u)		((void)(u),a3Malloc(x, void))
+#define STBTT_free(x,u)			((void)(u),a3Free(x, void))
 #define STBTT_assert(x)			a3Assert(x)
 #define STBTT_STATIC
 #include "External/STBTrueType.h"
@@ -44,9 +44,9 @@
 #define STBI_MSC_SECURE_CRT
 #define STB_IMAGE_WRITE_STATIC
 #define STBIW_ASSERT(x)			a3Assert(x)
-#define STBIW_MALLOC(s)			a3::Platform.Malloc(s)
-#define STBIW_REALLOC(p, s)		a3::Platform.Realloc(p, s)
-#define STBIW_FREE(p)			a3::Platform.Free(p)
+#define STBIW_MALLOC(s)			a3Malloc(s, void)
+#define STBIW_REALLOC(p, s)		a3Realloc(p, s, void)
+#define STBIW_FREE(p)			a3Free(p)
 #define STBIW_MEMMOVE			a3::MemoryMove
 #define STBI_WRITE_NO_STDIO
 #include "External/STBImageWrite.h"

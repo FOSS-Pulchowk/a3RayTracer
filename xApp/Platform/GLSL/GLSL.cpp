@@ -2,7 +2,7 @@
 
 namespace a3 {
 
-	namespace Shaders {
+	namespace shaders {
 
 		const char* GLBasic2DVertex = 
 			"#version 330 core\n												"

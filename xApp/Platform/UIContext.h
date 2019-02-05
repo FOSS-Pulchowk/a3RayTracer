@@ -30,6 +30,7 @@ namespace a3 {
 		f32 m_Width;
 		f32 m_Height;
 
+		basic2d_renderer m_Renderer2D;
 		batch2d_renderer m_Batch2DRenderer;
 		font_renderer m_FontRenderer;
 
@@ -42,6 +43,7 @@ namespace a3 {
 		ui_context(f32 width, f32 height);
 		inline void UpdateIO(const input_info& input);
 		inline b32 Button(i32 uid, v2 position, v2 dimension, s8 desc);
+		inline b32 Button(i32 uid, v2 position, v2 dimension, a3::texture* texture);
 		inline b32 Checkbox(i32 uid, v2 position, v2 dimension, b32 checked, s8 desc);
 		inline void SetColor(v3 color, v3 hot, v3 active, v3 font);
 
@@ -57,8 +59,9 @@ namespace a3 {
 //
 
 a3::ui_context::ui_context(f32 width, f32 height) :
-	m_Batch2DRenderer(a3::Renderer.CreateBatch2DRenderer(Shaders::GLBatch2DVertex, Shaders::GLBatch2DFragment)),
-	m_FontRenderer(a3::Renderer.CreateFontRenderer(Shaders::GLFontVertex, Shaders::GLFontFragment))
+	m_Renderer2D(a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment)),
+	m_Batch2DRenderer(a3::Renderer.CreateBatch2DRenderer(shaders::GLBatch2DVertex, shaders::GLBatch2DFragment)),
+	m_FontRenderer(a3::Renderer.CreateFontRenderer(shaders::GLFontVertex, shaders::GLFontFragment))
 {
 	m_Width = width;
 	m_Height = height;
@@ -91,6 +94,20 @@ inline b32 a3::ui_context::Button(i32 uid, v2 position, v2 dimension, s8 desc)
 	v2 fontRegionDim = dimension;
 	fontRegionDim.y *= 0.5f;
 	m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, m_UIFontColor);
+	return result;
+}
+
+inline b32 a3::ui_context::Button(i32 uid, v2 position, v2 dimension, a3::texture * texture)
+{
+	b32 result = IsInteracted(uid, position, dimension);
+	v4 texDimension = { 0.0f, 0.35f, 1.0f, 0.57f };
+	RenderUI(uid, position, dimension, texDimension);
+	v3 renPosition;
+	renPosition.xy = position + dimension * 0.01f;
+	renPosition.z = 0.0f;
+	m_Renderer2D.BeginFrame();
+	m_Renderer2D.Push(renPosition, dimension, a3::color::White, texture);
+	m_Renderer2D.EndFrame();
 	return result;
 }
 

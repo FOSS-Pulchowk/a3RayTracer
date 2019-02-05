@@ -148,16 +148,28 @@ struct a3_platform
 	// NOTE(Zero):
 	// These use generic heap allocators
 	// These should be used for general and temporary purposes
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+	void* Malloc(u64 size, s8 file, i32 line) const;
+	void* Calloc(u64 size, s8 file, i32 line) const;
+	void* Realloc(void* ptr, u64 size, s8 file, i32 line) const;
+	void* Recalloc(void* ptr, u64 size, s8 file, i32 line) const;
+#else
 	void* Malloc(u64 size) const;
 	void* Calloc(u64 size) const;
 	void* Realloc(void* ptr, u64 size) const;
 	void* Recalloc(void* ptr, u64 size) const;
+#endif
 	b32 Free(void* ptr) const;
 
 	// NOTE(Zero):
 	// Use these for persistancy application resources
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+	void* AllocMemory(u64 size, s8 file, i32 line) const;
+	void* ResizeMemory(void* usrPtr, u64 size, s8 file, i32 line) const;
+#else
 	void* AllocMemory(u64 size) const;
 	void* ResizeMemory(void* usrPtr, u64 size) const;
+#endif
 	b32 Release(void* ptr) const;
 
 	utf8* LoadFromDialogue(s8 title, a3::file_type type) const;
@@ -179,8 +191,34 @@ namespace a3 {
 // C++ new and delete operator override
 // Should be defined in platform layer
 //
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+void* operator new(u64 size, s8 file, i32 line);
 void* operator new(u64 size);
+#else
+void* operator new(u64 size);
+#endif
 void operator delete(void* ptr);
+
+// Helper macros for memory allocations
+// These should be prefered over other methods
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+#define a3Malloc(size, type) (type*)a3::Platform.Malloc(size, __FILE__, __LINE__)
+#define a3Realloc(ptr, size, type) (type*)a3::Platform.Realloc(ptr, size, __FILE__, __LINE__)
+#define a3Calloc(size, type) (type*)a3::Platform.Calloc(size, __FILE__, __LINE__)
+#define a3Recalloc(ptr, size) (type*)a3::Platform.Recalloc(ptr, size, __FILE__, __LINE__)
+#define a3Free(ptr) a3::Platform.Free(ptr)
+#define a3Allocate(size, type) (type*)a3::Platform.AllocMemory(size, __FILE__, __LINE__)
+#define a3Reallocate(ptr, size, type) (type*)a3::Platform.ResizeMemory(ptr, size, __FILE__, __LINE__)
+#define a3Release(ptr) a3::Platform.Release(ptr)
+#define a3New new(__FILE__, __LINE__)
+#else
+#define a3Malloc(size, type) (type*)a3::Platform.Malloc(size)
+#define a3Realloc(ptr, size, type) (type*)a3::Platform.Realloc(ptr, size)
+#define a3Calloc(size, type) (type*)a3::Platform.Calloc(size)
+#define a3Recalloc(ptr, size) (type*)a3::Platform.Recalloc(ptr, size)
+#define a3Free(ptr) a3::Platform.Free(ptr)
+#define a3New new
+#endif
 
 namespace a3 {
 	enum button

@@ -2,7 +2,7 @@
 
 namespace a3 {
 
-	namespace Shaders {
+	namespace shaders {
 		extern const char* GLBasic2DVertex;
 		extern const char* GLBasic2DFragment;
 		extern const char* GLFontVertex;

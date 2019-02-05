@@ -75,7 +75,7 @@ static u64 s_PersistantHeapFreed;
 #define a3InternalHeapAllocation(x) x;\
 if(ptr) { \
     if(size > a3MegaBytes(1)) \
-    a3LogWarn("Large Heap Allocation of {u} bytes", size); \
+    a3LogWarn("Large Heap Allocation of {u} bytes at {s}:{i}", size, file, line); \
     s_TotalHeapAllocated += size;\
     u64* loc = (u64*)ptr; \
     *loc = size; \
@@ -86,7 +86,7 @@ a3LogWarn("Nullptr returned by heap allocation");
 #define a3InternalHeapReAllocation(x) x;\
 if(ptr) { \
     if(size > a3MegaBytes(1)) \
-    a3LogWarn("Large Heap Re Allocation of {u} bytes", size); \
+    a3LogWarn("Large Heap Re Allocation of {u} bytes at {s}:{i}", size, file, line); \
     s_TotalHeapAllocated += (size - *(u64*)ptr);\
     u64* loc = (u64*)ptr; \
     *loc = size; \
@@ -101,7 +101,7 @@ if(result) { \
 #define a3InternalPersistantHeapAllocation(x) x;\
 if(ptr) { \
     if(size > a3MegaBytes(1)) \
-    a3LogWarn("Large Heap Allocation of {u} bytes", size); \
+    a3LogWarn("Large Heap Allocation of {u} bytes at {s}:{i}", size, file, size); \
     s_PersistantHeapAllocated += size;\
     u64* loc = (u64*)ptr; \
     *loc = size; \
@@ -112,7 +112,7 @@ a3LogWarn("Nullptr returned by heap allocation");
 #define a3InternalPersistantHeapReAllocation(x) x;\
 if(ptr) { \
     if(size > a3MegaBytes(1)) \
-    a3LogWarn("Large Heap Re Allocation of {u} bytes", size); \
+    a3LogWarn("Large Heap Re Allocation of {u} bytes at {s}:{i}", size, file, size); \
     s_PersistantHeapAllocated += (size - *(u64*)ptr);\
     u64* loc = (u64*)ptr; \
     *loc = size; \
@@ -225,7 +225,15 @@ b32 a3_platform::ReplaceFileContent(s8 fileName, const a3::file_content & file) 
 	return result;
 }
 
-void* a3_platform::Malloc(u64 size) const
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+#define A3_DEFINE_ALLOCATION(name) name(u64 size, s8 file, i32 line)
+#define A3_DEFINE_REALLOCATION(name) name(void* usrPtr, u64 size, s8 file, i32 line)
+#else
+#define A3_DEFINE_ALLOCATION(name) name(u64 size)
+#define A3_DEFINE_REALLOCATION(name) name(void* usrPtr, u64 size)
+#endif
+
+void* a3_platform::A3_DEFINE_ALLOCATION(Malloc) const
 {
 	a3InternalHeapAllocation(
 		void* ptr = HeapAlloc(s_GenericHeapHandle, 0, a3InternalAllocationSize(size))
@@ -233,7 +241,7 @@ void* a3_platform::Malloc(u64 size) const
 	return ptr;
 }
 
-void* a3_platform::Calloc(u64 size) const
+void* a3_platform::A3_DEFINE_ALLOCATION(Calloc) const
 {
 	a3InternalHeapAllocation(
 		void* ptr = HeapAlloc(s_GenericHeapHandle, HEAP_ZERO_MEMORY, a3InternalAllocationSize(size))
@@ -241,7 +249,7 @@ void* a3_platform::Calloc(u64 size) const
 	return ptr;
 }
 
-void* a3_platform::Realloc(void* usrPtr, u64 size) const
+void* a3_platform::A3_DEFINE_REALLOCATION(Realloc) const
 {
 	if (usrPtr)
 	{
@@ -253,10 +261,10 @@ void* a3_platform::Realloc(void* usrPtr, u64 size) const
 	// NOTE(Zero):
 	// If the usrPtr is null, Malloc is called
 	// Following the Standard Library
-	return a3::Platform.Malloc(size);
+	return a3Malloc(size, void);
 }
 
-void* a3_platform::Recalloc(void* usrPtr, u64 size) const
+void* a3_platform::A3_DEFINE_REALLOCATION(Recalloc) const
 {
 	if (usrPtr)
 	{
@@ -268,7 +276,7 @@ void* a3_platform::Recalloc(void* usrPtr, u64 size) const
 	// NOTE(Zero):
 	// If the usrPtr is null, Malloc is called
 	// Following the Standard Library
-	return a3::Platform.Calloc(size);
+	return a3Calloc(size, void);
 }
 
 b32 a3_platform::Free(void* ptr) const
@@ -278,11 +286,10 @@ b32 a3_platform::Free(void* ptr) const
 		a3InternalHeapFree(b32 result = (b32)HeapFree(s_GenericHeapHandle, 0, a3InternalGetActualPtr(ptr)));
 		return result;
 	}
-	a3LogWarn("Attempt to free null pointer");
 	return false;
 }
 
-void * a3_platform::AllocMemory(u64 size) const
+void * a3_platform::A3_DEFINE_ALLOCATION(AllocMemory) const
 {
 	a3InternalPersistantHeapAllocation(
 		void* ptr = HeapAlloc(s_PersistentHeapHandle, HEAP_ZERO_MEMORY, a3InternalAllocationSize(size))
@@ -290,7 +297,7 @@ void * a3_platform::AllocMemory(u64 size) const
 	return ptr;
 }
 
-void * a3_platform::ResizeMemory(void * usrPtr, u64 size) const
+void * a3_platform::A3_DEFINE_REALLOCATION(ResizeMemory) const
 {
 	if (usrPtr)
 	{
@@ -302,7 +309,7 @@ void * a3_platform::ResizeMemory(void * usrPtr, u64 size) const
 	// NOTE(Zero):
 	// If the usrPtr is null, Malloc is called
 	// Following the Standard Library
-	return a3::Platform.AllocMemory(size);
+	return a3Allocate(size, void);
 }
 
 b32 a3_platform::Release(void * ptr) const
@@ -312,7 +319,6 @@ b32 a3_platform::Release(void * ptr) const
 		a3InternalPersistantHeapFree(b32 result = (b32)HeapFree(s_PersistentHeapHandle, 0, a3InternalGetActualPtr(ptr)));
 		return result;
 	}
-	a3LogWarn("Attempt to free null pointer");
 	return false;
 }
 
@@ -326,7 +332,7 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 	{
 		utf16* wTitle = A3NULL;
 		i32 size = MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, 0);
-		wTitle = new utf16[size];
+		wTitle = a3New utf16[size];
 		MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, size);
 		pOpenDialog->SetTitle(wTitle);
 		delete[] wTitle;
@@ -357,7 +363,7 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 					// MAX_PATH is used here because when I query the length information and use it
 					// it didn't work, and I don't know why, could be because the WideChar string given
 					// might not be null terminated, I could not find information on this in the documentation
-					resultPath = new utf8[MAX_PATH];
+					resultPath = a3New utf8[MAX_PATH];
 					i32 v = WideCharToMultiByte(CP_UTF8, 0, wFilePath, -1, resultPath, MAX_PATH, 0, 0);
 					i32 err = GetLastError();
 					CoTaskMemFree(wFilePath);
@@ -395,9 +401,22 @@ u64 a3_platform::GetPersistantHeapFreed() const
 }
 #endif
 
+void* operator A3_DEFINE_ALLOCATION(new)
+{
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+	return a3::Platform.Malloc(size, file, line);
+#else
+	return a3::Platform.Malloc(size);
+#endif
+}
+
 void* operator new(u64 size)
 {
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+	return a3::Platform.Malloc(size, __FILE__, __LINE__);
+#else
 	return a3::Platform.Malloc(size);
+#endif
 }
 
 void operator delete(void* ptr)
@@ -591,7 +610,7 @@ i32 a3Main()
 		return -1;
 	}
 	
-	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::Shaders::GLFontVertex, a3::Shaders::GLFontFragment);
+	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::shaders::GLFontVertex, a3::shaders::GLFontFragment);
 	fontRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
