@@ -27,8 +27,8 @@ namespace a3 {
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void BeginFrame();
-		void Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture);
-		void Push(v3 position, f32 height, const v3 color[4], a3::texture* texture);
+		void Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture, rect dest = rect{ 0, 0, 0, 0 });
+		void Push(v3 position, f32 height, const v3 color[4], a3::texture* texture, rect dest = rect{ 0, 0, 0, 0 });
 		void EndFrame();
 
 		friend struct a3_renderer;
@@ -409,7 +409,7 @@ namespace a3 {
 		m_Count = 0;
 	}
 
-	void basic2d_renderer::Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture)
+	void basic2d_renderer::Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture, rect dest)
 	{
 		if (m_Count == A3_BASIC_RENDERER_MAX_COUNT)
 		{
@@ -419,6 +419,22 @@ namespace a3 {
 
 		a3_vertex2d* v = a3GetMappedVertexPointer(a3_vertex2d);
 		u32* i = a3GetMappedElementPointer();
+
+		v4 texCoords;
+		if (dest == rect{ 0, 0, 0, 0 })
+		{
+			texCoords.x = 0.0f;
+			texCoords.y = 0.0f;
+			texCoords.z = 1.0f;
+			texCoords.w = 1.0f;
+		}
+		else
+		{
+			texCoords.x = (f32)dest.x / (f32)texture->Width;
+			texCoords.y = (f32)dest.y / (f32)texture->Height;
+			texCoords.z = (f32)(dest.x + dest.w) / (f32)texture->Width;
+			texCoords.w = (f32)(dest.y + dest.h) / (f32)texture->Height;
+		}
 
 		a3GL(glActiveTexture(GL_TEXTURE0));
 		a3GL(glBindTexture(GL_TEXTURE_2D, texture->Id));
@@ -434,10 +450,10 @@ namespace a3 {
 		v[m_Count * 4 + 1].color = color[1];
 		v[m_Count * 4 + 2].color = color[2];
 		v[m_Count * 4 + 3].color = color[3];
-		v[m_Count * 4 + 0].texCoords = { 0.0f, 0.0f };
-		v[m_Count * 4 + 1].texCoords = { 1.0f, 0.0f };
-		v[m_Count * 4 + 2].texCoords = { 1.0f, 1.0f };
-		v[m_Count * 4 + 3].texCoords = { 0.0f, 1.0f };
+		v[m_Count * 4 + 0].texCoords = { texCoords.x, texCoords.y };
+		v[m_Count * 4 + 1].texCoords = { texCoords.z, texCoords.y };
+		v[m_Count * 4 + 2].texCoords = { texCoords.z, texCoords.w };
+		v[m_Count * 4 + 3].texCoords = { texCoords.x, texCoords.w };
 
 		i[m_Count * 4 + 0] = m_Count * 4 + 0;
 		i[m_Count * 4 + 1] = m_Count * 4 + 1;
@@ -449,12 +465,12 @@ namespace a3 {
 		m_Count++;
 	}
 
-	void basic2d_renderer::Push(v3 position, f32 height, const v3 color[4], a3::texture * texture)
+	void basic2d_renderer::Push(v3 position, f32 height, const v3 color[4], a3::texture * texture, rect dest)
 	{
 		v2 dimension;
 		dimension.y = height;
 		dimension.x = texture->Width * (height / texture->Height);
-		Push(position, dimension, color, texture);
+		Push(position, dimension, color, texture, dest);
 	}
 
 	void basic2d_renderer::EndFrame()

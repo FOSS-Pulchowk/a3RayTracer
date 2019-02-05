@@ -11,6 +11,17 @@
 // DECLARATIONS
 //
 
+struct rect
+{
+	i32 x, y;
+	i32 w, h;
+};
+
+inline b32 operator==(const rect& l, const rect& r);
+inline b32 operator!=(const rect& l, const rect& r);
+
+// Overloaded mathematical functions for matrix and quaternions below
+
 inline v4 operator*(v4 vec, const m4x4 &mat);
 inline v3 operator*(v3 vec, const m4x4 &mat); // Treats w as 1.0f
 inline v4 operator*(const m4x4 &mat, v4 vec);
@@ -78,6 +89,16 @@ inline v4 operator*(const quat &lhs, v4 vec);
 //
 
 ////////////////////// Matrix Vector operations ///////////////////////////////////////
+
+inline b32 operator==(const rect & l, const rect & r)
+{
+	return (l.x == r.x) && (l.y == r.y) && (l.w == r.w) && (l.h == r.h);
+}
+
+inline b32 operator!=(const rect & l, const rect & r)
+{
+	return !(l == r);
+}
 
 inline v4 operator*(v4 vec, const m4x4 &mat)
 {

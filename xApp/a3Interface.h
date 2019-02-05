@@ -125,7 +125,8 @@ void App::Render()
 {
 	renderer2D.BeginFrame();
 	//renderer2D.Push({ 50.0f, 50.0f }, { 500.0f, 500.0f }, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
-	renderer2D.Push({ 50.0f, 50.0f }, 500.0f, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
+	rect dest = { 0,0, 0, 0 };
+	renderer2D.Push({ 50.0f, 50.0f }, 500.0f, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen), dest);
 	renderer2D.EndFrame();
 
 	fontRenderer.Render("PC Parts", { 1050.0f, 670.0f }, 45.0f, a3::color::White);
