@@ -28,6 +28,7 @@ namespace a3 {
 		void SetRegion(const m4x4& p);
 		void BeginFrame();
 		void Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture);
+		void Push(v3 position, f32 height, const v3 color[4], a3::texture* texture);
 		void EndFrame();
 
 		friend struct a3_renderer;
@@ -420,7 +421,7 @@ namespace a3 {
 		u32* i = a3GetMappedElementPointer();
 
 		a3GL(glActiveTexture(GL_TEXTURE0));
-		a3GL(glBindTexture(GL_TEXTURE_2D, *texture));
+		a3GL(glBindTexture(GL_TEXTURE_2D, texture->Id));
 		a3GL(glUniform1i(m_uTextureDiffuse[m_Count], m_Count));
 		v[m_Count * 4 + 0].position = position;
 		v[m_Count * 4 + 1].position = position;
@@ -448,7 +449,15 @@ namespace a3 {
 		m_Count++;
 	}
 
-	inline void basic2d_renderer::EndFrame()
+	void basic2d_renderer::Push(v3 position, f32 height, const v3 color[4], a3::texture * texture)
+	{
+		v2 dimension;
+		dimension.y = height;
+		dimension.x = texture->Width * (height / texture->Height);
+		Push(position, dimension, color, texture);
+	}
+
+	void basic2d_renderer::EndFrame()
 	{
 		a3_UnmapVertexPointer();
 		a3_UnmapElementPointer();
@@ -479,7 +488,7 @@ namespace a3 {
 		a3_BindElementArrayBuffer(m_ElementArrayBuffer);
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
-		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontTexture->Texture));
+		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontTexture->Texture.Id));
 		a3GL(glUniform3fv(m_uColor, 1, color.values));
 
 		u8* t = (u8*)font;
@@ -547,7 +556,7 @@ namespace a3 {
 		a3_BindElementArrayBuffer(m_ElementArrayBuffer);
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
-		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontTexture->Texture));
+		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontTexture->Texture.Id));
 		a3GL(glUniform3fv(m_uColor, 1, color.values));
 
 		u8* t = (u8*)font;
@@ -712,7 +721,7 @@ namespace a3 {
 		a3_UnmapElementPointer();
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.UITextureSlot));
-		a3GL(glBindTexture(GL_TEXTURE_2D, *m_Texture));
+		a3GL(glBindTexture(GL_TEXTURE_2D, m_Texture->Id));
 		a3GL(glDrawElements(GL_TRIANGLES, m_Count * 6, GL_UNSIGNED_INT, A3NULL));
 		m_Count = 0;
 	}

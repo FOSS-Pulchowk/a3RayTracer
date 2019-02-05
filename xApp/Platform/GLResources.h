@@ -10,7 +10,12 @@
 
 namespace a3 {
 
-	using texture = u32;
+	struct texture
+	{
+		u32 Id;
+		i32 Width;
+		i32 Height;
+	};
 
 	inline texture GLMakeTexture(GLenum type, GLenum filter, GLenum wrap);
 	inline texture GLMakeTexture2DFromBuffer(GLenum filter, GLenum wrap, void* buffer, i32 w, i32 h, i32 n);
@@ -25,8 +30,8 @@ namespace a3 {
 inline a3::texture a3::GLMakeTexture(GLenum type, GLenum filter, GLenum wrap)
 {
 	texture texture;
-	a3GL(glGenTextures(1, &texture));
-	a3GL(glBindTexture(type, texture));
+	a3GL(glGenTextures(1, &texture.Id));
+	a3GL(glBindTexture(type, texture.Id));
 	a3GL(glTexParameteri(type, GL_TEXTURE_MIN_FILTER, filter));
 	a3GL(glTexParameteri(type, GL_TEXTURE_MAG_FILTER, filter));
 	a3GL(glTexParameteri(type, GL_TEXTURE_WRAP_S, wrap));
@@ -60,11 +65,14 @@ inline a3::texture a3::GLMakeTexture2DFromBuffer(GLenum filter, GLenum wrap, voi
 	default:
 	{
 		a3TriggerBreakPoint();
-		a3GL(glDeleteTextures(1, &result));
-		return 0;
+		a3GL(glDeleteTextures(1, &result.Id));
+		result.Id = 0;
+		return result;
 	}
 	}
 	a3GL(glTexImage2D(GL_TEXTURE_2D, 0, internal, w, h, 0, format, GL_UNSIGNED_BYTE, buffer));
 	if (n == 1) a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
+	result.Width = w;
+	result.Height = h;
 	return result;
 }

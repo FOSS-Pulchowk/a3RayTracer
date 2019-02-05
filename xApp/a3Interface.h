@@ -18,6 +18,8 @@
 #include <vector>
 using namespace std;
 
+#define a3MakeColorArray(x) { x, x, x, x }
+
 #define ADD_COMPONENT(x) struct x { string name; }
 
 static const v3 WhiteColorArray[4] = {
@@ -53,9 +55,10 @@ private:
 	ADD_COMPONENT(pc_case);
 
 	a3::ui_context uiContext;
-	pc_components currentlyOpen;
 	a3::font_renderer fontRenderer;
 	a3::basic2d_renderer renderer2D;
+
+	pc_components currentlyOpen;
 
 	vector<motherboard> vMotherBoards;
 	vector<processor> vProcessors;
@@ -121,9 +124,9 @@ void App::Update(const a3::input_info& input)
 void App::Render()
 {
 	renderer2D.BeginFrame();
-	renderer2D.Push({ 50.0f, 50.0f }, { 500.0f, 500.0f }, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
+	//renderer2D.Push({ 50.0f, 50.0f }, { 500.0f, 500.0f }, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
+	renderer2D.Push({ 50.0f, 50.0f }, 500.0f, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
 	renderer2D.EndFrame();
-
 
 	fontRenderer.Render("PC Parts", { 1050.0f, 670.0f }, 45.0f, a3::color::White);
 	RenderUI({ 1050.0f, 600.0f }, { 200.0f, 50.0f });
@@ -151,7 +154,7 @@ void App::RenderComponentWindow(App::pc_components c)
 	{
 	case pc_components::Motherboard:
 	{
-
+		
 		break;
 	}
 	case pc_components::Processor:
@@ -159,26 +162,31 @@ void App::RenderComponentWindow(App::pc_components c)
 
 		break;
 	}
+
 	case pc_components::Memory:
 	{
 
 		break;
 	}
+
 	case pc_components::Cooler:
 	{
 
 		break;
 	}
+
 	case pc_components::Storage:
 	{
 
 		break;
 	}
+
 	case pc_components::VideoCard:
 	{
 
 		break;
 	}
+
 	case pc_components::PowerSupply:
 	{
 

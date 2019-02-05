@@ -297,6 +297,9 @@
   <ItemGroup>
     <Font Include="Resources\HackRegular.ttf" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="scroll window" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

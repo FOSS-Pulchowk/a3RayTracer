@@ -1,6 +1,6 @@
 #pragma once
 #include "Common/Core.h"
-#include "Platform.h"
+#include "Platform/Platform.h"
 #include "Glad.h"
 #include "GLExtensions.h"
 

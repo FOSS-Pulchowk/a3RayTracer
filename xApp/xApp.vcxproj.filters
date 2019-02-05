@@ -122,4 +122,7 @@
   <ItemGroup>
     <Font Include="Resources\HackRegular.ttf" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="scroll window" />
+  </ItemGroup>
 </Project>
