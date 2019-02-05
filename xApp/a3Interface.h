@@ -18,8 +18,6 @@
 #include <vector>
 using namespace std;
 
-#define a3MakeColorArray(x) { x, x, x, x }
-
 #define ADD_COMPONENT(x) struct x { string name; }
 
 static const v3 WhiteColorArray[4] = {
