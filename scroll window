@@ -1,0 +1,97 @@
+#include<iostream>
+#include<SFML/Window.hpp>
+#include<SFML/Graphics.hpp>
+
+int main()
+{
+
+sf::Vector2i screenDimensions (250,400);
+sf::Vector2i position(0,0);
+float movespeed= 10000.0f;
+
+sf::RenderWindow Window;
+Window.create(sf::VideoMode(screenDimensions.x,screenDimensions.y),"");
+
+sf::Clock clock;
+
+sf::Texture spriteTexture;
+sf::Texture backgroundTexture;
+
+sf::Sprite background;
+sf::Sprite sprite[10];
+
+sf::View view;
+sf::Vector2f viewDimensions(200.0f,200.f);
+view.setCenter(sf::Vector2f(screenDimensions.x/2,viewDimensions.y/2));
+view.setSize(viewDimensions);
+
+
+
+backgroundTexture.loadFromFile("background.jpeg"); //Ashish you put up images yourself ,i am not uploading
+spriteTexture.loadFromFile("spotato.png");
+
+background.setTexture(backgroundTexture);
+
+for(int i=1;i<11;i++)  // this is to set the 10 textures
+{
+sprite[i-1].setTexture(spriteTexture);
+sprite[i-1].setPosition(position.x+100*(i-1),position.y);
+//sprite[i-1].setTextureRect( sf::IntRect(0,0,100,71));
+if (i%2==0){position.y+=90;
+            position.x-=200;}
+
+}
+
+int i =0;
+while (Window.isOpen())
+    {
+        i++;
+        clock.restart();
+        sf::Event event;
+        while (Window.pollEvent(event))
+        {
+            // "close requested" event: we close the window
+        if (event.type == sf::Event::Closed)
+        Window.close();
+
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+        view.move(0,-movespeed*clock.getElapsedTime().asSeconds());
+
+
+
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+        view.move(0,movespeed*clock.getElapsedTime().asSeconds());
+
+
+
+        }
+/*this part not working well ,will have done this by tomorrow morning.
+          if (i%1000==0)
+        {
+        sf::Vector2f v;
+        v=sprite[1].getPosition();
+
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+        {
+        std::cout<<"bug";
+        sf::Vector2i pos =sf::Mouse::getPosition(Window);   //wrt to window
+        if (sprite[1].getGlobalBounds().contains( pos.x,pos.y))
+        {
+
+        }
+
+        }
+
+
+//        sf::Vector2f MousePos = Window.ConvertCoords(Window.GetInput().GetMouseX(), Window.GetInput().GetMouseY());
+*/
+
+        Window.setView(view);
+        Window.draw(background);
+        for (int i=0;i<10;i++)
+        Window.draw(sprite[i]);
+        Window.display();
+        Window.clear();
+
+   }
+}
