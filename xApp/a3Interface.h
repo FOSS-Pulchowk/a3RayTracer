@@ -22,10 +22,10 @@
 #define ADD_COMPONENT(x) struct x { string name; }
 
 static const v3 WhiteColorArray[4] = {
-	{1.0f, 1.0f, 1.0f},
-	{1.0f, 1.0f, 1.0f},
-	{1.0f, 1.0f, 1.0f},
-	{1.0f, 1.0f, 1.0f}
+	{ 1.0f, 1.0f, 1.0f },
+	{ 1.0f, 1.0f, 1.0f },
+	{ 1.0f, 1.0f, 1.0f },
+	{ 1.0f, 1.0f, 1.0f }
 };
 
 class App
@@ -106,6 +106,38 @@ void App::Init()
 	renderer2D.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
 	SetComponents();
+
+	//
+	// TEST CODE
+	//
+	a3::Asset.LoadImageFromFile(51, "Resources/BigSmile100.png");
+	a3::Asset.LoadImageFromFile(52, "Resources/BigSmile100.png");
+	a3::Asset.LoadImageFromFile(53, "Resources/BigSmile100.png");
+	a3::Asset.LoadImageFromFile(54, "Resources/BigSmile100.png");
+	a3::Asset.LoadImageFromFile(55, "Resources/BigSmile100.png");
+	a3::Asset.LoadImageFromFile(56, "Resources/BigSmile100.png");
+	a3::Asset.LoadImageFromFile(57, "Resources/BigSmile100.png");
+	a3::Asset.LoadImageFromFile(58, "Resources/BigSmile100.png");
+
+
+	i32 ew = 100, eh = 100;
+	i32 tot = 8;
+	i32 w = ew * 2 + (10.0f / 100.0f * (f32)ew) * (2 + 1);
+	i32 h = (tot / 2) * eh + (10.0f / 100.0f * (f32)eh) * (tot/2 + 1);
+	a3::Asset.LoadTexture2DFromPixels(59, A3NULL, w, h, 4, GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::texture* t = a3::Asset.Get<a3::texture>(59);
+	for (i32 y = 0; y < tot / 2; ++y)
+	{
+		i32 yoffset = eh * y + (y + 1)*(10.0f / 100.0f * eh);
+		for (i32 x = 0; x < 2; ++x)
+		{
+			i32 xoffset = ew * x + (x + 1)*(10.0f / 100.0f * ew);
+			a3::GLSubImageTexture2D(t, xoffset, yoffset, ew, eh, 4, a3::Asset.Get<a3::image>(51 + y * 2 + x)->Pixels);
+		}
+	}
+	//a3::image* i = a3::Asset.Get<a3::image>(21);
+	//a.wi
+	
 }
 
 void App::Update(const a3::input_info& input)
@@ -115,20 +147,25 @@ void App::Update(const a3::input_info& input)
 
 void App::Render()
 {
-	renderer2D.BeginFrame();
-	//renderer2D.Push({ 50.0f, 50.0f }, { 500.0f, 500.0f }, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
-	//rect dest = { 0,0, 0, 0 };
-	renderer2D.Push({ 50.0f, 50.0f }, 500.0f, a3::color::White, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
-	renderer2D.EndFrame();
-
 	fontRenderer.Render("PC Parts", { 1050.0f, 670.0f }, 45.0f, a3::color::White);
 	RenderUI({ 1050.0f, 600.0f }, { 200.0f, 50.0f });
 	RenderComponentWindow(currentlyOpen);
 
-	if (uiContext.Button(36, { 600.0f, 300.0f }, { 200.0f, 200.0f }, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))
+	if (uiContext.Button(55, { 350.0f, 400.0f }, 200.0f, 200.0f, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))
+	{
+	}
+
+	if (uiContext.Button(56, { 600.0f, 400.0f }, { 200.0f, 200.0f }, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))
 	{
 
 	}
+
+	renderer2D.BeginFrame();
+	//renderer2D.Push({ 50.0f, 50.0f }, { 500.0f, 500.0f }, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
+	//rect dest = { 0,0, 0, 0 };
+	renderer2D.Push({ 50.0f, 50.0f }, 500.0f, a3::color::White, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
+	renderer2D.Push({ 0.0f, 500.0f }, { 500.0f, 500.0f }, a3::color::White, a3::Asset.Get<a3::texture>(12));
+	renderer2D.EndFrame();
 }
 
 void App::SetComponents()
@@ -186,7 +223,10 @@ void App::RenderComponentWindow(App::pc_components c)
 	{
 	case pc_components::Motherboard:
 	{
-		
+	
+
+
+
 		break;
 	}
 	case pc_components::Processor:

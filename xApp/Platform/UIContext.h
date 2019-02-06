@@ -44,6 +44,7 @@ namespace a3 {
 		inline void UpdateIO(const input_info& input);
 		inline b32 Button(i32 uid, v2 position, v2 dimension, s8 desc);
 		inline b32 Button(i32 uid, v2 position, v2 dimension, a3::texture* texture);
+		inline b32 Button(i32 uid, v2 position, f32 height, f32 maxWidth, a3::texture* texture);
 		inline b32 Checkbox(i32 uid, v2 position, v2 dimension, b32 checked, s8 desc);
 		inline void SetColor(v3 color, v3 hot, v3 active, v3 font);
 
@@ -109,6 +110,32 @@ inline b32 a3::ui_context::Button(i32 uid, v2 position, v2 dimension, a3::textur
 	tposition.z = 0.0f;
 	m_Renderer2D.BeginFrame();
 	m_Renderer2D.Push(tposition, tdimension, a3::color::White, texture);
+	m_Renderer2D.EndFrame();
+	return result;
+}
+
+inline b32 a3::ui_context::Button(i32 uid, v2 position, f32 height, f32 maxWidth, a3::texture * texture)
+{
+	v2 dimension;
+	dimension.x = maxWidth;
+	dimension.y = height;
+	v2 tdim;
+	tdim.y = height - 0.3f * height;
+	tdim.x = (f32)texture->Width * (tdim.y / (f32)texture->Height);
+	if (tdim.x > dimension.x)
+	{
+		tdim.x = dimension.x - 0.3f * dimension.x;
+		tdim.y = (f32)texture->Height * (tdim.x / (f32)texture->Width);
+	}
+	v3 tposition;
+	tposition.xy = position + (dimension - tdim) * 0.5f;
+	tposition.z = 0.0f;
+
+	b32 result = IsInteracted(uid, position, dimension);
+	v4 texDimension = { 0.0f, 0.35f, 1.0f, 0.57f };
+	RenderUI(uid, position, dimension, texDimension);
+	m_Renderer2D.BeginFrame();
+	m_Renderer2D.Push(tposition, tdim, a3::color::White, texture);
 	m_Renderer2D.EndFrame();
 	return result;
 }

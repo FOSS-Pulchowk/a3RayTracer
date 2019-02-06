@@ -17,6 +17,7 @@ public:
 	void LoadImageFromFile(u64 id, s8 file);
 	void LoadFontFromBuffer(u64 id, void* buffer, u64 length, f32 scale);
 	void LoadFontFromFile(u64 id, s8 file, f32 scale);
+	void LoadTexture2DFromPixels(u64 id, void* pixels, i32 w, i32 h, i32 channels, u32 filter, u32 wrap);
 	void LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap);
 	void LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap);
 	void LoadFontTextureAtlasFromBuffer(u64 id, void* buffer, i32 length, f32 scale);
@@ -100,17 +101,28 @@ void a3_asset::LoadFontFromFile(u64 id, s8 file, f32 scale)
 	a3::Platform.FreeFileContent(fc);
 }
 
-void a3_asset::LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap)
+inline void a3_asset::LoadTexture2DFromPixels(u64 id, void * pixels, i32 w, i32 h, i32 channels, u32 filter, u32 wrap)
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
 	a3IsBufferTooLarge(sizeof(a3::texture));
-	u64 size = a3::QueryPixelBufferSize(buffer, length);
-	u8* dest = a3New u8[size];
-	a3::image img = a3::LoadImageFromBufer(buffer, length, dest);
 	m_Assets[id] = a3Reallocate(m_Assets[id], sizeof(a3::texture), void);
 	a3IsOutOfMemory(m_Assets[id]);
 	a3::texture* m = (a3::texture*)m_Assets[id];
-	*m = a3::GLMakeTexture2DFromBuffer(filter, wrap, img.Pixels, img.Width, img.Height, img.Channels);
+	*m = a3::GLMakeTexture2DFromBuffer(filter, wrap, pixels, w, h, channels);
+}
+
+void a3_asset::LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap)
+{
+	//if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
+	//a3IsBufferTooLarge(sizeof(a3::texture));
+	u64 size = a3::QueryPixelBufferSize(buffer, length);
+	u8* dest = a3New u8[size];
+	a3::image img = a3::LoadImageFromBufer(buffer, length, dest);
+	LoadTexture2DFromPixels(id, img.Pixels, img.Width, img.Height, img.Channels, filter, wrap);
+	//m_Assets[id] = a3Reallocate(m_Assets[id], sizeof(a3::texture), void);
+	//a3IsOutOfMemory(m_Assets[id]);
+	//a3::texture* m = (a3::texture*)m_Assets[id];
+	//*m = a3::GLMakeTexture2DFromBuffer(filter, wrap, img.Pixels, img.Width, img.Height, img.Channels);
 	delete[] dest;
 }
 

@@ -19,7 +19,7 @@ namespace a3 {
 
 	inline texture GLMakeTexture(GLenum type, GLenum filter, GLenum wrap);
 	inline texture GLMakeTexture2DFromBuffer(GLenum filter, GLenum wrap, void* buffer, i32 w, i32 h, i32 n);
-
+	inline void GLSubImageTexture2D(texture * tex, i32 xOffset, i32 yOffset, i32 w, i32 h, i32 n, u8 * pixels);
 }
 
 
@@ -75,4 +75,33 @@ inline a3::texture a3::GLMakeTexture2DFromBuffer(GLenum filter, GLenum wrap, voi
 	result.Width = w;
 	result.Height = h;
 	return result;
+}
+
+void a3::GLSubImageTexture2D(texture * tex, i32 xOffset, i32 yOffset, i32 w, i32 h, i32 n, u8 * pixels)
+{
+	GLenum format;
+	switch (n)
+	{
+	case 1:
+	{
+		a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+		format = GL_RED;
+	} break;
+	case 3:
+	{
+		format = GL_RGB;
+	} break;
+	case 4:
+	{
+		format = GL_RGBA;
+	} break;
+	default:
+	{
+		a3TriggerBreakPoint();
+	}
+	}
+	// TODO(Zero):
+	// Do not bind the thing everytime to for subimaging
+	a3GL(glBindTexture(GL_TEXTURE_2D, tex->Id));
+	a3GL(glTexSubImage2D(GL_TEXTURE_2D, 0, xOffset, yOffset, w, h, format, GL_UNSIGNED_BYTE, pixels));
 }

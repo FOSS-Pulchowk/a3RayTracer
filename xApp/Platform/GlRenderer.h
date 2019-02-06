@@ -11,7 +11,7 @@ struct a3_renderer;
 
 namespace a3 {
 
-#define A3_BASIC_RENDERER_MAX_COUNT 50
+#define A3_BASIC_RENDERER_MAX_COUNT 25
 	struct basic2d_renderer
 	{
 	private:
@@ -249,7 +249,8 @@ struct a3_vertex2d
 	v3 position;
 	v3 color;
 	v2 texCoords;
-	enum { POSITION = 0, COLOR, TEXCOORDS };
+	i32 texIndex;
+	enum { POSITION = 0, COLOR, TEXCOORDS, TEXINDEX };
 };
 
 #define A3_FONT_RENDER_MAX 1000
@@ -315,10 +316,15 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 		GL_FALSE, sizeof(a3_vertex2d),
 		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texCoords))));
 
+	a3GL(glVertexAttribPointer(a3_vertex2d::TEXINDEX, 1, 
+		GL_INT, GL_FALSE, sizeof(a3_vertex2d),
+		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texIndex))));
+
 	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * A3_BASIC_RENDERER_MAX_COUNT, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::POSITION));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::COLOR));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::TEXCOORDS));
+	a3GL(glEnableVertexAttribArray(a3_vertex2d::TEXINDEX));
 
 	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
@@ -327,14 +333,14 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 	for (i32 i = 0; i < 10; ++i)
 	{
 		name09[10] = i + 48;
-		a3GL(r.m_uTextureDiffuse[0] = glGetUniformLocation(r.m_ShaderProgram, name09));
+		a3GL(r.m_uTextureDiffuse[i] = glGetUniformLocation(r.m_ShaderProgram, name09));
 	}
 	char nameg9[] = "u_Diffuse[--]";
 	for (i32 i = 10; i < A3_BASIC_RENDERER_MAX_COUNT; ++i)
 	{
 		nameg9[10] = i / 10;
 		nameg9[11] = (i % 10) + 48;
-		a3GL(r.m_uTextureDiffuse[0] = glGetUniformLocation(r.m_ShaderProgram, nameg9));
+		a3GL(r.m_uTextureDiffuse[i] = glGetUniformLocation(r.m_ShaderProgram, nameg9));
 	}
 
 	return r;
@@ -476,6 +482,10 @@ namespace a3 {
 		v[m_Count * 4 + 1].texCoords = { texCoords.z, texCoords.y };
 		v[m_Count * 4 + 2].texCoords = { texCoords.z, texCoords.w };
 		v[m_Count * 4 + 3].texCoords = { texCoords.x, texCoords.w };
+		v[m_Count * 4 + 0].texIndex = m_Count;
+		v[m_Count * 4 + 1].texIndex = m_Count;
+		v[m_Count * 4 + 2].texIndex = m_Count;
+		v[m_Count * 4 + 3].texIndex = m_Count;
 
 		i[m_Count * 4 + 0] = m_Count * 4 + 0;
 		i[m_Count * 4 + 1] = m_Count * 4 + 1;

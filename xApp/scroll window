@@ -42,10 +42,9 @@ if (i%2==0){position.y+=90;
 
 }
 
-int i =0;
 while (Window.isOpen())
     {
-        i++;
+        
         clock.restart();
         sf::Event event;
         while (Window.pollEvent(event))
