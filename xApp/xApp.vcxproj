@@ -262,8 +262,10 @@
     <ClCompile Include="Platform\Win32Platform.cpp" />
     <ClCompile Include="Platform\Win32Debug.cpp" />
     <ClCompile Include="Utility\Resource.cpp" />
+    <ClCompile Include="Utility\string2.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Utility\DynamicArray.h" />
     <ClInclude Include="a3raytrace.h" />
     <ClInclude Include="Common\Core.h" />
     <ClInclude Include="External\STBImage.h" />
@@ -291,6 +293,7 @@
     <ClInclude Include="Utility\Memory.h" />
     <ClInclude Include="Platform\Platform.h" />
     <ClInclude Include="Utility\String.h" />
+    <ClInclude Include="Utility\string2.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\BigSmile.png" />

@@ -13,8 +13,8 @@
 #include "GLResources.h"
 #include "Utility/Resource.h"
 
-//#include "a3Interface.h"
-#include "a3raytrace.h"
+#include "a3Interface.h"
+//#include "a3raytrace.h"
 
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
