@@ -103,6 +103,8 @@ void App::Init()
 	renderer2D.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
 	SetComponents();
+
+
 }
 
 void App::Update(const a3::input_info& input)
