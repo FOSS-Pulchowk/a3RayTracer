@@ -68,6 +68,7 @@ a3::ui_context::ui_context(f32 width, f32 height) :
 	m_Active = -1;
 	m_Hot = -1;
 	m_Input.mouseDragging = false;
+	m_Renderer2D.SetRegion(0.0f, m_Width, 0.0f, m_Height);
 	m_FontRenderer.SetRegion(0.0f, m_Width, 0.0f, m_Height);
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::UIFont, "Resources/HackRegular.ttf", 30.0f);
 	m_FontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::UIFont));
@@ -102,11 +103,12 @@ inline b32 a3::ui_context::Button(i32 uid, v2 position, v2 dimension, a3::textur
 	b32 result = IsInteracted(uid, position, dimension);
 	v4 texDimension = { 0.0f, 0.35f, 1.0f, 0.57f };
 	RenderUI(uid, position, dimension, texDimension);
-	v3 renPosition;
-	renPosition.xy = position + dimension * 0.01f;
-	renPosition.z = 0.0f;
+	v3 tposition;
+	v2 tdimension = dimension - 0.3f * dimension;
+	tposition.xy = position + (dimension - tdimension) * 0.5f;
+	tposition.z = 0.0f;
 	m_Renderer2D.BeginFrame();
-	m_Renderer2D.Push(renPosition, dimension, a3::color::White, texture);
+	m_Renderer2D.Push(tposition, tdimension, a3::color::White, texture);
 	m_Renderer2D.EndFrame();
 	return result;
 }

@@ -114,7 +114,7 @@ void App::Render()
 {
 	renderer2D.BeginFrame();
 	//renderer2D.Push({ 50.0f, 50.0f }, { 500.0f, 500.0f }, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
-	rect dest = { 0,0, 0, 0 };
+	//rect dest = { 0,0, 0, 0 };
 	renderer2D.Push({ 50.0f, 50.0f }, 500.0f, a3::color::White, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
 	renderer2D.EndFrame();
 
@@ -122,7 +122,7 @@ void App::Render()
 	RenderUI({ 1050.0f, 600.0f }, { 200.0f, 50.0f });
 	RenderComponentWindow(currentlyOpen);
 
-	if (uiContext.Button(55, { 600.0f, 300.0f }, { 200.0f, 200.0f }, a3::Asset.Get<a3::texture>(12)))
+	if (uiContext.Button(36, { 600.0f, 300.0f }, { 200.0f, 200.0f }, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))
 	{
 
 	}
