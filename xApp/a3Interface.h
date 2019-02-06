@@ -19,10 +19,10 @@
 #define ADD_COMPONENT(x) struct x { string name; }
 
 static const v3 WhiteColorArray[4] = {
-	{1.0f, 1.0f, 1.0f},
-	{1.0f, 1.0f, 1.0f},
-	{1.0f, 1.0f, 1.0f},
-	{1.0f, 1.0f, 1.0f}
+	{ 1.0f, 1.0f, 1.0f },
+	{ 1.0f, 1.0f, 1.0f },
+	{ 1.0f, 1.0f, 1.0f },
+	{ 1.0f, 1.0f, 1.0f }
 };
 
 class App
@@ -122,7 +122,12 @@ void App::Render()
 	RenderUI({ 1050.0f, 600.0f }, { 200.0f, 50.0f });
 	RenderComponentWindow(currentlyOpen);
 
-	if (uiContext.Button(36, { 600.0f, 300.0f }, { 200.0f, 200.0f }, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))
+	if (uiContext.Button(55, { 350.0f, 400.0f }, 200.0f, 200.0f, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))
+	{
+
+	}
+
+	if (uiContext.Button(56, { 600.0f, 400.0f }, { 200.0f, 200.0f }, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))
 	{
 
 	}
