@@ -264,6 +264,7 @@
     <ClCompile Include="Utility\Resource.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="a3raytrace.h" />
     <ClInclude Include="Common\Core.h" />
     <ClInclude Include="External\STBImage.h" />
     <ClInclude Include="External\STBImageWrite.h" />

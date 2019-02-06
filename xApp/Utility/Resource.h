@@ -57,7 +57,7 @@ struct font_atlas_info
 
 u64 QueryPixelBufferSize(void* buffer, i32 length);
 image LoadImageFromBufer(void* imgeBuffer, i32 length, void* destination);
-u64 QueryImageSize(i32 w, i32 h, i32 chaneels, i32 bytesPerPixel, void* pixels);
+u64 QueryImageSize(i32 w, i32 h, i32 channels, i32 bytesPerPixel, void* pixels);
 u64 WriteImageToBuffer(void* buffer, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
 u64 QueryFontSize(void* buffer, i32 length, f32 scale);
 void QueryMaxFontDimension(void * buffer, i32 length, f32 scale, i32* x, i32* y);
