@@ -33,7 +33,13 @@ static inline void a3_STBWriteBufferCallback(void* context, void* data, i32 size
 	}
 }
 
-u64 a3::QueryImageSize(void * buffer, i32 length)
+static inline void a3_STbQueryImageSizeCallback(void* context, void* data, i32 size)
+{
+	a3_buffer* fc = (a3_buffer*)context;
+	fc->size = size;
+}
+
+u64 a3::QueryPixelBufferSize(void * buffer, i32 length)
 {
 	stbi_set_flip_vertically_on_load(1);
 	i32 w, h, n;
@@ -60,7 +66,27 @@ a3::image a3::LoadImageFromBufer(void * imgeBuffer, i32 length, void * destinati
 	return result;
 }
 
-b32 a3::WriteImageToBuffer(void * destination, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void * pixels)
+u64 a3::QueryImageSize(i32 w, i32 h, i32 channels, i32 bytesPerPixel, void * pixels)
+{
+	i32 stride;
+	if (channels == 1)
+		stride = w;
+	else if (channels == 3) // TODO(Zero): Test for images with 3 channels
+		stride = 4 * ((w * bytesPerPixel + 3) / 4);
+	else if (channels == 4)
+		stride = w;
+	else
+		return false; // NOTE(Zero): Ouput only for 1, 3 and 4 channel images
+
+	a3_buffer buffer = {};
+	if (stbi_write_png_to_func(a3_STbQueryImageSizeCallback, &buffer, w, h, channels, pixels, stride))
+	{
+		return buffer.size;
+	}
+	return 0;
+}
+
+u64 a3::WriteImageToBuffer(void * destination, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void * pixels)
 {
 	stbi_flip_vertically_on_write(1);
 	// NOTE(Zero): Stride for images should align to multiple of 4 or 8
@@ -84,9 +110,9 @@ b32 a3::WriteImageToBuffer(void * destination, i32 width, i32 height, i32 channe
 	{
 		a3::MemoryCopy(destination, buffer.buffer, buffer.size);
 		a3Delete[] buffer.buffer;
-		return true;
+		return buffer.size;
 	}
-	return false;
+	return 0;
 }
 
 static inline void a3_CalculateFontBitmapMaxDimension(stbtt_fontinfo& info, f32 scale, i32* w, i32* h)

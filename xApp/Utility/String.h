@@ -14,7 +14,7 @@ namespace a3 {
 	inline void ReverseMemoryCopy(void* dst, const void* src, u64 size);
 	inline void ReverseRectCopy(void* dst, const void* src, i32 w, i32 h);
 	inline void* MemoryMove(void* dst, const void* src, u64 size);
-	inline void* MemorySet(void* dst, i32 val, u64 size);
+	inline void* MemorySet(void* dst, u8 val, u64 size);
 
 }
 
@@ -151,7 +151,7 @@ inline void* a3::MemoryMove(void* dst, const void* src, u64 size)
 	return dst;
 }
 
-inline void* a3::MemorySet(void* dst, i32 val, u64 size)
+inline void* a3::MemorySet(void* dst, u8 val, u64 size)
 {
 	u8* p = (u8*)dst;
 	for (u64 i = 0; i < size; ++i)

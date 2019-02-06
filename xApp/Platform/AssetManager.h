@@ -65,7 +65,7 @@ void a3_asset::Resize(u64 count)
 void a3_asset::LoadImageFromBuffer(u64 id, void* buffer, u64 length)
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
-	u64 size = a3::QueryImageSize(buffer, (i32)length);
+	u64 size = a3::QueryPixelBufferSize(buffer, (i32)length);
 	a3IsBufferTooLarge(size + sizeof(a3::image));
 	m_Assets[id] = a3Reallocate(m_Assets[id], size + sizeof(a3::image), void);
 	a3IsOutOfMemory(m_Assets[id]);
@@ -104,7 +104,7 @@ void a3_asset::LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 fil
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
 	a3IsBufferTooLarge(sizeof(a3::texture));
-	u64 size = a3::QueryImageSize(buffer, length);
+	u64 size = a3::QueryPixelBufferSize(buffer, length);
 	u8* dest = a3New u8[size];
 	a3::image img = a3::LoadImageFromBufer(buffer, length, dest);
 	m_Assets[id] = a3Reallocate(m_Assets[id], sizeof(a3::texture), void);
