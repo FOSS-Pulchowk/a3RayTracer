@@ -104,7 +104,13 @@ void App::Init()
 
 	SetComponents();
 
-
+	a3::Asset.LoadImageFromFile(25, "Resources/HugeSmile.png");
+	a3::Asset.LoadImageFromFile(26, "Resources/HuggingSmile.png");
+	a3::image* aSmile = a3::Asset.Get<a3::image>(25);
+	a3::image* bSmile = a3::Asset.Get<a3::image>(25);
+	a3::Asset.LoadTexture2DFromPixels(27, A3NULL, aSmile->Width + bSmile->Width, aSmile->Height + bSmile->Height, 4, GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::GLSubImageTexture2D(a3::Asset.Get<a3::texture>(27), 0, 0, aSmile->Width, aSmile->Height, aSmile->Channels, aSmile->Pixels);
+	a3::GLSubImageTexture2D(a3::Asset.Get<a3::texture>(27), aSmile->Width, aSmile->Height, bSmile->Width, bSmile->Height, aSmile->Channels, aSmile->Pixels);
 }
 
 void App::Update(const a3::input_info& input)
@@ -118,6 +124,7 @@ void App::Render()
 	//renderer2D.Push({ 50.0f, 50.0f }, { 500.0f, 500.0f }, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
 	//rect dest = { 0,0, 0, 0 };
 	renderer2D.Push({ 50.0f, 50.0f }, 500.0f, a3::color::White, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
+	renderer2D.Push({ 0.0f, 500.0f }, { 500.0f, 500.0f }, a3::color::White, a3::Asset.Get<a3::texture>(27));
 	renderer2D.EndFrame();
 
 	fontRenderer.Render("PC Parts", { 1050.0f, 670.0f }, 45.0f, a3::color::White);
@@ -126,7 +133,6 @@ void App::Render()
 
 	if (uiContext.Button(55, { 350.0f, 400.0f }, 200.0f, 200.0f, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))
 	{
-
 	}
 
 	if (uiContext.Button(56, { 600.0f, 400.0f }, { 200.0f, 200.0f }, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))

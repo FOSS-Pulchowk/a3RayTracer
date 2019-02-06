@@ -9,9 +9,11 @@ namespace a3 {
 			"layout(location = 0) in vec3 vPosition;							"
 			"layout(location = 1) in vec3 vColor;								"
 			"layout(location = 2) in vec2 vTexCoords;							"
+			"layout(location = 3) in int vTextureIndex;							"
 			"uniform mat4 u_Projection;											"
 			"out vec3 fColor;													"
 			"out vec2 fTexCoords;												"
+			"flat out int fTextureIndex;										"
 			"void main()														"
 			"{																	"
 			"	fColor = vColor;												"
@@ -21,15 +23,16 @@ namespace a3 {
 			;
 
 		const char* GLBasic2DFragment = 
-			"#version 330 core\n														"
-			"in vec3 fColor;															"
-			"in vec2 fTexCoords;														"
-			"out vec4 FragmentColor;													"
-			"uniform sampler2D u_Diffuse;												"
-			"void main()																"
-			"{																			"
-			"	FragmentColor = texture(u_Diffuse, fTexCoords) * vec4(fColor, 1.0f);	"
-			"}																			"
+			"#version 330 core\n																	"
+			"in vec3 fColor;																		"
+			"in vec2 fTexCoords;																	"
+			"flat in int fTextureIndex;																"
+			"out vec4 FragmentColor;																"
+			"uniform sampler2D u_Diffuse[25];														"
+			"void main()																			"
+			"{																						"
+			"	FragmentColor = texture(u_Diffuse[fTextureIndex], fTexCoords) * vec4(fColor, 1.0f);	"
+			"}																						"
 			;
 
 		const char* GLFontVertex = 
