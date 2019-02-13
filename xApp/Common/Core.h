@@ -124,6 +124,7 @@ struct v4
 		struct { f32 r, g, b, a; };
 		struct { v2 xy, zw; };
 		struct { v3 xyz; f32 w; };
+		struct { v3 rgb; f32 a; };
 		struct { f32 x; v3 yzw; };
 		f32 values[4];
 	};

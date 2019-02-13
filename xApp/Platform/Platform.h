@@ -194,10 +194,13 @@ namespace a3 {
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 void* operator new(u64 size, s8 file, i32 line);
 void* operator new(u64 size);
+void* operator new[](u64 size, s8 file, i32 line);
+void* operator new[](u64 size);
 #else
 void* operator new(u64 size);
 #endif
 void operator delete(void* ptr);
+void operator delete[](void* ptr);
 
 // Helper macros for memory allocations
 // These should be prefered over other methods

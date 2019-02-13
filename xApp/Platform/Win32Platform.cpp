@@ -13,9 +13,6 @@
 #include "GLResources.h"
 #include "Utility/Resource.h"
 
-#include "a3Interface.h"
-//#include "a3raytrace.h"
-
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
 // for windows dialogue windows/boxes
@@ -414,6 +411,15 @@ void* operator A3_DEFINE_ALLOCATION(new)
 #endif
 }
 
+void* operator A3_DEFINE_ALLOCATION(new[])
+{
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+	return a3::Platform.Malloc(size, file, line);
+#else
+	return a3::Platform.Malloc(size);
+#endif
+}
+
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 void* operator new(u64 size)
 {
@@ -421,7 +427,19 @@ void* operator new(u64 size)
 }
 #endif
 
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+void* operator new[](u64 size)
+{
+	return a3::Platform.Malloc(size, __FILE__, __LINE__);
+}
+#endif
+
 void operator delete(void* ptr)
+{
+	a3::Platform.Free(ptr);
+}
+
+void operator delete[](void* ptr)
 {
 	a3::Platform.Free(ptr);
 }
@@ -633,8 +651,8 @@ i32 a3Main()
 	b32 renderDebugInformation = true;
     
 	f32 deltaTime = 0.0f;
-	App application;
-	application.Init();
+
+	a3::Platform.LoadFromDialogue("ss", a3::file_type::FileTypePNG);
     
 	b32 shouldRun = true;
 	while (shouldRun)
@@ -654,8 +672,6 @@ i32 a3Main()
 			}
 		}
         
-		application.Update(userData->inputSystem);
-        
 		v3 cc = a3::color::NotQuiteBlack;
 		a3GL(glClearColor(cc.r, cc.g, cc.b, 1.0f));
 		a3GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -668,9 +684,7 @@ i32 a3Main()
 		// Should we setup callbacks for window resizing?
 		a3GL(glViewport(0, 0, userData->inputSystem.WindowWidth, userData->inputSystem.WindowHeight));
         
-        
-		application.Render();
-        
+                
 		LARGE_INTEGER currentPerformanceCounter;
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;

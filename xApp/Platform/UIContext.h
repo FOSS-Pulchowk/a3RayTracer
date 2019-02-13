@@ -43,6 +43,7 @@ namespace a3 {
 		ui_context(f32 width, f32 height);
 		inline void UpdateIO(const input_info& input);
 		inline b32 Button(i32 uid, v2 position, v2 dimension, s8 desc);
+		// TODO(Zero): DO we really need these two?
 		inline b32 Button(i32 uid, v2 position, v2 dimension, a3::texture* texture);
 		inline b32 Button(i32 uid, v2 position, f32 height, f32 maxWidth, a3::texture* texture);
 		inline b32 Checkbox(i32 uid, v2 position, v2 dimension, b32 checked, s8 desc);
