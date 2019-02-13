@@ -48,14 +48,14 @@ private:
 	a3::font_renderer fontRenderer;
 	a3::basic2d_renderer renderer2D;
 
-	a3::dynamic_array<casing> vCase;
-	a3::dynamic_array<powerSupply> vPowerSupply;
-	a3::dynamic_array<videoCard> vVideoCard;
-	a3::dynamic_array<storage> vStorage;
-	a3::dynamic_array<memory> vMemory;
-	a3::dynamic_array<cpuCooler> vCpuCooler;
-	a3::dynamic_array<motherboard> vMotherboard;
-	a3::dynamic_array<cpu> vCpu;
+	a3::darray<casing> vCase;
+	a3::darray<powerSupply> vPowerSupply;
+	a3::darray<videoCard> vVideoCard;
+	a3::darray<storage> vStorage;
+	a3::darray<memory> vMemory;
+	a3::darray<cpuCooler> vCpuCooler;
+	a3::darray<motherboard> vMotherboard;
+	a3::darray<cpu> vCpu;
 
 	pc_components currentlyOpen;
 
