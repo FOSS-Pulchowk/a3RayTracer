@@ -119,10 +119,10 @@
     <ClInclude Include="a3raytrace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\DynamicArray.h">
+    <ClInclude Include="Utility\DString.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\DString.h">
+    <ClInclude Include="Utility\DArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

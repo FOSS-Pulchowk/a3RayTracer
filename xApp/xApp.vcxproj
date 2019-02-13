@@ -265,7 +265,7 @@
     <ClCompile Include="Utility\DString.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Utility\DynamicArray.h" />
+    <ClInclude Include="Utility\DArray.h" />
     <ClInclude Include="a3raytrace.h" />
     <ClInclude Include="Common\Core.h" />
     <ClInclude Include="External\STBImage.h" />

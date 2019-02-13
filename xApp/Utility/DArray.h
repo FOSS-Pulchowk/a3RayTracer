@@ -21,6 +21,7 @@ namespace a3 {
 		inline darray(u64 capacity);
 		inline darray(darray<Type>& da); // NOTE(Zero): Transfers ownership i.e. moves doesn't copy
 		inline darray<Type>& operator=(darray<Type>& da); // NOTE(Zero): Transfers ownership i.e. moves doesn't copy
+		inline ~darray();
 		inline b32 Resize(u64 capacity);
 		inline Type& GetElement(u64 index);
 		inline Type& operator[](u64 index);
@@ -80,6 +81,12 @@ namespace a3 {
 		da.m_Size = da.m_Capacity = 0;
 		da.m_Base = A3NULL;
 		return *this;
+	}
+
+	template<typename Type>
+	inline darray<Type>::~darray()
+	{
+		a3Free(m_Base);
 	}
 
 	template<typename Type>
