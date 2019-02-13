@@ -4,6 +4,10 @@
 
 namespace a3 {
 
+	// TODO(Zero):
+	// If we are not able to access more memory or reallocating fails, then there is very high probability for the program to crash
+	// Handling when we are in low memory
+
 	template<typename Type>
 	class darray
 	{
@@ -27,12 +31,19 @@ namespace a3 {
 		inline const Type* GetPointer(u64 index) const;
 		inline const Type* GetData() const;
 		inline Type& Push(const Type& e);
+		
+		template <typename ...Args>
+		inline Type& Emplace(Args... args);
+
 		inline Type& Pop();
 		inline u64 QuerySize() const;
 		inline u64 QueryCapacity() const;
 		inline u64 QueryEmpty() const;
 		inline Type* Begin() const;
 		inline Type* End() const;
+		inline void New(u64 capacity);
+		inline void Delete();
+		inline void Empty();
 	};
 
 	template<typename Type>
@@ -44,13 +55,9 @@ namespace a3 {
 	}
 
 	template<typename Type>
-	inline darray<Type>::darray(u64 capacity)
+	inline darray<Type>::darray(u64 capacity): darray()
 	{
-		m_Base = a3Malloc(capacity, Type);
-		if (m_Base)
-		{
-			m_Capacity = capacity;
-		}
+		New(capacity);
 	}
 
 	template<typename Type>
@@ -92,6 +99,7 @@ namespace a3 {
 	template<typename Type>
 	inline Type & darray<Type>::GetElement(u64 index)
 	{
+		a3Assert(index < m_Size);
 		return m_Base[index];
 	}
 
@@ -145,6 +153,20 @@ namespace a3 {
 	}
 
 	template<typename Type>
+	template<typename ...Args>
+	inline Type & darray<Type>::Emplace(Args ...args)
+	{
+		if (m_Size == m_Capacity) {
+			if (!Resize(m_Capacity + 10))
+			{
+				a3TriggerBreakPoint();
+			}
+		}
+		a3Place(&m_Base[m_Size++]) Type(args...);
+		return m_Base[m_Size - 1];
+	}
+
+	template<typename Type>
 	inline Type & darray<Type>::Pop()
 	{
 		return m_Base[m_Size--];
@@ -180,5 +202,27 @@ namespace a3 {
 		return &GetElement(m_Size - 1);
 	}
 
+	template<typename Type>
+	inline void darray<Type>::New(u64 capacity)
+	{
+		m_Capacity = capacity;
+		if (m_Capacity < m_Size) m_Size = m_Capacity;
+		m_Base = a3Realloc(m_Base, m_Capacity, Type);
+	}
+
+	template<typename Type>
+	inline void darray<Type>::Delete()
+	{
+		m_Capacity = 0;
+		m_Size = 0;
+		a3Free(m_Base);
+		m_Base = A3NULL;
+	}
+
+	template<typename Type>
+	inline void darray<Type>::Empty()
+	{
+		m_Size = 0;
+	}
 
 }

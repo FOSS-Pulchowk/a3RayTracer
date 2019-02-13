@@ -420,6 +420,11 @@ void* operator A3_DEFINE_ALLOCATION(new[])
 #endif
 }
 
+void * operator new(u64 size, void * where)
+{
+	return where;
+}
+
 void operator delete(void* ptr)
 {
 	a3::Platform.Free(ptr);

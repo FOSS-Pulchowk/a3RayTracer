@@ -198,6 +198,9 @@ void* operator new[](u64 size, s8 file, i32 line);
 void* operator new(u64 size);
 void* operator new[](u64 size);
 #endif
+
+void* operator new(u64 size, void* where);
+
 void operator delete(void* ptr);
 void operator delete[](void* ptr);
 
@@ -213,6 +216,7 @@ void operator delete[](void* ptr);
 #define a3Reallocate(ptr, size, type) (type*)a3::Platform.ResizeMemory(ptr, size, __FILE__, __LINE__)
 #define a3Release(ptr) a3::Platform.Release(ptr)
 #define a3New new(__FILE__, __LINE__)
+#define a3Place(where) new(where)
 #define a3Delete delete
 #else
 #define a3Malloc(size, type) (type*)a3::Platform.Malloc(size)
@@ -224,6 +228,7 @@ void operator delete[](void* ptr);
 #define a3Reallocate(ptr, size, type) (type*)a3::Platform.ResizeMemory(ptr, size)
 #define a3Release(ptr) a3::Platform.Release(ptr)
 #define a3New new
+#define a3Place(where) new(where)
 #define a3Delete delete
 #endif
 
