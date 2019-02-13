@@ -2,7 +2,8 @@
 
 #include "Common/Core.h"
 #include "Platform/Platform.h"
-#include "Utility/String.h"
+#include "Memory.h"
+#include "String.h"
 
 // We will only be supporting PNG currently
 // TODO(Zero): Correctly remove all STD libs from here

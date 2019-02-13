@@ -17,7 +17,7 @@
 #include "Utility/DynamicArray.h"
 
 #include "Components.h"
-#include "Utility/string2.h"
+#include "Utility/DString.h"
 
 #define ADD_COMPONENT(x) struct x { string name; }
 

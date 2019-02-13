@@ -1,4 +1,6 @@
+#include "Platform/Platform.h"
 #include "DString.h"
+#include "Memory.h"
 #include "String.h"
 
 namespace a3

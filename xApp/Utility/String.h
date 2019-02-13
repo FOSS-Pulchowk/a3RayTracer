@@ -10,11 +10,6 @@ namespace a3 {
 	inline i32 ParseU32(utf8* buffer, u32 length, u32 number, u32 base);
 	inline i32 ParseF32(utf8* buffer, u32 length, f32 number);
 	inline u64 GetStringLength(s8 s);
-	inline void MemoryCopy(void* dst, const void* src, u64 size);
-	inline void ReverseMemoryCopy(void* dst, const void* src, u64 size);
-	inline void ReverseRectCopy(void* dst, const void* src, i32 w, i32 h);
-	inline void* MemoryMove(void* dst, const void* src, u64 size);
-	inline void* MemorySet(void* dst, u8 val, u64 size);
 
 }
 
@@ -109,52 +104,4 @@ inline u64 a3::GetStringLength(s8 s)
 	for (utf8 c = s[0]; c != '\0'; ++c)
 		len++;
 	return (len + 1);
-}
-
-inline void a3::MemoryCopy(void* dst, const void* src, u64 size)
-{
-	u8* dp = (u8*)dst;
-	u8* sp = (u8*)src;
-	for (u64 i = 0; i < size; ++i)
-		*dp++ = *sp++;
-}
-
-inline void a3::ReverseMemoryCopy(void* dst, const void* src, u64 size)
-{
-	u8* dp = (u8*)dst;
-	u8* sp = (u8*)src + size - 1;
-	for (u64 i = 0; i < size; ++i)
-		*dp++ = *sp--;
-}
-
-inline void a3::ReverseRectCopy(void* dst, const void* src, i32 w, i32 h)
-{
-	u8* sp = (u8*)src;
-	u8* rowDP = (u8*)dst + w * h - w;
-	for (i32 y = 0; y < h; ++y)
-	{
-		u8* dp = rowDP;
-		for (i32 x = 0; x < w; ++x)
-		{
-			*dp++ = *sp++;
-		}
-		rowDP -= w;
-	}
-}
-
-inline void* a3::MemoryMove(void* dst, const void* src, u64 size)
-{
-	u8* pd = (u8*)dst;
-	u8* sp = (u8*)src;
-	for (u64 i = 0; i < size; ++i)
-		*pd++ = *sp++;
-	return dst;
-}
-
-inline void* a3::MemorySet(void* dst, u8 val, u64 size)
-{
-	u8* p = (u8*)dst;
-	for (u64 i = 0; i < size; ++i)
-		*p++ = val;
-	return dst;
 }

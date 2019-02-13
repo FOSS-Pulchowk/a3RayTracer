@@ -1,5 +1,4 @@
 #include "Common/Core.h"
-#include "Platform/Platform.h"
 
 namespace a3
 {
