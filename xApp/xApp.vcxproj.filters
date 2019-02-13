@@ -33,7 +33,7 @@
     <ClCompile Include="Utility\Resource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\string2.cpp">
+    <ClCompile Include="Utility\DString.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -122,7 +122,7 @@
     <ClInclude Include="Utility\DynamicArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\string2.h">
+    <ClInclude Include="Utility\DString.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
