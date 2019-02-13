@@ -173,6 +173,7 @@ struct a3_platform
 	b32 Release(void* ptr) const;
 
 	utf8* LoadFromDialogue(s8 title, a3::file_type type) const;
+	utf8* SaveFromDialogue(s8 title, a3::file_type type) const;
 	void FreeDialogueData(utf8* data) const;
 
 #if defined(A3DEBUG) || defined(A3INTERNAL)

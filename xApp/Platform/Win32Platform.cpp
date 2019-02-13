@@ -378,6 +378,63 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 	return A3NULL;
 }
 
+utf8 * a3_platform::SaveFromDialogue(s8 title, a3::file_type type) const
+{
+	IFileSaveDialog *pSaveDialog = A3NULL;
+	HRESULT hr;
+
+	hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_ALL, IID_IFileSaveDialog, (void**)&pSaveDialog);
+	if (SUCCEEDED(hr))
+	{
+		utf16* wTitle = A3NULL;
+		i32 size = MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, 0);
+		wTitle = a3New utf16[size];
+		MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, size);
+		pSaveDialog->SetTitle(wTitle);
+		a3Delete[] wTitle;
+
+		if (type == a3::FileTypePNG)
+		{
+			COMDLG_FILTERSPEC filterTypes = {
+				L"Portable Network Graphics",
+				L"*.png"
+			};
+			pSaveDialog->SetFileTypes(1, &filterTypes);
+			pSaveDialog->SetFileTypeIndex(1);
+		}
+
+		hr = pSaveDialog->Show(Win32GetUserData()->windowHandle);
+		utf8* resultPath = A3NULL;
+		if (SUCCEEDED(hr))
+		{
+			IShellItem *pShellItem;
+			hr = pSaveDialog->GetResult(&pShellItem);
+			if (SUCCEEDED(hr))
+			{
+				utf16* wFilePath;
+				hr = pShellItem->GetDisplayName(SIGDN_FILESYSPATH, &wFilePath);
+				if (SUCCEEDED(hr))
+				{
+					// NOTE(Zero):
+					// MAX_PATH is used here because when I query the length information and use it
+					// it didn't work, and I don't know why, could be because the WideChar string given
+					// might not be null terminated, I could not find information on this in the documentation
+					resultPath = a3New utf8[MAX_PATH];
+					i32 v = WideCharToMultiByte(CP_UTF8, 0, wFilePath, -1, resultPath, MAX_PATH, 0, 0);
+					i32 err = GetLastError();
+					// TODO(Zero): Retrive and add file extension here!
+					//MessageBox(NULL, wFilePath, L"File Path", MB_OK);
+					CoTaskMemFree(wFilePath);
+				}
+				pShellItem->Release();
+			}
+		}
+		pSaveDialog->Release();
+		return resultPath;
+	}
+	return A3NULL;
+}
+
 void a3_platform::FreeDialogueData(utf8 * data) const
 {
 	a3Delete[] data;
@@ -643,7 +700,7 @@ i32 a3Main()
     
 	f32 deltaTime = 0.0f;
 
-	a3::Platform.LoadFromDialogue("ss", a3::file_type::FileTypePNG);
+	a3::Platform.SaveFromDialogue("ss", a3::file_type::FileTypePNG);
     
 	b32 shouldRun = true;
 	while (shouldRun)
