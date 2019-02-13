@@ -420,20 +420,6 @@ void* operator A3_DEFINE_ALLOCATION(new[])
 #endif
 }
 
-#if defined(A3DEBUG) || defined(A3INTERNAL)
-void* operator new(u64 size)
-{
-	return a3::Platform.Malloc(size, __FILE__, __LINE__);
-}
-#endif
-
-#if defined(A3DEBUG) || defined(A3INTERNAL)
-void* operator new[](u64 size)
-{
-	return a3::Platform.Malloc(size, __FILE__, __LINE__);
-}
-#endif
-
 void operator delete(void* ptr)
 {
 	a3::Platform.Free(ptr);
