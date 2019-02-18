@@ -5,30 +5,31 @@ namespace a3 {
 	namespace shaders {
 
 		const char* GLBasic2DVertex = 
-			"#version 330 core\n												"
+			"#version 420 core\n												"
 			"layout(location = 0) in vec3 vPosition;							"
 			"layout(location = 1) in vec3 vColor;								"
 			"layout(location = 2) in vec2 vTexCoords;							"
-			"layout(location = 3) in int vTextureIndex;							"
+			"layout(location = 3) in uint vTextureIndex;							"
 			"uniform mat4 u_Projection;											"
 			"out vec3 fColor;													"
 			"out vec2 fTexCoords;												"
-			"flat out int fTextureIndex;										"
+			"flat out uint fTextureIndex;										"
 			"void main()														"
 			"{																	"
 			"	fColor = vColor;												"
 			"	fTexCoords = vTexCoords;										"
+			"	fTextureIndex = vTextureIndex;									"
 			"	gl_Position = u_Projection * vec4(vPosition, 1.0f);				"
 			"}																	"
 			;
 
 		const char* GLBasic2DFragment = 
-			"#version 330 core\n																	"
+			"#version 420 core\n																	"
 			"in vec3 fColor;																		"
 			"in vec2 fTexCoords;																	"
-			"flat in int fTextureIndex;																"
+			"flat in uint fTextureIndex;																"
 			"out vec4 FragmentColor;																"
-			"uniform sampler2D u_Diffuse[25];														"
+			"uniform sampler2D u_Diffuse[5];														"
 			"void main()																			"
 			"{																						"
 			"	FragmentColor = texture(u_Diffuse[fTextureIndex], fTexCoords) * vec4(fColor, 1.0f);	"

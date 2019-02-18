@@ -11,7 +11,7 @@ struct a3_renderer;
 
 namespace a3 {
 
-#define A3_BASIC_RENDERER_MAX_COUNT 25
+#define A3_BASIC_RENDERER_MAX_COUNT 5
 	struct basic2d_renderer
 	{
 	private:
@@ -316,8 +316,8 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 		GL_FALSE, sizeof(a3_vertex2d),
 		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texCoords))));
 
-	a3GL(glVertexAttribPointer(a3_vertex2d::TEXINDEX, 1, 
-		GL_INT, GL_FALSE, sizeof(a3_vertex2d),
+	a3GL(glVertexAttribPointer(a3_vertex2d::TEXINDEX, 1, GL_INT,
+		GL_FALSE, sizeof(a3_vertex2d),
 		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texIndex))));
 
 	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * A3_BASIC_RENDERER_MAX_COUNT, A3NULL, GL_DYNAMIC_DRAW));
@@ -330,18 +330,22 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_uProjection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	char name09[] = "u_Diffuse[-]";
-	for (i32 i = 0; i < 10; ++i)
-	{
-		name09[10] = i + 48;
-		a3GL(r.m_uTextureDiffuse[i] = glGetUniformLocation(r.m_ShaderProgram, name09));
-	}
 	char nameg9[] = "u_Diffuse[--]";
-	for (i32 i = 10; i < A3_BASIC_RENDERER_MAX_COUNT; ++i)
+	for (i32 i = 0; i < A3_BASIC_RENDERER_MAX_COUNT; ++i)
 	{
-		nameg9[10] = i / 10;
-		nameg9[11] = (i % 10) + 48;
-		a3GL(r.m_uTextureDiffuse[i] = glGetUniformLocation(r.m_ShaderProgram, nameg9));
+		if (i < 10)
+		{
+			name09[10] = i + 48;
+			a3GL(r.m_uTextureDiffuse[i] = glGetUniformLocation(r.m_ShaderProgram, name09));
+		}
+		else
+		{
+			nameg9[10] = (i / 10) + 48;
+			nameg9[11] = (i % 10) + 48;
+			a3GL(r.m_uTextureDiffuse[i] = glGetUniformLocation(r.m_ShaderProgram, nameg9));
+		}
 	}
+	a3GL(r.m_uTextureDiffuse[0] = glGetUniformLocation(r.m_ShaderProgram, "u_Diffuse"));
 
 	return r;
 }
@@ -464,9 +468,9 @@ namespace a3 {
 			texCoords.w = (f32)(dest.y + dest.h) / (f32)texture->Height;
 		}
 
-		a3GL(glActiveTexture(GL_TEXTURE0));
+		a3GL(glActiveTexture(GL_TEXTURE0 + m_Count));
 		a3GL(glBindTexture(GL_TEXTURE_2D, texture->Id));
-		a3GL(glUniform1i(m_uTextureDiffuse[m_Count], m_Count));
+		//a3GL(glUniform1i(m_uTextureDiffuse[m_Count], m_Count));
 		v[m_Count * 4 + 0].position = position;
 		v[m_Count * 4 + 1].position = position;
 		v[m_Count * 4 + 2].position = position;
@@ -509,6 +513,11 @@ namespace a3 {
 	{
 		a3_UnmapVertexPointer();
 		a3_UnmapElementPointer();
+		i32 textureIds[A3_BASIC_RENDERER_MAX_COUNT];
+		for (i32 i = 0; i < A3_BASIC_RENDERER_MAX_COUNT; ++i)
+			textureIds[i] = i;
+
+		a3GL(glUniform1iv(m_uTextureDiffuse[0], 25, textureIds));
 		a3GL(glDrawElements(GL_TRIANGLES, m_Count * 6, GL_UNSIGNED_INT, A3NULL));
 		m_Count = 0;
 	}
@@ -743,12 +752,12 @@ namespace a3 {
 		v[m_Count * 4 + 2].texCoords = { tx1, ty1 };
 		v[m_Count * 4 + 3].texCoords = { tx0, ty1 };
 
-		i[m_Count * 4 + 0] = m_Count * 4 + 0;
-		i[m_Count * 4 + 1] = m_Count * 4 + 1;
-		i[m_Count * 4 + 2] = m_Count * 4 + 2;
-		i[m_Count * 4 + 3] = m_Count * 4 + 0;
-		i[m_Count * 4 + 4] = m_Count * 4 + 2;
-		i[m_Count * 4 + 5] = m_Count * 4 + 3;
+		i[m_Count * 6 + 0] = m_Count * 4 + 0;
+		i[m_Count * 6 + 1] = m_Count * 4 + 1;
+		i[m_Count * 6 + 2] = m_Count * 4 + 2;
+		i[m_Count * 6 + 3] = m_Count * 4 + 0;
+		i[m_Count * 6 + 4] = m_Count * 4 + 2;
+		i[m_Count * 6 + 5] = m_Count * 4 + 3;
 
 		m_Count++;
 	}

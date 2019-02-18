@@ -735,6 +735,7 @@ i32 a3Main()
 	renderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 
 	a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
     
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
@@ -794,8 +795,15 @@ i32 a3Main()
 		performanceCounter = currentPerformanceCounter;
 
 		renderer.BeginFrame();
-		renderer.Push(v3{ 100.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(11));
 		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(11));
+		renderer.EndFrame();
+		renderer.BeginFrame();
+		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(12));
+		renderer.EndFrame();
+		
+		renderer.BeginFrame();
+		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(11));
+		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(12));
 		renderer.EndFrame();
         
 		if (renderDebugInformation)
@@ -815,8 +823,16 @@ i32 a3Main()
 			fontRenderer.Render(buffer, v2{ 0.0f, 520.0f }, 15.0f, a3::color::GreenYellow);
 #endif
 		}
-        
+
+		//wglSwapLayerBuffers(hDC, 0);
+		
 		SwapBuffers(hDC);
+        
+		//if (SwapBuffers(hDC) == FALSE)
+		//{
+		//	auto err = GetLastError();
+		//	a3TriggerBreakPoint();
+		//}
 	}
     
 	return 0;
