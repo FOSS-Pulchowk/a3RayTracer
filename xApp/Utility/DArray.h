@@ -233,3 +233,6 @@ namespace a3 {
 	}
 
 }
+
+
+#define a3ForEach(e, a) for(auto& e = *a.Begin(); &e != (a.End()+1); ++&e++)
