@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Common/Core.h"
 #include "GlRenderer.h"
 #include "GLSL/GLSLShaders.h"
@@ -30,22 +30,18 @@ namespace a3 {
 		f32 m_Width;
 		f32 m_Height;
 
-		basic2d_renderer m_Renderer2D;
 		batch2d_renderer m_Batch2DRenderer;
 		font_renderer m_FontRenderer;
 
 		v3 m_UIColor;
 		v3 m_ActiveUIColor;
-		v3 m_HotUIColor;
 		v3 m_UIFontColor;
+		v3 m_UIActiveFontColor;
 
 	public:
 		ui_context(f32 width, f32 height);
 		inline void UpdateIO(const input_info& input);
 		inline b32 Button(i32 uid, v2 position, v2 dimension, s8 desc);
-		// TODO(Zero): DO we really need these two?
-		inline b32 Button(i32 uid, v2 position, v2 dimension, a3::texture* texture);
-		inline b32 Button(i32 uid, v2 position, f32 height, f32 maxWidth, a3::texture* texture);
 		inline b32 Checkbox(i32 uid, v2 position, v2 dimension, b32 checked, s8 desc);
 		inline void SetColor(v3 color, v3 hot, v3 active, v3 font);
 
@@ -61,7 +57,6 @@ namespace a3 {
 //
 
 a3::ui_context::ui_context(f32 width, f32 height) :
-	m_Renderer2D(a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment)),
 	m_Batch2DRenderer(a3::Renderer.CreateBatch2DRenderer(shaders::GLBatch2DVertex, shaders::GLBatch2DFragment)),
 	m_FontRenderer(a3::Renderer.CreateFontRenderer(shaders::GLFontVertex, shaders::GLFontFragment))
 {
@@ -70,14 +65,16 @@ a3::ui_context::ui_context(f32 width, f32 height) :
 	m_Active = -1;
 	m_Hot = -1;
 	m_Input.mouseDragging = false;
-	m_Renderer2D.SetRegion(0.0f, m_Width, 0.0f, m_Height);
-	m_FontRenderer.SetRegion(0.0f, m_Width, 0.0f, m_Height);
+	
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::UIFont, "Resources/HackRegular.ttf", 30.0f);
+	a3::Asset.LoadTexture2DFromFile(a3::asset_id::UITexture, "Resources/A3UI.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	
+	m_FontRenderer.SetRegion(0.0f, m_Width, 0.0f, m_Height);
 	m_FontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::UIFont));
+	
 	m_Batch2DRenderer.SetRegion(0.0f, m_Width, 0.0f, m_Height);
-	a3::Asset.LoadTexture2DFromFile(a3::asset_id::UITexture, "Resources/UIAtlas.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
 	m_Batch2DRenderer.SetTexture(a3::Asset.Get<a3::texture>(a3::asset_id::UITexture));
-	SetColor(a3::color::Aqua, a3::color::Aqua, a3::color::Blurple, a3::color::WhiteSmoke);
+	SetColor(a3::color::NotQuiteBlack, a3::color::Blurple, a3::color::Grey, a3::color::White);
 }
 
 inline void a3::ui_context::UpdateIO(const input_info& input)
@@ -91,53 +88,12 @@ inline void a3::ui_context::UpdateIO(const input_info& input)
 inline b32 a3::ui_context::Button(i32 uid, v2 position, v2 dimension, s8 desc)
 {
 	b32 result = IsInteracted(uid, position, dimension);
-	v4 texDimension = { 0.0f, 0.35f, 1.0f, 0.57f };
+	v4 texDimension = { 0.0f, 0.7f, 1.0f, 1.0f };
 	RenderUI(uid, position, dimension, texDimension);
-	position += v2{ 20.0f, 20.0f };
+	position += 0.25f * dimension;
 	v2 fontRegionDim = dimension;
-	fontRegionDim.y *= 0.5f;
-	m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, m_UIFontColor);
-	return result;
-}
-
-inline b32 a3::ui_context::Button(i32 uid, v2 position, v2 dimension, a3::texture * texture)
-{
-	b32 result = IsInteracted(uid, position, dimension);
-	v4 texDimension = { 0.0f, 0.35f, 1.0f, 0.57f };
-	RenderUI(uid, position, dimension, texDimension);
-	v3 tposition;
-	v2 tdimension = dimension - 0.3f * dimension;
-	tposition.xy = position + (dimension - tdimension) * 0.5f;
-	tposition.z = 0.0f;
-	m_Renderer2D.BeginFrame();
-	m_Renderer2D.Push(tposition, tdimension, a3::color::White, texture);
-	m_Renderer2D.EndFrame();
-	return result;
-}
-
-inline b32 a3::ui_context::Button(i32 uid, v2 position, f32 height, f32 maxWidth, a3::texture * texture)
-{
-	v2 dimension;
-	dimension.x = maxWidth;
-	dimension.y = height;
-	v2 tdim;
-	tdim.y = height - 0.3f * height;
-	tdim.x = (f32)texture->Width * (tdim.y / (f32)texture->Height);
-	if (tdim.x > dimension.x)
-	{
-		tdim.x = dimension.x - 0.3f * dimension.x;
-		tdim.y = (f32)texture->Height * (tdim.x / (f32)texture->Width);
-	}
-	v3 tposition;
-	tposition.xy = position + (dimension - tdim) * 0.5f;
-	tposition.z = 0.0f;
-
-	b32 result = IsInteracted(uid, position, dimension);
-	v4 texDimension = { 0.0f, 0.35f, 1.0f, 0.57f };
-	RenderUI(uid, position, dimension, texDimension);
-	m_Renderer2D.BeginFrame();
-	m_Renderer2D.Push(tposition, tdim, a3::color::White, texture);
-	m_Renderer2D.EndFrame();
+	fontRegionDim.y *= 0.6f;
+	m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, (m_Active != uid && m_Hot != uid) ? m_UIFontColor : m_UIActiveFontColor);
 	return result;
 }
 
@@ -146,24 +102,23 @@ inline b32 a3::ui_context::Checkbox(i32 uid, v2 position, v2 dimension, b32 chec
 	b32 result = IsInteracted(uid, position, dimension);
 	v4 texDimension;
 	if (checked)
-		texDimension = { 0.0f, 0.56f, 1.0f, 0.79f };
+		texDimension = { 0.0f, 0.0f, 1.0f, 0.3f };
 	else
-		texDimension = { 0.0f, 0.77f, 1.0f, 1.0f };
+		texDimension = { 0.0f, 0.34f, 1.0f, 0.64f };
 	RenderUI(uid, position, dimension, texDimension);
-	position += (v2{ 20.0f, 20.0f } +v2{ 0.15f * dimension.x, 0.0f });
+	position += (0.25f * dimension + v2{ 0.1f * dimension.x, 0.0f });
 	v2 fontRegionDim = dimension;
-	fontRegionDim.y *= 0.5f;
-	m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, m_UIFontColor);
+	fontRegionDim.y *= 0.6f;
+	m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, (m_Active != uid && m_Hot != uid) ? m_UIFontColor : m_UIActiveFontColor);
 	return result;
 }
 
-inline void a3::ui_context::SetColor(v3 color, v3 hot, v3 active, v3 font)
+inline void a3::ui_context::SetColor(v3 ui, v3 activeui, v3 font, v3 activefont)
 {
-	m_UIColor = color;
-	m_HotUIColor = hot;
-	m_ActiveUIColor = active;
+	m_UIColor = ui;
+	m_ActiveUIColor = activeui;
 	m_UIFontColor = font;
-	m_Batch2DRenderer.SetSpotLightColor(hot);
+	m_UIActiveFontColor = activefont;
 }
 
 inline b32 a3::ui_context::IsInteracted(i32 uid, v2 position, v2 dimension)
@@ -216,24 +171,16 @@ inline b32 a3::ui_context::IsInteracted(i32 uid, v2 position, v2 dimension)
 inline void a3::ui_context::RenderUI(i32 uid, v2 position, v2 dimension, v4 texDimension)
 {
 	v3 finalColor;
-	if (m_Active == uid)
+	if (m_Active == uid || m_Hot == uid)
 	{
 		finalColor = m_ActiveUIColor;
-		m_Batch2DRenderer.SetSpotLightIntensity(5.0f);
-	}
-	else if (m_Hot == uid)
-	{
-		finalColor = m_HotUIColor;
-		m_Batch2DRenderer.SetSpotLightIntensity(5.0f);
 	}
 	else
 	{
 		finalColor = m_UIColor;
-		m_Batch2DRenderer.SetSpotLightIntensity(2.0f);
 	}
 
 	m_Batch2DRenderer.BeginFrame();
-	m_Batch2DRenderer.SetSpotLightPosition(v2{ m_Input.mouseX, m_Input.mouseY });
 	m_Batch2DRenderer.Push(position, dimension, finalColor, texDimension);
 	m_Batch2DRenderer.EndFrame();
 }

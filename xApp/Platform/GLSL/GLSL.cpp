@@ -86,17 +86,10 @@ namespace a3 {
 			"in vec3 fFragmentPos;															"
 			"out vec4 FragmentColor;														"
 			"uniform sampler2D u_TextureAtlas;												"
-			"uniform vec2 u_SpotLightPosition;												"
-			"uniform vec3 u_SpotLightColor;													"
-			"uniform float u_SpotLightIntensity;											"
 			"void main()																	"
 			"{																				"
 			"	vec4 sampled = texture(u_TextureAtlas, fTexCoords) * vec4(fColor, 1.0f);	"
-			"	vec3 finalColor = sampled.rgb;												"
-			"	float len = length(u_SpotLightPosition - fFragmentPos.xy);					"
-			"	float intensity = u_SpotLightIntensity / (1.0f + 0.2 * len);"
-			"	finalColor = intensity * finalColor * u_SpotLightColor + 0.2f * finalColor;	"
-			"	FragmentColor = vec4(finalColor, sampled.a);								"
+			"	FragmentColor = sampled;													"
 			"}																				"
 			;
 

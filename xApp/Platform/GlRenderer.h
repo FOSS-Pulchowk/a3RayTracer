@@ -68,19 +68,12 @@ namespace a3 {
 		u32 m_ShaderProgram;
 		u32 m_uProjection;
 		u32 m_uTextureAtlas;
-		u32 m_uSpotLightPosition;
-		u32 m_uSpotLightColor;
-		u32 m_uSpotLightIntensity;
 		u32 m_Count;
 		texture* m_Texture;
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void SetTexture(a3::texture* texture);
-		void SetSpotLightIntensity(f32 intensity);
-		void SetSpotLightColor(v3 color);
-		void SetSpotLightPosition(v2 position);
-		void SetSpotLightMaterial(v3 color, f32 intensity);
 		void Push(v2 position, v2 dimension, v3 color, v4 texDimension);
 		void BeginFrame();
 		void EndFrame();
@@ -371,9 +364,6 @@ a3::batch2d_renderer a3_renderer::CreateBatch2DRenderer(s8 vSource, s8 fSource) 
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_uProjection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_uTextureAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_TextureAtlas"));
-	a3GL(r.m_uSpotLightPosition = glGetUniformLocation(r.m_ShaderProgram, "u_SpotLightPosition"));
-	a3GL(r.m_uSpotLightColor = glGetUniformLocation(r.m_ShaderProgram, "u_SpotLightColor"));
-	a3GL(r.m_uSpotLightIntensity = glGetUniformLocation(r.m_ShaderProgram, "u_SpotLightIntensity"));
 	a3GL(glUniform1i(r.m_uTextureAtlas, s_CurrentBound.UITextureSlot));
 	r.m_Count = 0;
 
@@ -671,31 +661,6 @@ namespace a3 {
 	void batch2d_renderer::SetTexture(a3::texture * tex)
 	{
 		m_Texture = tex;
-	}
-
-	void batch2d_renderer::SetSpotLightIntensity(f32 intensity)
-	{
-		a3_BindProgram(m_ShaderProgram);
-		a3GL(glUniform1f(m_uSpotLightIntensity, intensity));
-	}
-
-	void batch2d_renderer::SetSpotLightColor(v3 color)
-	{
-		a3_BindProgram(m_ShaderProgram);
-		a3GL(glUniform3fv(m_uSpotLightColor, 1, color.values));
-	}
-
-	void batch2d_renderer::SetSpotLightPosition(v2 position)
-	{
-		a3_BindProgram(m_ShaderProgram);
-		a3GL(glUniform2fv(m_uSpotLightPosition, 1, position.values));
-	}
-
-	void batch2d_renderer::SetSpotLightMaterial(v3 color, f32 intensity)
-	{
-		a3_BindProgram(m_ShaderProgram);
-		a3GL(glUniform3fv(m_uSpotLightColor, 1, color.values));
-		a3GL(glUniform1f(m_uSpotLightIntensity, intensity));
 	}
 
 	void batch2d_renderer::Push(v2 position, v2 dimension, v3 color, v4 texDimension)
