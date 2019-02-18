@@ -736,7 +736,16 @@ i32 a3Main()
 
 	a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
 	a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(13, "Resources/UIAtlas.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
     
+	//a3::batch2d_renderer renderer = a3::Renderer.CreateBatch2DRenderer(a3::shaders::GLBatch2DVertex, a3::shaders::GLBatch2DFragment);
+	//renderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
+	//renderer.SetSpotLightColor(a3::color::Blue);
+	//renderer.SetSpotLightIntensity(50.0f);
+	//renderer.SetSpotLightPosition(v2{ 400.0f, 300.0f });
+	//renderer.SetTexture(a3::Asset.Get<a3::texture>(13));
+
+
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
 	a3Log("Window displayed.");
@@ -793,17 +802,10 @@ i32 a3Main()
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
-
-		renderer.BeginFrame();
-		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(11));
-		renderer.EndFrame();
-		renderer.BeginFrame();
-		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(12));
-		renderer.EndFrame();
 		
 		renderer.BeginFrame();
-		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(11));
-		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(12));
+		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(12));
+		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(11));
 		renderer.EndFrame();
         
 		if (renderDebugInformation)
@@ -823,16 +825,8 @@ i32 a3Main()
 			fontRenderer.Render(buffer, v2{ 0.0f, 520.0f }, 15.0f, a3::color::GreenYellow);
 #endif
 		}
-
-		//wglSwapLayerBuffers(hDC, 0);
 		
 		SwapBuffers(hDC);
-        
-		//if (SwapBuffers(hDC) == FALSE)
-		//{
-		//	auto err = GetLastError();
-		//	a3TriggerBreakPoint();
-		//}
 	}
     
 	return 0;

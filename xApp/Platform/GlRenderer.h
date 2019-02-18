@@ -11,7 +11,7 @@ struct a3_renderer;
 
 namespace a3 {
 
-#define A3_BASIC_RENDERER_MAX_COUNT 5
+#define A3_BASIC_RENDERER_MAX_COUNT 32
 	struct basic2d_renderer
 	{
 	private:
@@ -20,7 +20,7 @@ namespace a3 {
 		u32 m_ElementArrayBuffer;
 		u32 m_ShaderProgram;
 		u32 m_uProjection;
-		u32 m_uTextureDiffuse[A3_BASIC_RENDERER_MAX_COUNT];
+		u32 m_uTextureDiffuse;
 		u32 m_Count;
 		basic2d_renderer(){}
 	public:
@@ -170,11 +170,7 @@ inline void a3_BindVertexArrayObject(u32 target)
 inline void a3_BindVertexArrayBuffer(u32 target)
 {
 	if (target == s_CurrentBound.VertexArrayBuffer) return;
-	if (s_CurrentBound.VertexArrayBufferIsMapped)
-	{
-		// NOTE(Zero): Pointer is not cleared to zero
-		a3_UnmapVertexPointer();
-	}
+	a3Assert(!s_CurrentBound.VertexArrayBufferIsMapped); // Binding buffer without unmapping
 	a3GL(glBindBuffer(GL_ARRAY_BUFFER, target));
 	s_CurrentBound.VertexArrayBuffer = target;
 }
@@ -182,11 +178,7 @@ inline void a3_BindVertexArrayBuffer(u32 target)
 inline void a3_BindElementArrayBuffer(u32 target)
 {
 	if (target == s_CurrentBound.ElementArrayBuffer) return;
-	if (s_CurrentBound.ElementArrayBufferIsMapped)
-	{
-		// NOTE(Zero): Pointer is not cleared to zero
-		a3_UnmapElementPointer();
-	}
+	a3Assert(!s_CurrentBound.ElementArrayBufferIsMapped); // Binding buffer without unmapping
 	a3GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, target));
 	s_CurrentBound.ElementArrayBuffer = target;
 }
@@ -304,6 +296,7 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 	a3_GenerateAndBind(&r.m_VertexArrayObject, &r.m_VertexArrayBuffer, &r.m_ElementArrayBuffer);
 
 	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex2d) * 4 * A3_BASIC_RENDERER_MAX_COUNT, A3NULL, GL_DYNAMIC_DRAW));
+
 	a3GL(glVertexAttribPointer(a3_vertex2d::POSITION, 3, GL_FLOAT,
 		GL_FALSE, sizeof(a3_vertex2d),
 		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::position))));
@@ -316,9 +309,8 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 		GL_FALSE, sizeof(a3_vertex2d),
 		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texCoords))));
 
-	a3GL(glVertexAttribPointer(a3_vertex2d::TEXINDEX, 1, GL_INT,
-		GL_FALSE, sizeof(a3_vertex2d),
-		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texIndex))));
+	a3GL(glVertexAttribIPointer(a3_vertex2d::TEXINDEX, 1, GL_INT,
+		sizeof(a3_vertex2d), (void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texIndex))));
 
 	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * A3_BASIC_RENDERER_MAX_COUNT, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::POSITION));
@@ -329,23 +321,14 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_uProjection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
-	char name09[] = "u_Diffuse[-]";
-	char nameg9[] = "u_Diffuse[--]";
+
+
+
+	i32 textureIds[A3_BASIC_RENDERER_MAX_COUNT];
 	for (i32 i = 0; i < A3_BASIC_RENDERER_MAX_COUNT; ++i)
-	{
-		if (i < 10)
-		{
-			name09[10] = i + 48;
-			a3GL(r.m_uTextureDiffuse[i] = glGetUniformLocation(r.m_ShaderProgram, name09));
-		}
-		else
-		{
-			nameg9[10] = (i / 10) + 48;
-			nameg9[11] = (i % 10) + 48;
-			a3GL(r.m_uTextureDiffuse[i] = glGetUniformLocation(r.m_ShaderProgram, nameg9));
-		}
-	}
-	a3GL(r.m_uTextureDiffuse[0] = glGetUniformLocation(r.m_ShaderProgram, "u_Diffuse"));
+		textureIds[i] = i;
+	a3GL(r.m_uTextureDiffuse = glGetUniformLocation(r.m_ShaderProgram, "u_Diffuse"));
+	a3GL(glUniform1iv(r.m_uTextureDiffuse, A3_BASIC_RENDERER_MAX_COUNT, textureIds));
 
 	return r;
 }
@@ -470,7 +453,6 @@ namespace a3 {
 
 		a3GL(glActiveTexture(GL_TEXTURE0 + m_Count));
 		a3GL(glBindTexture(GL_TEXTURE_2D, texture->Id));
-		//a3GL(glUniform1i(m_uTextureDiffuse[m_Count], m_Count));
 		v[m_Count * 4 + 0].position = position;
 		v[m_Count * 4 + 1].position = position;
 		v[m_Count * 4 + 2].position = position;
@@ -513,11 +495,6 @@ namespace a3 {
 	{
 		a3_UnmapVertexPointer();
 		a3_UnmapElementPointer();
-		i32 textureIds[A3_BASIC_RENDERER_MAX_COUNT];
-		for (i32 i = 0; i < A3_BASIC_RENDERER_MAX_COUNT; ++i)
-			textureIds[i] = i;
-
-		a3GL(glUniform1iv(m_uTextureDiffuse[0], 25, textureIds));
 		a3GL(glDrawElements(GL_TRIANGLES, m_Count * 6, GL_UNSIGNED_INT, A3NULL));
 		m_Count = 0;
 	}
