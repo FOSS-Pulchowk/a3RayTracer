@@ -136,6 +136,41 @@ namespace a3 {
 		FileTypePNG = '.png',
 		FileTypeOBJ = '.obj'
 	};
+	enum message_box_result
+	{
+		MessageBoxResultError = 0,
+		MessageBoxResultAbort,
+		MessageBoxResultCancel,
+		MessageBoxResultContinue,
+		MessageBoxResultIgnore,
+		MessageBoxResultNo,
+		MessageBoxResultOk,
+		MessageBoxResultRetry,
+		MessageBoxResultTryAgain,
+		MessageBoxResultYes
+	};
+	enum message_box_type : u32
+	{
+		MessageBoxTypeAbortRetryIgnore,
+		MessageBoxTypeCancelTryContinue,
+		MessageBoxTypeHelp,
+		MessageBoxTypeOk,
+		MessageBoxTypeOkCancel,
+		MessageBoxTypeRetryCancel,
+		MessageBoxTypeYesNo,
+		MessageBoxTypeYesNoCancel,
+	};
+	enum message_box_icon : u32
+	{
+		MessageBoxIconExclamation,
+		MessageBoxIconWarning,
+		MessageBoxIconInformation,
+		MessageBoxIconAsterisk,
+		MessageBoxIconQuestion,
+		MessageBoxIconStop,
+		MessageBoxIconError,
+		MessageBoxIconHand
+	};
 }
 
 struct a3_platform
@@ -175,6 +210,8 @@ struct a3_platform
 	utf8* LoadFromDialogue(s8 title, a3::file_type type) const;
 	utf8* SaveFromDialogue(s8 title, a3::file_type type) const;
 	void FreeDialogueData(utf8* data) const;
+	a3::message_box_result MessageBox(s8 title, s8 caption, a3::message_box_type type, a3::message_box_icon icon) const;
+
 
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 	u64 GetTotalHeapAllocated() const;

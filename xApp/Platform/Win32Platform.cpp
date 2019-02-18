@@ -35,6 +35,10 @@
 #undef CreateWindow
 #endif
 
+#ifdef MessageBox
+#undef MessageBox
+#endif
+
 //
 // Globals
 //
@@ -439,6 +443,47 @@ void a3_platform::FreeDialogueData(utf8 * data) const
 	a3Delete[] data;
 }
 
+a3::message_box_result a3_platform::MessageBox(s8 title, s8 caption, a3::message_box_type type, a3::message_box_icon icon) const
+{
+	u32 flags = 0;
+	switch (type)
+	{
+	case a3::message_box_type::MessageBoxTypeAbortRetryIgnore: flags |= MB_ABORTRETRYIGNORE; break;
+	case a3::message_box_type::MessageBoxTypeCancelTryContinue: flags |= MB_CANCELTRYCONTINUE; break;
+	case a3::message_box_type::MessageBoxTypeHelp: flags |= MB_HELP; break;
+	case a3::message_box_type::MessageBoxTypeOk: flags |= MB_OK; break;
+	case a3::message_box_type::MessageBoxTypeOkCancel: flags |= MB_OKCANCEL; break;
+	case a3::message_box_type::MessageBoxTypeRetryCancel: flags |= MB_RETRYCANCEL; break;
+	case a3::message_box_type::MessageBoxTypeYesNo: flags |= MB_YESNO; break;
+	case a3::message_box_type::MessageBoxTypeYesNoCancel: flags |= MB_YESNOCANCEL; break;
+	}
+	switch (icon)
+	{
+	case a3::message_box_icon::MessageBoxIconExclamation: flags |= MB_ICONEXCLAMATION; break;
+	case a3::message_box_icon::MessageBoxIconWarning: flags |= MB_ICONWARNING; break;
+	case a3::message_box_icon::MessageBoxIconInformation: flags |= MB_ICONINFORMATION; break;
+	case a3::message_box_icon::MessageBoxIconAsterisk: flags |= MB_ICONASTERISK; break;
+	case a3::message_box_icon::MessageBoxIconQuestion: flags |= MB_ICONQUESTION; break;
+	case a3::message_box_icon::MessageBoxIconStop: flags |= MB_ICONSTOP; break;
+	case a3::message_box_icon::MessageBoxIconError: flags |= MB_ICONERROR; break;
+	case a3::message_box_icon::MessageBoxIconHand: flags |= MB_ICONHAND; break;
+	}
+	i32 result = MessageBoxA(Win32GetUserData()->windowHandle, caption, title, flags);
+	switch (result)
+	{
+	case IDABORT: return a3::message_box_result::MessageBoxResultAbort;
+	case IDCANCEL: return a3::message_box_result::MessageBoxResultCancel;
+	case IDCONTINUE: return a3::message_box_result::MessageBoxResultContinue;
+	case IDIGNORE: return a3::message_box_result::MessageBoxResultIgnore;
+	case IDNO: return a3::message_box_result::MessageBoxResultNo;
+	case IDOK: return a3::message_box_result::MessageBoxResultOk;
+	case IDRETRY: return a3::message_box_result::MessageBoxResultRetry;
+	case IDTRYAGAIN: return a3::message_box_result::MessageBoxResultTryAgain;
+	case IDYES: return a3::message_box_result::MessageBoxResultYes;
+	default: return a3::message_box_result::MessageBoxResultError;
+	}
+}
+
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 u64 a3_platform::GetTotalHeapAllocated() const
 {
@@ -699,8 +744,12 @@ i32 a3Main()
     
 	f32 deltaTime = 0.0f;
 
-	a3::Platform.SaveFromDialogue("ss", a3::file_type::FileTypePNG);
-    
+	//a3::Platform.SaveFromDialogue("ss", a3::file_type::FileTypePNG);
+	if (a3::Platform.MessageBox("Title", "Caption", a3::MessageBoxTypeYesNoCancel, a3::MessageBoxIconQuestion) == a3::MessageBoxResultYes)
+	{
+		a3LogTrace("Message Box Pressed {s}", "Yes");
+	}
+
 	b32 shouldRun = true;
 	while (shouldRun)
 	{
