@@ -487,12 +487,12 @@ namespace a3 {
 		v[m_Count * 4 + 2].texIndex = m_Count;
 		v[m_Count * 4 + 3].texIndex = m_Count;
 
-		i[m_Count * 4 + 0] = m_Count * 4 + 0;
-		i[m_Count * 4 + 1] = m_Count * 4 + 1;
-		i[m_Count * 4 + 2] = m_Count * 4 + 2;
-		i[m_Count * 4 + 3] = m_Count * 4 + 0;
-		i[m_Count * 4 + 4] = m_Count * 4 + 2;
-		i[m_Count * 4 + 5] = m_Count * 4 + 3;
+		i[m_Count * 6 + 0] = m_Count * 4 + 0;
+		i[m_Count * 6 + 1] = m_Count * 4 + 1;
+		i[m_Count * 6 + 2] = m_Count * 4 + 2;
+		i[m_Count * 6 + 3] = m_Count * 4 + 0;
+		i[m_Count * 6 + 4] = m_Count * 4 + 2;
+		i[m_Count * 6 + 5] = m_Count * 4 + 3;
 
 		m_Count++;
 	}

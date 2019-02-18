@@ -730,6 +730,11 @@ i32 a3Main()
 	fontRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
+
+	a3::basic2d_renderer renderer = a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment);
+	renderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
+
+	a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
     
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
@@ -748,11 +753,9 @@ i32 a3Main()
     
 	f32 deltaTime = 0.0f;
 
-	utf8* path = a3::Platform.SaveFromDialogue("save as", a3::FileTypePNG);
-
-	a3::Platform.MessageBox("Path", path, a3::MessageBoxTypeOk, a3::MessageBoxIconNone);
-
-	a3::Platform.FreeDialogueData(path);
+	//utf8* path = a3::Platform.SaveFromDialogue("save as", a3::FileTypePNG);
+	//a3::Platform.MessageBox("Path", path, a3::MessageBoxTypeOk, a3::MessageBoxIconNone);
+	//a3::Platform.FreeDialogueData(path);
 
 	b32 shouldRun = true;
 	while (shouldRun)
@@ -789,6 +792,11 @@ i32 a3Main()
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
+
+		renderer.BeginFrame();
+		renderer.Push(v3{ 100.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(11));
+		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(11));
+		renderer.EndFrame();
         
 		if (renderDebugInformation)
 		{
