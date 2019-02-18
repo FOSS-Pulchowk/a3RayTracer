@@ -162,6 +162,7 @@ namespace a3 {
 	};
 	enum message_box_icon : u32
 	{
+		MessageBoxIconNone,
 		MessageBoxIconExclamation,
 		MessageBoxIconWarning,
 		MessageBoxIconInformation,
@@ -248,7 +249,7 @@ void operator delete[](void* ptr);
 #define a3Malloc(size, type) (type*)a3::Platform.Malloc(size, __FILE__, __LINE__)
 #define a3Realloc(ptr, size, type) (type*)a3::Platform.Realloc(ptr, size, __FILE__, __LINE__)
 #define a3Calloc(size, type) (type*)a3::Platform.Calloc(size, __FILE__, __LINE__)
-#define a3Recalloc(ptr, size) (type*)a3::Platform.Recalloc(ptr, size, __FILE__, __LINE__)
+#define a3Recalloc(ptr, size, type) (type*)a3::Platform.Recalloc(ptr, size, __FILE__, __LINE__)
 #define a3Free(ptr) a3::Platform.Free(ptr)
 #define a3Allocate(size, type) (type*)a3::Platform.AllocMemory(size, __FILE__, __LINE__)
 #define a3Reallocate(ptr, size, type) (type*)a3::Platform.ResizeMemory(ptr, size, __FILE__, __LINE__)

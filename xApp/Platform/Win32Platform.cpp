@@ -423,9 +423,12 @@ utf8 * a3_platform::SaveFromDialogue(s8 title, a3::file_type type) const
 					// MAX_PATH is used here because when I query the length information and use it
 					// it didn't work, and I don't know why, could be because the WideChar string given
 					// might not be null terminated, I could not find information on this in the documentation
-					resultPath = a3New utf8[MAX_PATH];
+					resultPath = a3Calloc(MAX_PATH, utf8);
 					i32 v = WideCharToMultiByte(CP_UTF8, 0, wFilePath, -1, resultPath, MAX_PATH, 0, 0);
-					// HACK(Zero): Do we need too add null terminator here?
+					if (v == MAX_PATH)
+					{
+						resultPath = a3Recalloc(resultPath, MAX_PATH + 3, utf8);
+					}
 					*(u32*)&resultPath[v] = type;
 					CoTaskMemFree(wFilePath);
 				}
@@ -459,6 +462,7 @@ a3::message_box_result a3_platform::MessageBox(s8 title, s8 caption, a3::message
 	}
 	switch (icon)
 	{
+	case a3::message_box_icon::MessageBoxIconNone: flags |= 0; break;
 	case a3::message_box_icon::MessageBoxIconExclamation: flags |= MB_ICONEXCLAMATION; break;
 	case a3::message_box_icon::MessageBoxIconWarning: flags |= MB_ICONWARNING; break;
 	case a3::message_box_icon::MessageBoxIconInformation: flags |= MB_ICONINFORMATION; break;
@@ -744,11 +748,11 @@ i32 a3Main()
     
 	f32 deltaTime = 0.0f;
 
-	//a3::Platform.SaveFromDialogue("ss", a3::file_type::FileTypePNG);
-	if (a3::Platform.MessageBox("Title", "Caption", a3::MessageBoxTypeYesNoCancel, a3::MessageBoxIconQuestion) == a3::MessageBoxResultYes)
-	{
-		a3LogTrace("Message Box Pressed {s}", "Yes");
-	}
+	utf8* path = a3::Platform.SaveFromDialogue("save as", a3::FileTypePNG);
+
+	a3::Platform.MessageBox("Path", path, a3::MessageBoxTypeOk, a3::MessageBoxIconNone);
+
+	a3::Platform.FreeDialogueData(path);
 
 	b32 shouldRun = true;
 	while (shouldRun)
