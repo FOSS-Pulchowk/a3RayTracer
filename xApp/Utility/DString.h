@@ -12,11 +12,11 @@ namespace a3
 	{
 	private:
 		u64 m_Length;
-		char* m_Data;
+		utf8* m_Data;
 
 	public:
 		dstring();
-		dstring(const char* cstr);
+		dstring(s8 cstr);
 		dstring(dstring& str);
 		~dstring();
 
@@ -25,28 +25,37 @@ namespace a3
 		void Move(dstring& l, dstring& r); // owndership is transfered DEFAULT!
 		void Copy(dstring& l, dstring& r);
 
-		dstring& operator=(const char* cstr);
+		dstring& operator=(s8 cstr);
 		dstring& operator=(dstring& str);
 
-		char& operator[](u64 i);
-		const char& operator[](u64 i) const;
+		utf8& operator[](u64 i);
+		const utf8& operator[](u64 i) const;
 
-		char* CharArray();
-		const char* CharArray() const;
+		utf8* Utf8Array();
+		s8 Utf8Array() const;
 
 		u64 Length() const;
 
 		dstring& ToUpper(dstring& str);
 		dstring& ToLower(dstring& str);
 
-		friend bool operator==(const dstring& one, const dstring& other);
-		friend bool operator!=(const dstring& one, const dstring& other);
+		friend bool operator==(dstring& one, dstring& other);
+		friend bool operator!=(dstring& one, dstring& other);
+
+		friend bool operator==(dstring& one, s8 other);
+		friend bool operator!=(dstring& one, s8 other);
+		
+		friend bool operator==(s8 other, dstring& one);
+		friend bool operator!=(s8 other, dstring& one);
 
 		// lhs and rhs remain as they are, ownership is not transfered
-		friend dstring operator+(const dstring& lhs, const dstring& rhs); 
+		friend dstring operator+(dstring& lhs, dstring& rhs); 
+		friend dstring operator+(dstring& lhs, s8 rhs);
+		friend dstring operator+(s8 rhs, dstring& one);
 
 		// other remains as it is, ownership is not transfered
-		dstring& operator+=(const dstring& other);
+		dstring& operator+=(dstring& other);
+		dstring& operator+=(s8 other);
 	};
 
 }

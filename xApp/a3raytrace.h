@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <cmath>
 #include <fstream>
+#include "Utility/DString.h"
+
 template<typename T>
 class Vec2
 {

@@ -421,9 +421,8 @@ utf8 * a3_platform::SaveFromDialogue(s8 title, a3::file_type type) const
 					// might not be null terminated, I could not find information on this in the documentation
 					resultPath = a3New utf8[MAX_PATH];
 					i32 v = WideCharToMultiByte(CP_UTF8, 0, wFilePath, -1, resultPath, MAX_PATH, 0, 0);
-					i32 err = GetLastError();
-					// TODO(Zero): Retrive and add file extension here!
-					//MessageBox(NULL, wFilePath, L"File Path", MB_OK);
+					// HACK(Zero): Do we need too add null terminator here?
+					*(u32*)&resultPath[v] = type;
 					CoTaskMemFree(wFilePath);
 				}
 				pShellItem->Release();

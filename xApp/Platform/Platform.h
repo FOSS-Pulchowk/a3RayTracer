@@ -130,11 +130,11 @@ namespace a3 {
 		void* Buffer;
 		u64 Size;
 	};
-	enum file_type
+	enum file_type : u32
 	{
-		FileTypeAny,
-		FileTypePNG,
-		FileTypeOBJ
+		FileTypeAny = '0000',
+		FileTypePNG = '.png',
+		FileTypeOBJ = '.obj'
 	};
 }
 
