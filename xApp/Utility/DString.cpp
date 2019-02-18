@@ -133,9 +133,9 @@ namespace a3
 
 	bool operator==(dstring & one, s8 other)
 	{
-		i32 len = a3::GetStringLength(other);
+		u64 len = a3::GetStringLength(other);
 		if (len != one.m_Length) return false;
-		for (i32 i = 0; i < len; ++i)
+		for (u64 i = 0; i < len; ++i)
 		{
 			if (other[i] != one.m_Data[i]) return false;
 		}
@@ -169,7 +169,7 @@ namespace a3
 	dstring operator+(dstring & lhs, s8 rhs)
 	{
 		dstring temp;
-		i32 len = a3::GetStringLength(rhs);
+		u64 len = a3::GetStringLength(rhs);
 		temp.New(lhs.m_Length + len - 1);
 		a3::MemoryCopy(temp.m_Data, lhs.m_Data, lhs.m_Length * sizeof(utf8));
 		a3::MemoryCopy(&temp.m_Data[lhs.m_Length-1], rhs, len * sizeof(utf8));
@@ -179,7 +179,7 @@ namespace a3
 	dstring operator+(s8 rhs, dstring & lhs)
 	{
 		dstring temp;
-		i32 len = a3::GetStringLength(rhs);
+		u64 len = a3::GetStringLength(rhs);
 		temp.New(lhs.m_Length + len - 1);
 		a3::MemoryCopy(&temp.m_Data, rhs, len * sizeof(utf8));
 		a3::MemoryCopy(&temp.m_Data[len-1], lhs.m_Data, lhs.m_Length * sizeof(utf8));
@@ -196,7 +196,7 @@ namespace a3
 
 	dstring & dstring::operator+=(s8 other)
 	{
-		i32 len = a3::GetStringLength(other);
+		u64 len = a3::GetStringLength(other);
 		m_Data = a3Realloc(m_Data, (m_Length + len - 1), utf8);
 		a3::MemoryCopy(&m_Data[m_Length - 1], other, len * sizeof(utf8));
 		m_Length = m_Length + len - 1;
