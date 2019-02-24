@@ -79,24 +79,24 @@ void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...)
 	GetLocalTime(&sysTime);
 	a3_ParseAndLogString("[Time:");
 	static utf8 temporaryBuffer[100] = {};
-	a3Assert(a3::ParseU32(temporaryBuffer, 100, sysTime.wHour, 10) > 0);
+	a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, sysTime.wHour, 10) > 0);
 	a3_ParseAndLogString(temporaryBuffer);
 	a3_ParseAndLogString(":");
-	a3Assert(a3::ParseU32(temporaryBuffer, 100, sysTime.wMinute, 10) > 0);
+	a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, sysTime.wMinute, 10) > 0);
 	a3_ParseAndLogString(temporaryBuffer);
 	a3_ParseAndLogString(":");
-	a3Assert(a3::ParseU32(temporaryBuffer, 100, sysTime.wSecond, 10) > 0);
+	a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, sysTime.wSecond, 10) > 0);
 	a3_ParseAndLogString(temporaryBuffer);
 	a3_ParseAndLogString(":");
-	a3Assert(a3::ParseU32(temporaryBuffer, 100, sysTime.wMilliseconds, 10) > 0);
+	a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, sysTime.wMilliseconds, 10) > 0);
 	a3_ParseAndLogString(temporaryBuffer);
 	a3_ParseAndLogString("] [Thread:");
-	a3Assert(a3::ParseU32(temporaryBuffer, 100, GetCurrentThreadId(), 10) > 0);
+	a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, GetCurrentThreadId(), 10) > 0);
 	a3_ParseAndLogString(temporaryBuffer);
 	a3_ParseAndLogString("] [File:");
 	a3_ParseAndLogString(file);
 	a3_ParseAndLogString("] [Line:");
-	a3Assert(a3::ParseU32(temporaryBuffer, 100, line, 10));
+	a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, line, 10));
 	a3_ParseAndLogString(temporaryBuffer);
 	a3_ParseAndLogString("]\n");
 
@@ -132,14 +132,14 @@ void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...)
 						a3_PutCharToBuffer('-');
 					}
 					u64 unum = (u64)num;
-					a3Assert(a3::ParseU32(temporaryBuffer, 100, (u64)num, 10) > 0);
+					a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, (u64)num, 10) > 0);
 					a3_ParseAndLogString(temporaryBuffer);
 					traverser += 2;
 					break;
 				}
 				case 'x': // integer to hex
 				{
-					a3Assert(a3::ParseU32(temporaryBuffer, 100, va_arg(arg, u32), 16) > 0);
+					a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, va_arg(arg, u32), 16) > 0);
 					a3_ParseAndLogString(temporaryBuffer);
 					traverser += 2;
 					a3_PutCharToBuffer('h');
@@ -147,7 +147,7 @@ void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...)
 				}
 				case 'o': // integer to oct
 				{
-					a3Assert(a3::ParseU32(temporaryBuffer, 100, va_arg(arg, u32), 8) > 0);
+					a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, va_arg(arg, u32), 8) > 0);
 					a3_ParseAndLogString(temporaryBuffer);
 					traverser += 2;
 					a3_PutCharToBuffer('o');
@@ -155,7 +155,7 @@ void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...)
 				}
 				case 'b': // integer to binary
 				{
-					a3Assert(a3::ParseU32(temporaryBuffer, 100, va_arg(arg, u32), 2) > 0);
+					a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, va_arg(arg, u32), 2) > 0);
 					a3_ParseAndLogString(temporaryBuffer);
 					traverser += 2;
 					a3_PutCharToBuffer('b');
@@ -163,14 +163,14 @@ void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...)
 				}
 				case 'u': // unsigned integer
 				{
-					a3Assert(a3::ParseU32(temporaryBuffer, 100, va_arg(arg, u32), 10) > 0);
+					a3Assert(a3::WriteU32ToBuffer(temporaryBuffer, 100, va_arg(arg, u32), 10) > 0);
 					a3_ParseAndLogString(temporaryBuffer);
 					traverser += 2;
 					break;
 				}
 				case 'f': // floats
 				{
-					a3Assert(a3::ParseF32(temporaryBuffer, 100, (f32)va_arg(arg, f64)) > 0);
+					a3Assert(a3::WriteF32ToBuffer(temporaryBuffer, 100, (f32)va_arg(arg, f64)) > 0);
 					a3_ParseAndLogString(temporaryBuffer);
 					traverser += 2;
 					break;
@@ -192,10 +192,10 @@ void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...)
 					{
 						v2 vec = va_arg(arg, v2);
 						a3_PutCharToBuffer('(');
-						a3Assert(a3::ParseF32(temporaryBuffer, 100, vec.x) > 0);
+						a3Assert(a3::WriteF32ToBuffer(temporaryBuffer, 100, vec.x) > 0);
 						a3_ParseAndLogString(temporaryBuffer);
 						a3_PutCharToBuffer(',');
-						a3Assert(a3::ParseF32(temporaryBuffer, 100, vec.y) > 0);
+						a3Assert(a3::WriteF32ToBuffer(temporaryBuffer, 100, vec.y) > 0);
 						a3_ParseAndLogString(temporaryBuffer);
 						a3_PutCharToBuffer(')');
 						traverser += 3;
@@ -206,13 +206,13 @@ void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...)
 					{
 						v3 vec = va_arg(arg, v3);
 						a3_PutCharToBuffer('(');
-						a3Assert(a3::ParseF32(temporaryBuffer, 100, vec.x) > 0);
+						a3Assert(a3::WriteF32ToBuffer(temporaryBuffer, 100, vec.x) > 0);
 						a3_ParseAndLogString(temporaryBuffer);
 						a3_PutCharToBuffer(',');
-						a3Assert(a3::ParseF32(temporaryBuffer, 100, vec.y) > 0);
+						a3Assert(a3::WriteF32ToBuffer(temporaryBuffer, 100, vec.y) > 0);
 						a3_ParseAndLogString(temporaryBuffer);
 						a3_PutCharToBuffer(',');
-						a3Assert(a3::ParseF32(temporaryBuffer, 100, vec.z) > 0);
+						a3Assert(a3::WriteF32ToBuffer(temporaryBuffer, 100, vec.z) > 0);
 						a3_ParseAndLogString(temporaryBuffer);
 						a3_PutCharToBuffer(')');
 						traverser += 3;
@@ -222,16 +222,16 @@ void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...)
 					{
 						v4 vec = va_arg(arg, v4);
 						a3_PutCharToBuffer('(');
-						a3Assert(a3::ParseF32(temporaryBuffer, 100, vec.x) > 0);
+						a3Assert(a3::WriteF32ToBuffer(temporaryBuffer, 100, vec.x) > 0);
 						a3_ParseAndLogString(temporaryBuffer);
 						a3_PutCharToBuffer(',');
-						a3Assert(a3::ParseF32(temporaryBuffer, 100, vec.y) > 0);
+						a3Assert(a3::WriteF32ToBuffer(temporaryBuffer, 100, vec.y) > 0);
 						a3_ParseAndLogString(temporaryBuffer);
 						a3_PutCharToBuffer(',');
-						a3Assert(a3::ParseF32(temporaryBuffer, 100, vec.z) > 0);
+						a3Assert(a3::WriteF32ToBuffer(temporaryBuffer, 100, vec.z) > 0);
 						a3_ParseAndLogString(temporaryBuffer);
 						a3_PutCharToBuffer(',');
-						a3Assert(a3::ParseF32(temporaryBuffer, 100, vec.w) > 0);
+						a3Assert(a3::WriteF32ToBuffer(temporaryBuffer, 100, vec.w) > 0);
 						a3_ParseAndLogString(temporaryBuffer);
 						a3_PutCharToBuffer(')');
 						traverser += 3;

@@ -7,8 +7,12 @@
 
 namespace a3 {
 
-	inline i32 ParseU32(utf8* buffer, u32 length, u32 number, u32 base);
-	inline i32 ParseF32(utf8* buffer, u32 length, f32 number);
+	inline i32 WriteU32ToBuffer(utf8* buffer, u32 length, u32 number, u32 base);
+	inline i32 WriteF32ToBuffer(utf8* buffer, u32 length, f32 number);
+
+	inline u32 ParseU32(s8 buffer);
+	inline f32 ParseF32(s8 buffer);
+
 	inline u64 GetStringLength(s8 s);
 
 }
@@ -18,7 +22,7 @@ namespace a3 {
 // IMPLEMENTATION
 //
 
-inline i32 a3::ParseU32(utf8* buffer, u32 length, u32 number, u32 base)
+inline i32 a3::WriteU32ToBuffer(utf8* buffer, u32 length, u32 number, u32 base)
 {
 	a3Assert(length > 0);
 	a3Assert(base == 2 || base == 8 || base == 16 || base == 10);
@@ -52,7 +56,7 @@ inline i32 a3::ParseU32(utf8* buffer, u32 length, u32 number, u32 base)
 	return bufferIndex;
 }
 
-inline i32 a3::ParseF32(utf8* buffer, u32 length, f32 number)
+inline i32 a3::WriteF32ToBuffer(utf8* buffer, u32 length, f32 number)
 {
 	a3Assert(length > 0);
 	u32 num = *((u32*)(&number));
@@ -67,7 +71,7 @@ inline i32 a3::ParseF32(utf8* buffer, u32 length, f32 number)
 		buffer[bufferIndex++] = '-';
 
 	if (bufferIndex == length) return -bufferIndex;
-	i32 result = ParseU32(buffer + bufferIndex, length - bufferIndex, man >> (23 - exp), 10);
+	i32 result = WriteU32ToBuffer(buffer + bufferIndex, length - bufferIndex, man >> (23 - exp), 10);
 	if (result <= 0) return result;
 	bufferIndex += result;
 
@@ -87,7 +91,7 @@ inline i32 a3::ParseF32(utf8* buffer, u32 length, f32 number)
 	while (frac != 0 && c++ < 6)
 	{
 		frac *= 10;
-		result = ParseU32(buffer + bufferIndex, length - bufferIndex, (u32)(frac / base), 10);
+		result = WriteU32ToBuffer(buffer + bufferIndex, length - bufferIndex, (u32)(frac / base), 10);
 		if (result <= 0) return result;
 		bufferIndex += result;
 		frac %= base;
@@ -96,6 +100,46 @@ inline i32 a3::ParseF32(utf8* buffer, u32 length, f32 number)
 	buffer[bufferIndex] = 0;
 
 	return bufferIndex;
+}
+
+u32 a3::ParseU32(s8 buffer)
+{
+	u32 result = 0;
+	for (utf8* s = (utf8*)buffer; *s != 0; ++s)
+	{
+		result = result * 10 + (*s - 48);
+	}
+	return result;
+}
+
+f32 a3::ParseF32(s8 buffer)
+{
+	b32 period = false;
+	f32 negative = 1.0f;
+	f32 result = 0.0f;
+	f32 divisor = 1.0f;
+	f32 dividend = 0.0f;
+	for (utf8* s = (utf8*)buffer; *s != 0 && *s != 'f' && *s != 'F'; ++s)
+	{
+		if (*s == '.')
+		{
+			period = true;
+			continue;
+		}
+		if (*s == '-')
+		{
+			negative = -1.0f;
+			continue;
+		}
+		if (period)
+		{
+			dividend = dividend * 10.0f + (f32)(*s - 48);
+			divisor *= 10.0f;
+		}
+		else
+			result = result * 10.0f + (f32)(*s - 48);
+	}
+	return negative * (result + dividend / divisor);
 }
 
 inline u64 a3::GetStringLength(s8 s)
