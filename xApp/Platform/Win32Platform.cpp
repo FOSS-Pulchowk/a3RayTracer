@@ -736,18 +736,8 @@ i32 a3Main()
 
 	a3::ui_context ui(800.0f, 600.0f);
 
-	a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
-	a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
-	a3::Asset.LoadTexture2DFromFile(13, "Resources/UIAtlas.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
-	//a3::Asset.LoadTexture2DFromPixels(14, (u8*)a3UIPixels, 13, 20, 4, GL_LINEAR, GL_CLAMP_TO_EDGE);
-	//a3::Asset.LoadTexture2DFromBuffer(14, (void*)a3UIPixels, 10178, GL_LINEAR, GL_CLAMP_TO_EDGE);
-
-	//a3::batch2d_renderer renderer = a3::Renderer.CreateBatch2DRenderer(a3::shaders::GLBatch2DVertex, a3::shaders::GLBatch2DFragment);
-	//renderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
-	//renderer.SetSpotLightColor(a3::color::Blue);
-	//renderer.SetSpotLightIntensity(50.0f);
-	//renderer.SetSpotLightPosition(v2{ 400.0f, 300.0f });
-	//renderer.SetTexture(a3::Asset.Get<a3::texture>(13));
+	a3::texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
 
 
 	ShowWindow(hWnd, SW_SHOW);
@@ -766,10 +756,6 @@ i32 a3Main()
 	b32 renderDebugInformation = true;
 
 	f32 deltaTime = 0.0f;
-
-	//utf8* path = a3::Platform.SaveFromDialogue("save as", a3::FileTypePNG);
-	//a3::Platform.MessageBox("Path", path, a3::MessageBoxTypeOk, a3::MessageBoxIconNone);
-	//a3::Platform.FreeDialogueData(path);
 
 	b32 shouldRun = true;
 	while (shouldRun)
@@ -809,8 +795,8 @@ i32 a3Main()
 		performanceCounter = currentPerformanceCounter;
 
 		renderer.BeginFrame();
-		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(12));
-		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, a3::Asset.Get<a3::texture>(11));
+		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, bigsmile);
+		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, hugesmile);
 		renderer.EndFrame();
 
 		f32 width = 100.0f;

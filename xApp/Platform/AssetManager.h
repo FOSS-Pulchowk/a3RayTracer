@@ -13,15 +13,15 @@ private:
 	u64 m_AssetsCount;
 	void Resize(u64 count);
 public:
-	void LoadImageFromBuffer(u64 id, void* buffer, u64 length);
-	void LoadImageFromFile(u64 id, s8 file);
-	void LoadFontFromBuffer(u64 id, void* buffer, u64 length, f32 scale);
-	void LoadFontFromFile(u64 id, s8 file, f32 scale);
-	void LoadTexture2DFromPixels(u64 id, void* pixels, i32 w, i32 h, i32 channels, u32 filter, u32 wrap);
-	void LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap);
-	void LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap);
-	void LoadFontTextureAtlasFromBuffer(u64 id, void* buffer, i32 length, f32 scale);
-	void LoadFontTextureAtlasFromFile(u64 id, s8 file, f32 scale);
+	a3::image* LoadImageFromBuffer(u64 id, void* buffer, u64 length);
+	a3::image* LoadImageFromFile(u64 id, s8 file);
+	a3::font* LoadFontFromBuffer(u64 id, void* buffer, u64 length, f32 scale);
+	a3::font* LoadFontFromFile(u64 id, s8 file, f32 scale);
+	a3::texture* LoadTexture2DFromPixels(u64 id, void* pixels, i32 w, i32 h, i32 channels, u32 filter, u32 wrap);
+	a3::texture* LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap);
+	a3::texture* LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap);
+	a3::font_texture* LoadFontTextureAtlasFromBuffer(u64 id, void* buffer, i32 length, f32 scale);
+	a3::font_texture* LoadFontTextureAtlasFromFile(u64 id, s8 file, f32 scale);
 
 	void Free(u64 id);
 
@@ -42,8 +42,8 @@ namespace a3 {
 
 #define A3_ASSET_NUM_JUMP_ON_FULL 10
 
-#define a3IsOutOfMemory(x) if(!(x)) { a3LogWarn("Out of memory"); return; }
-#define a3IsBufferTooLarge(x) if((x) > (u64)max_i32) { a3LogWarn("Buffer too large"); return; }
+#define a3IsOutOfMemory(x) if(!(x)) { a3LogWarn("Out of memory"); return A3NULL; }
+#define a3IsBufferTooLarge(x) if((x) > (u64)max_i32) { a3LogWarn("Buffer too large"); return A3NULL; }
 
 namespace a3 {
 	a3_asset Asset = {};
@@ -63,7 +63,7 @@ void a3_asset::Resize(u64 count)
 	}
 }
 
-void a3_asset::LoadImageFromBuffer(u64 id, void* buffer, u64 length)
+a3::image* a3_asset::LoadImageFromBuffer(u64 id, void* buffer, u64 length)
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
 	u64 size = a3::QueryPixelBufferSize(buffer, (i32)length);
@@ -73,16 +73,18 @@ void a3_asset::LoadImageFromBuffer(u64 id, void* buffer, u64 length)
 	a3::image* m = (a3::image*)m_Assets[id];
 	u8* dest = (u8*)m_Assets[id] + sizeof(a3::image);
 	*m = a3::LoadImageFromBufer(buffer, (i32)length, dest);
+	return m;
 }
 
-void a3_asset::LoadImageFromFile(u64 id, s8 file)
+a3::image* a3_asset::LoadImageFromFile(u64 id, s8 file)
 {
 	a3::file_content fc = a3::Platform.LoadFileContent(file);
-	LoadImageFromBuffer(id, fc.Buffer, fc.Size);
+	a3::image* res = LoadImageFromBuffer(id, fc.Buffer, fc.Size);
 	a3::Platform.FreeFileContent(fc);
+	return res;
 }
 
-void a3_asset::LoadFontFromBuffer(u64 id, void* buffer, u64 length, f32 scale)
+a3::font* a3_asset::LoadFontFromBuffer(u64 id, void* buffer, u64 length, f32 scale)
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
 	u64 size = a3::QueryFontSize(buffer, (i32)length, scale);
@@ -92,16 +94,18 @@ void a3_asset::LoadFontFromBuffer(u64 id, void* buffer, u64 length, f32 scale)
 	a3::font* m = (a3::font*)m_Assets[id];
 	u8* dest = (u8*)m_Assets[id] + sizeof(a3::font);
 	*m = a3::LoadFontFromBuffer(buffer, scale, dest);
+	return m;
 }
 
-void a3_asset::LoadFontFromFile(u64 id, s8 file, f32 scale)
+a3::font* a3_asset::LoadFontFromFile(u64 id, s8 file, f32 scale)
 {
 	a3::file_content fc = a3::Platform.LoadFileContent(file);
-	LoadFontFromBuffer(id, fc.Buffer, fc.Size, scale);
+	a3::font* res = LoadFontFromBuffer(id, fc.Buffer, fc.Size, scale);
 	a3::Platform.FreeFileContent(fc);
+	return res;
 }
 
-inline void a3_asset::LoadTexture2DFromPixels(u64 id, void * pixels, i32 w, i32 h, i32 channels, u32 filter, u32 wrap)
+a3::texture* a3_asset::LoadTexture2DFromPixels(u64 id, void * pixels, i32 w, i32 h, i32 channels, u32 filter, u32 wrap)
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
 	a3IsBufferTooLarge(sizeof(a3::texture));
@@ -109,31 +113,28 @@ inline void a3_asset::LoadTexture2DFromPixels(u64 id, void * pixels, i32 w, i32 
 	a3IsOutOfMemory(m_Assets[id]);
 	a3::texture* m = (a3::texture*)m_Assets[id];
 	*m = a3::GLMakeTexture2DFromBuffer(filter, wrap, pixels, w, h, channels);
+	return m;
 }
 
-void a3_asset::LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap)
+a3::texture* a3_asset::LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap)
 {
-	//if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
-	//a3IsBufferTooLarge(sizeof(a3::texture));
 	u64 size = a3::QueryPixelBufferSize(buffer, length);
 	u8* dest = a3New u8[size];
 	a3::image img = a3::LoadImageFromBufer(buffer, length, dest);
-	LoadTexture2DFromPixels(id, img.Pixels, img.Width, img.Height, img.Channels, filter, wrap);
-	//m_Assets[id] = a3Reallocate(m_Assets[id], sizeof(a3::texture), void);
-	//a3IsOutOfMemory(m_Assets[id]);
-	//a3::texture* m = (a3::texture*)m_Assets[id];
-	//*m = a3::GLMakeTexture2DFromBuffer(filter, wrap, img.Pixels, img.Width, img.Height, img.Channels);
+	a3::texture* res = LoadTexture2DFromPixels(id, img.Pixels, img.Width, img.Height, img.Channels, filter, wrap);
 	delete[] dest;
+	return res;
 }
 
-void a3_asset::LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap)
+a3::texture* a3_asset::LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap)
 {
 	a3::file_content fc = a3::Platform.LoadFileContent(file);
-	LoadTexture2DFromBuffer(id, fc.Buffer, (i32)fc.Size, filter, wrap);
+	a3::texture* res = LoadTexture2DFromBuffer(id, fc.Buffer, (i32)fc.Size, filter, wrap);
 	a3::Platform.FreeFileContent(fc);
+	return res;
 }
 
-void a3_asset::LoadFontTextureAtlasFromBuffer(u64 id, void * buffer, i32 length, f32 scale)
+a3::font_texture* a3_asset::LoadFontTextureAtlasFromBuffer(u64 id, void * buffer, i32 length, f32 scale)
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
 	a3IsBufferTooLarge(sizeof(a3::font_texture));
@@ -153,13 +154,15 @@ void a3_asset::LoadFontTextureAtlasFromBuffer(u64 id, void * buffer, i32 length,
 	});
 	a3GL(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
 	delete[] temp;
+	return ft;
 }
 
-void a3_asset::LoadFontTextureAtlasFromFile(u64 id, s8 file, f32 scale)
+a3::font_texture* a3_asset::LoadFontTextureAtlasFromFile(u64 id, s8 file, f32 scale)
 {
 	a3::file_content fc = a3::Platform.LoadFileContent(file);
-	a3::Asset.LoadFontTextureAtlasFromBuffer(id, fc.Buffer, (i32)fc.Size, scale);
+	a3::font_texture* res = a3::Asset.LoadFontTextureAtlasFromBuffer(id, fc.Buffer, (i32)fc.Size, scale);
 	a3::Platform.FreeFileContent(fc);
+	return res;
 }
 
 void a3_asset::Free(u64 id)
