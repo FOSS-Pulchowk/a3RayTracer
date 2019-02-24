@@ -8,8 +8,9 @@
 
 namespace a3 {
 
-
-
+	a3::image CreateImageBuffer(i32 w, i32 h, i32 n);
+	void FillImageBuffer(a3::image* img, v3 color);
+	void ClearImageBuffer(a3::image* img);
 	typedef void(*RasterizeFontCallback)(void* userData, i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
 	void ResterizeFontsToBuffer(font_atlas_info* i, void* buffer, i32 length, f32 scale, void* drawBuffer, RasterizeFontCallback callback, void* userData);
 
@@ -22,8 +23,36 @@ namespace a3 {
 
 #ifdef A3_IMPLEMENT_RASTERIZER2D
 #include "Utility/STBLibs.h"
+#include "Platform/Platform.h"
+#include "Math/Color.h"
 
 namespace a3 {
+
+	a3::image CreateImageBuffer(i32 w, i32 h, i32 n)
+	{
+		a3Assert(n == 4);
+		a3::image result;
+		result.Pixels = a3New u8[w*h*n];
+		result.Width = w;
+		result.Height = h;
+		result.Channels = n;
+		return result;
+	}
+
+	void FillImageBuffer(a3::image* img, v3 color)
+	{
+		u32 hexCol = a3Normalv3ToRGBA(color, 0xffffffff);
+		u32* pixel = (u32*)img->Pixels;
+		for (i32 i = 0; i < img->Width*img->Height; ++i)
+		{
+			pixel[i] = hexCol;
+		}
+	}
+
+	void ClearImageBuffer(a3::image * img)
+	{
+		a3::MemorySet(img->Pixels, 0, img->Width * img->Height * img->Channels);
+	}
 
 	void a3::ResterizeFontsToBuffer(font_atlas_info* i, void * buffer, i32 length, f32 scale, void * drawBuffer, RasterizeFontCallback callback, void* userData)
 	{

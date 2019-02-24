@@ -7,6 +7,8 @@
 	Link:: https://www.w3schools.com/colors/colors_names.asp
 */
 
+
+// NOTE(Zero): These macros take color in Big Endian order or in Netork Order
 #define a3GetRChannel(hex) ((hex) >> 16)
 #define a3GetGChannel(hex) (((hex) & 0x00ff00) >> 8)
 #define a3GetBChannel(hex) (((hex) & 0x0000ff))
@@ -17,7 +19,18 @@
 
 #define a3MakeRGBv3(rgb) v3{ a3RChannelToNormal(rgb), a3GChannelToNormal(rgb), a3BChannelToNormal(rgb) }
 
+#define a3NormalToChannel8(v) ((u8)((v) * 255.0f))
+#define a3NormalToChannel a3NormalToChannel8
+#define a3NormalToChannel32(v) ((u32)((v) * 255.0f))
+
+// NOTE(Zero): This macros return color values in Little Endian Order
+#define a3Normalv3ToRGB(c) ((a3NormalToChannel32(c.r) << 0) | (a3NormalToChannel32(c.g) << 8) | (a3NormalToChannel32(c.b) << 16))
+#define a3Normalv4ToRGBA(c) ((a3NormalToChannel32(c.a) << 24) | a3Normalv3ToRGB(c.rgb))
+#define a3Normalv3ToRGBA(c, alpha) ((alpha << 24) | a3Normalv3ToRGB(c))
+
 namespace a3 { namespace color {
+
+	// NOTE(Zero): These colors are in Network-Byte-Order or are in Big Endian
 
 	constexpr v3 AliceBlue = a3MakeRGBv3(0xF0F8FF);
 	constexpr v3 AntiqueWhite = a3MakeRGBv3(0xFAEBD7);

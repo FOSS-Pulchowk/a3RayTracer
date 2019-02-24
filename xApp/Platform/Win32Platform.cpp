@@ -735,9 +735,13 @@ i32 a3Main()
 
 	a3::ui_context ui(800.0f, 600.0f);
 
+	a3::image img = a3::CreateImageBuffer(500, 500, 4);
+	a3::FillImageBuffer(&img, a3::color::Red);
+	a3::FillImageBuffer(&img, a3::color::RebeccaPurple);
+
 	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
-
+	a3::image_texture* raw = a3::Asset.LoadTexture2DFromPixels(13, img.Pixels, img.Width, img.Height, img.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
@@ -796,6 +800,7 @@ i32 a3Main()
 		renderer.BeginFrame();
 		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, bigsmile);
 		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, hugesmile);
+		renderer.Push(v3{ 400.0f, 250.0f, 0.0f }, 100.0f, a3::color::White, raw);
 		renderer.EndFrame();
 
 		f32 width = 100.0f;
