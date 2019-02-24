@@ -2,6 +2,7 @@
 #include "Common/Core.h"
 #include "Math/Math.h"
 #include "Assets.h"
+#include "Graphics/Rasterizer2D.h"
 
 //
 // DECLARATIONS
@@ -27,10 +28,10 @@ namespace a3 {
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void BeginFrame();
-		void Push(v3 position, v2 dimension, v3 color, a3::texture* texture, rect dest = rect{ 0,0,0,0 });
-		void Push(v3 position, f32 height, v3 color, a3::texture* texture, rect dest = rect{ 0,0,0,0 });
-		void Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture, rect dest = rect{ 0, 0, 0, 0 });
-		void Push(v3 position, f32 height, const v3 color[4], a3::texture* texture, rect dest = rect{ 0, 0, 0, 0 });
+		void Push(v3 position, v2 dimension, v3 color, a3::image_texture* image_texture, rect dest = rect{ 0,0,0,0 });
+		void Push(v3 position, f32 height, v3 color, a3::image_texture* image_texture, rect dest = rect{ 0,0,0,0 });
+		void Push(v3 position, v2 dimension, const v3 color[4], a3::image_texture* image_texture, rect dest = rect{ 0, 0, 0, 0 });
+		void Push(v3 position, f32 height, const v3 color[4], a3::image_texture* image_texture, rect dest = rect{ 0, 0, 0, 0 });
 		void EndFrame();
 
 		friend struct a3_renderer;
@@ -69,11 +70,11 @@ namespace a3 {
 		u32 m_uProjection;
 		u32 m_uTextureAtlas;
 		u32 m_Count;
-		texture* m_Texture;
+		image_texture* m_Texture;
 	public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
-		void SetTexture(a3::texture* texture);
+		void SetTexture(a3::image_texture* image_texture);
 		void Push(v2 position, v2 dimension, v3 color, v4 texDimension);
 		void BeginFrame();
 		void EndFrame();
@@ -394,27 +395,27 @@ namespace a3 {
 		m_Count = 0;
 	}
 
-	void basic2d_renderer::Push(v3 position, v2 dimension, v3 color, a3::texture * texture, rect dest)
+	void basic2d_renderer::Push(v3 position, v2 dimension, v3 color, a3::image_texture * image_texture, rect dest)
 	{
 		static v3 acolor[4];
 		acolor[0] = color;
 		acolor[1] = color;
 		acolor[2] = color;
 		acolor[3] = color;
-		Push(position, dimension, acolor, texture, dest);
+		Push(position, dimension, acolor, image_texture, dest);
 	}
 
-	void basic2d_renderer::Push(v3 position, f32 height, v3 color, a3::texture * texture, rect dest)
+	void basic2d_renderer::Push(v3 position, f32 height, v3 color, a3::image_texture * image_texture, rect dest)
 	{
 		static v3 acolor[4];
 		acolor[0] = color;
 		acolor[1] = color;
 		acolor[2] = color;
 		acolor[3] = color;
-		Push(position, height, acolor, texture, dest);
+		Push(position, height, acolor, image_texture, dest);
 	}
 
-	void basic2d_renderer::Push(v3 position, v2 dimension, const v3 color[4], a3::texture* texture, rect dest)
+	void basic2d_renderer::Push(v3 position, v2 dimension, const v3 color[4], a3::image_texture* image_texture, rect dest)
 	{
 		if (m_Count == A3_BASIC_RENDERER_MAX_COUNT)
 		{
@@ -435,14 +436,14 @@ namespace a3 {
 		}
 		else
 		{
-			texCoords.x = (f32)dest.x / (f32)texture->Width;
-			texCoords.y = (f32)dest.y / (f32)texture->Height;
-			texCoords.z = (f32)(dest.x + dest.w) / (f32)texture->Width;
-			texCoords.w = (f32)(dest.y + dest.h) / (f32)texture->Height;
+			texCoords.x = (f32)dest.x / (f32)image_texture->Width;
+			texCoords.y = (f32)dest.y / (f32)image_texture->Height;
+			texCoords.z = (f32)(dest.x + dest.w) / (f32)image_texture->Width;
+			texCoords.w = (f32)(dest.y + dest.h) / (f32)image_texture->Height;
 		}
 
 		a3GL(glActiveTexture(GL_TEXTURE0 + m_Count));
-		a3GL(glBindTexture(GL_TEXTURE_2D, texture->Id));
+		a3GL(glBindTexture(GL_TEXTURE_2D, image_texture->Id));
 		v[m_Count * 4 + 0].position = position;
 		v[m_Count * 4 + 1].position = position;
 		v[m_Count * 4 + 2].position = position;
@@ -473,12 +474,12 @@ namespace a3 {
 		m_Count++;
 	}
 
-	void basic2d_renderer::Push(v3 position, f32 height, const v3 color[4], a3::texture * texture, rect dest)
+	void basic2d_renderer::Push(v3 position, f32 height, const v3 color[4], a3::image_texture * image_texture, rect dest)
 	{
 		v2 dimension;
 		dimension.y = height;
-		dimension.x = texture->Width * (height / texture->Height);
-		Push(position, dimension, color, texture, dest);
+		dimension.x = image_texture->Width * (height / image_texture->Height);
+		Push(position, dimension, color, image_texture, dest);
 	}
 
 	void basic2d_renderer::EndFrame()
@@ -658,7 +659,7 @@ namespace a3 {
 		a3GL(glUniformMatrix4fv(m_uProjection, 1, GL_FALSE, p.elements));
 	}
 
-	void batch2d_renderer::SetTexture(a3::texture * tex)
+	void batch2d_renderer::SetTexture(a3::image_texture * tex)
 	{
 		m_Texture = tex;
 	}

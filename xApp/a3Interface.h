@@ -125,7 +125,7 @@ void App::Init()
 	i32 w = ew * 2 + (10.0f / 100.0f * (f32)ew) * (2 + 1);
 	i32 h = (tot / 2) * eh + (10.0f / 100.0f * (f32)eh) * (tot/2 + 1);
 	a3::Asset.LoadTexture2DFromPixels(59, A3NULL, w, h, 4, GL_LINEAR, GL_CLAMP_TO_EDGE);
-	a3::texture* t = a3::Asset.Get<a3::texture>(59);
+	a3::image_texture* t = a3::Asset.Get<a3::image_texture>(59);
 	for (i32 y = 0; y < tot / 2; ++y)
 	{
 		i32 yoffset = eh * y + (y + 1)*(10.0f / 100.0f * eh);
@@ -151,11 +151,11 @@ void App::Render()
 	RenderUI({ 1050.0f, 600.0f }, { 200.0f, 50.0f });
 	RenderComponentWindow(currentlyOpen);
 
-	if (uiContext.Button(55, { 350.0f, 400.0f }, 200.0f, 200.0f, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))
+	if (uiContext.Button(55, { 350.0f, 400.0f }, 200.0f, 200.0f, a3::Asset.Get<a3::image_texture>(12 + currentlyOpen)))
 	{
 	}
 
-	if (uiContext.Button(56, { 600.0f, 400.0f }, { 200.0f, 200.0f }, a3::Asset.Get<a3::texture>(12 + currentlyOpen)))
+	if (uiContext.Button(56, { 600.0f, 400.0f }, { 200.0f, 200.0f }, a3::Asset.Get<a3::image_texture>(12 + currentlyOpen)))
 	{
 
 	}
@@ -163,8 +163,8 @@ void App::Render()
 	renderer2D.BeginFrame();
 	//renderer2D.Push({ 50.0f, 50.0f }, { 500.0f, 500.0f }, WhiteColorArray, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
 	//rect dest = { 0,0, 0, 0 };
-	renderer2D.Push({ 50.0f, 50.0f }, 500.0f, a3::color::White, a3::Asset.Get<a3::texture>(12 + currentlyOpen));
-	renderer2D.Push({ 0.0f, 500.0f }, { 500.0f, 500.0f }, a3::color::White, a3::Asset.Get<a3::texture>(12));
+	renderer2D.Push({ 50.0f, 50.0f }, 500.0f, a3::color::White, a3::Asset.Get<a3::image_texture>(12 + currentlyOpen));
+	renderer2D.Push({ 0.0f, 500.0f }, { 500.0f, 500.0f }, a3::color::White, a3::Asset.Get<a3::image_texture>(12));
 	renderer2D.EndFrame();
 }
 

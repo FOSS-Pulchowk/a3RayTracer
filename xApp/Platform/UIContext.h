@@ -73,7 +73,7 @@ a3::ui_context::ui_context(f32 width, f32 height) :
 	m_FontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::UIFont));
 	
 	m_Batch2DRenderer.SetRegion(0.0f, m_Width, 0.0f, m_Height);
-	m_Batch2DRenderer.SetTexture(a3::Asset.Get<a3::texture>(a3::asset_id::UITexture));
+	m_Batch2DRenderer.SetTexture(a3::Asset.Get<a3::image_texture>(a3::asset_id::UITexture));
 	SetColor(a3::color::NotQuiteBlack, a3::color::Blurple, a3::color::Grey, a3::color::White);
 }
 

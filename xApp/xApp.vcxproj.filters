@@ -30,9 +30,6 @@
     <ClCompile Include="a3Implementation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\Resource.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utility\DString.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -95,12 +92,6 @@
     <ClInclude Include="Utility\Memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\STBImplementation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utility\Resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Platform\UIContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -123,6 +114,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utility\DArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Rasterizer2D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\AssetsTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\STBLibs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

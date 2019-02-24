@@ -5,8 +5,12 @@
 #include "Memory.h"
 #include "String.h"
 
-// We will only be supporting PNG currently
-// TODO(Zero): Correctly remove all STD libs from here
+#ifdef A3IMPLEMENTSTBLIBS
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_TRUETYPE_IMPLEMENTATION
+#endif
+
 #define STBI_ONLY_PNG
 #define STBI_NO_GIF
 #define STBI_NO_STDIO

@@ -261,10 +261,10 @@
     <ClCompile Include="Platform\gl\Glad.cpp" />
     <ClCompile Include="Platform\Win32Platform.cpp" />
     <ClCompile Include="Platform\Win32Debug.cpp" />
-    <ClCompile Include="Utility\Resource.cpp" />
     <ClCompile Include="Utility\DString.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Graphics\Rasterizer2D.h" />
     <ClInclude Include="Utility\DArray.h" />
     <ClInclude Include="a3raytrace.h" />
     <ClInclude Include="Common\Core.h" />
@@ -276,8 +276,8 @@
     <ClInclude Include="Platform\Assets.h" />
     <ClInclude Include="Platform\GLSL\GLSLShaders.h" />
     <ClInclude Include="Platform\UIContext.h" />
-    <ClInclude Include="Utility\Resource.h" />
-    <ClInclude Include="Utility\STBImplementation.h" />
+    <ClInclude Include="Utility\AssetsTypes.h" />
+    <ClInclude Include="Utility\STBLibs.h" />
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Math\Matrix4.h" />
     <ClInclude Include="Math\Quaterniod.h" />

@@ -1,6 +1,8 @@
 #pragma once
 #include "Common/Core.h"
-#include "Assets.h"
+#include "Utility/AssetsTypes.h"
+#include "GLResources.h"
+#include "Graphics/Rasterizer2D.h"
 
 //
 // DECLARATIONS
@@ -17,9 +19,9 @@ public:
 	a3::image* LoadImageFromFile(u64 id, s8 file);
 	a3::font* LoadFontFromBuffer(u64 id, void* buffer, u64 length, f32 scale);
 	a3::font* LoadFontFromFile(u64 id, s8 file, f32 scale);
-	a3::texture* LoadTexture2DFromPixels(u64 id, void* pixels, i32 w, i32 h, i32 channels, u32 filter, u32 wrap);
-	a3::texture* LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap);
-	a3::texture* LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap);
+	a3::image_texture* LoadTexture2DFromPixels(u64 id, void* pixels, i32 w, i32 h, i32 channels, u32 filter, u32 wrap);
+	a3::image_texture* LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap);
+	a3::image_texture* LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap);
 	a3::font_texture* LoadFontTextureAtlasFromBuffer(u64 id, void* buffer, i32 length, f32 scale);
 	a3::font_texture* LoadFontTextureAtlasFromFile(u64 id, s8 file, f32 scale);
 
@@ -105,31 +107,31 @@ a3::font* a3_asset::LoadFontFromFile(u64 id, s8 file, f32 scale)
 	return res;
 }
 
-a3::texture* a3_asset::LoadTexture2DFromPixels(u64 id, void * pixels, i32 w, i32 h, i32 channels, u32 filter, u32 wrap)
+a3::image_texture* a3_asset::LoadTexture2DFromPixels(u64 id, void * pixels, i32 w, i32 h, i32 channels, u32 filter, u32 wrap)
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
-	a3IsBufferTooLarge(sizeof(a3::texture));
-	m_Assets[id] = a3Reallocate(m_Assets[id], sizeof(a3::texture), void);
+	a3IsBufferTooLarge(sizeof(a3::image_texture));
+	m_Assets[id] = a3Reallocate(m_Assets[id], sizeof(a3::image_texture), void);
 	a3IsOutOfMemory(m_Assets[id]);
-	a3::texture* m = (a3::texture*)m_Assets[id];
+	a3::image_texture* m = (a3::image_texture*)m_Assets[id];
 	*m = a3::GLMakeTexture2DFromBuffer(filter, wrap, pixels, w, h, channels);
 	return m;
 }
 
-a3::texture* a3_asset::LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap)
+a3::image_texture* a3_asset::LoadTexture2DFromBuffer(u64 id, void* buffer, i32 length, u32 filter, u32 wrap)
 {
 	u64 size = a3::QueryPixelBufferSize(buffer, length);
 	u8* dest = a3New u8[size];
 	a3::image img = a3::LoadImageFromBufer(buffer, length, dest);
-	a3::texture* res = LoadTexture2DFromPixels(id, img.Pixels, img.Width, img.Height, img.Channels, filter, wrap);
+	a3::image_texture* res = LoadTexture2DFromPixels(id, img.Pixels, img.Width, img.Height, img.Channels, filter, wrap);
 	delete[] dest;
 	return res;
 }
 
-a3::texture* a3_asset::LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap)
+a3::image_texture* a3_asset::LoadTexture2DFromFile(u64 id, s8 file, u32 filter, u32 wrap)
 {
 	a3::file_content fc = a3::Platform.LoadFileContent(file);
-	a3::texture* res = LoadTexture2DFromBuffer(id, fc.Buffer, (i32)fc.Size, filter, wrap);
+	a3::image_texture* res = LoadTexture2DFromBuffer(id, fc.Buffer, (i32)fc.Size, filter, wrap);
 	a3::Platform.FreeFileContent(fc);
 	return res;
 }

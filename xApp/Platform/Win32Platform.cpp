@@ -11,7 +11,6 @@
 #include "UIContext.h"
 
 #include "GLResources.h"
-#include "Utility/Resource.h"
 
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
@@ -736,8 +735,8 @@ i32 a3Main()
 
 	a3::ui_context ui(800.0f, 600.0f);
 
-	a3::texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
-	a3::texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
 
 
 	ShowWindow(hWnd, SW_SHOW);

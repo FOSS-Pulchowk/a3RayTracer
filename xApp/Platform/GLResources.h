@@ -3,6 +3,7 @@
 #include "gl/glad.h"
 #include "Platform.h"
 #include "gl/glDebug.h"
+#include "Utility/AssetsTypes.h"
 
 //
 // DECLARATIONS
@@ -10,16 +11,10 @@
 
 namespace a3 {
 
-	struct texture
-	{
-		u32 Id;
-		i32 Width;
-		i32 Height;
-	};
+	inline image_texture GLMakeTexture(GLenum type, GLenum filter, GLenum wrap);
+	inline image_texture GLMakeTexture2DFromBuffer(GLenum filter, GLenum wrap, void* buffer, i32 w, i32 h, i32 n);
+	inline void GLSubImageTexture2D(image_texture * tex, i32 xOffset, i32 yOffset, i32 w, i32 h, i32 n, u8 * pixels);
 
-	inline texture GLMakeTexture(GLenum type, GLenum filter, GLenum wrap);
-	inline texture GLMakeTexture2DFromBuffer(GLenum filter, GLenum wrap, void* buffer, i32 w, i32 h, i32 n);
-	inline void GLSubImageTexture2D(texture * tex, i32 xOffset, i32 yOffset, i32 w, i32 h, i32 n, u8 * pixels);
 }
 
 
@@ -27,9 +22,9 @@ namespace a3 {
 // IMPLEMENTATIONS
 //
 
-inline a3::texture a3::GLMakeTexture(GLenum type, GLenum filter, GLenum wrap)
+inline a3::image_texture a3::GLMakeTexture(GLenum type, GLenum filter, GLenum wrap)
 {
-	texture texture;
+	image_texture texture;
 	a3GL(glGenTextures(1, &texture.Id));
 	a3GL(glBindTexture(type, texture.Id));
 	a3GL(glTexParameteri(type, GL_TEXTURE_MIN_FILTER, filter));
@@ -39,9 +34,9 @@ inline a3::texture a3::GLMakeTexture(GLenum type, GLenum filter, GLenum wrap)
 	return texture;
 }
 
-inline a3::texture a3::GLMakeTexture2DFromBuffer(GLenum filter, GLenum wrap, void* buffer, i32 w, i32 h, i32 n)
+inline a3::image_texture a3::GLMakeTexture2DFromBuffer(GLenum filter, GLenum wrap, void* buffer, i32 w, i32 h, i32 n)
 {
-	texture result = GLMakeTexture(GL_TEXTURE_2D, filter, wrap);
+	image_texture result = GLMakeTexture(GL_TEXTURE_2D, filter, wrap);
 	GLenum format;
 	GLenum internal;
 	switch (n)
@@ -77,7 +72,7 @@ inline a3::texture a3::GLMakeTexture2DFromBuffer(GLenum filter, GLenum wrap, voi
 	return result;
 }
 
-void a3::GLSubImageTexture2D(texture * tex, i32 xOffset, i32 yOffset, i32 w, i32 h, i32 n, u8 * pixels)
+void a3::GLSubImageTexture2D(image_texture * tex, i32 xOffset, i32 yOffset, i32 w, i32 h, i32 n, u8 * pixels)
 {
 	GLenum format;
 	switch (n)
