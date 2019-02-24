@@ -670,7 +670,7 @@ const std::vector<std::unique_ptr<Light>> &lights)
 		//ofs << r << g << b;
 	}
 
-	u64 size = a3::QueryImageSize(options.width, options.height, 3, 1, pixels);
+	u64 size = a3::QueryEncodedImageSize(options.width, options.height, 3, 1, pixels);
 	u8* imgBuffer = a3New u8[size];
 	a3::file_content fc;
 	fc.Size = a3::WriteImageToBuffer(imgBuffer, options.width, options.height, 3, 1, pixels);

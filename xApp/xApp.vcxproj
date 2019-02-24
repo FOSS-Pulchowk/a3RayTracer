@@ -257,6 +257,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="a3Implementation.cpp" />
+    <ClCompile Include="Platform\GLPlatform.cpp" />
     <ClCompile Include="Platform\GLSL\GLSL.cpp" />
     <ClCompile Include="Platform\gl\Glad.cpp" />
     <ClCompile Include="Platform\Win32Platform.cpp" />
@@ -265,6 +266,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Rasterizer2D.h" />
+    <ClInclude Include="Platform\HardwarePlatform.h" />
     <ClInclude Include="Utility\DArray.h" />
     <ClInclude Include="a3raytrace.h" />
     <ClInclude Include="Common\Core.h" />
@@ -275,16 +277,15 @@
     <ClInclude Include="Math\Color.h" />
     <ClInclude Include="Platform\Assets.h" />
     <ClInclude Include="Platform\GLSL\GLSLShaders.h" />
-    <ClInclude Include="Platform\UIContext.h" />
-    <ClInclude Include="Utility\AssetsTypes.h" />
+    <ClInclude Include="Utility\UIContext.h" />
+    <ClInclude Include="Utility\AssetData.h" />
     <ClInclude Include="Utility\STBLibs.h" />
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Math\Matrix4.h" />
     <ClInclude Include="Math\Quaterniod.h" />
     <ClInclude Include="a3Interface.h" />
-    <ClInclude Include="Platform\AssetManager.h" />
+    <ClInclude Include="Utility\AssetManager.h" />
     <ClInclude Include="Platform\GlRenderer.h" />
-    <ClInclude Include="Platform\GLResources.h" />
     <ClInclude Include="Platform\GL\Glad.h" />
     <ClInclude Include="Platform\GL\GLDebug.h" />
     <ClInclude Include="Platform\GL\GLExtensions.h" />

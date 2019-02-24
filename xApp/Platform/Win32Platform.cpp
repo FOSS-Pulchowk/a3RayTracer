@@ -4,13 +4,13 @@
 
 #include "GL/GLDebug.h"
 #include "GlRenderer.h"
-#include "Platform/AssetManager.h"
+#include "Utility/AssetManager.h"
 
 #include "Math/Math.h"
 #include "Math/Color.h"
-#include "UIContext.h"
+#include "Utility/UIContext.h"
 
-#include "GLResources.h"
+#include "HardwarePlatform.h"
 
 #include <Windows.h>
 #include <windowsx.h> // for mouse macros
@@ -735,8 +735,8 @@ i32 a3Main()
 
 	a3::ui_context ui(800.0f, 600.0f);
 
-	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
-	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
+	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 
 
 	ShowWindow(hWnd, SW_SHOW);

@@ -33,6 +33,9 @@
     <ClCompile Include="Utility\DString.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Platform\GLPlatform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\Core.h">
@@ -80,19 +83,10 @@
     <ClInclude Include="Platform\GlRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Platform\AssetManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Platform\GLResources.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="a3Interface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utility\Memory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Platform\UIContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Platform\GLSL\GLSLShaders.h">
@@ -119,10 +113,19 @@
     <ClInclude Include="Graphics\Rasterizer2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\AssetsTypes.h">
+    <ClInclude Include="Utility\STBLibs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\STBLibs.h">
+    <ClInclude Include="Utility\AssetData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\AssetManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\UIContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform\HardwarePlatform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

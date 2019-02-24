@@ -2,7 +2,7 @@
 #include "Common/Core.h"
 #include "GlRenderer.h"
 #include "GLSL/GLSLShaders.h"
-#include "AssetManager.h"
+#include "Utility/AssetManager.h"
 #include "Assets.h"
 #include "Math/Color.h"
 
@@ -67,7 +67,7 @@ a3::ui_context::ui_context(f32 width, f32 height) :
 	m_Input.mouseDragging = false;
 	
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::UIFont, "Resources/HackRegular.ttf", 30.0f);
-	a3::Asset.LoadTexture2DFromFile(a3::asset_id::UITexture, "Resources/A3UI.png", GL_LINEAR, GL_CLAMP_TO_EDGE);
+	a3::Asset.LoadTexture2DFromFile(a3::asset_id::UITexture, "Resources/A3UI.png", a3::FilterLinear, a3::WrapClampToEdge);
 	
 	m_FontRenderer.SetRegion(0.0f, m_Width, 0.0f, m_Height);
 	m_FontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::UIFont));
