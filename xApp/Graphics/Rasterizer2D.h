@@ -1,6 +1,7 @@
 #pragma once
 #include "Common/Core.h"
 #include "Utility/AssetData.h"
+#include "Math/Math.h"
 
 //
 // DECLARATIONS
@@ -9,6 +10,7 @@
 namespace a3 {
 
 	a3::image CreateImageBuffer(i32 w, i32 h, i32 n);
+	void FillImageBuffer(a3::image* img, v3 color, rect r);
 	void FillImageBuffer(a3::image* img, v3 color);
 	void ClearImageBuffer(a3::image* img);
 	typedef void(*RasterizeFontCallback)(void* userData, i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
@@ -39,14 +41,22 @@ namespace a3 {
 		return result;
 	}
 
-	void FillImageBuffer(a3::image* img, v3 color)
+	void FillImageBuffer(a3::image * img, v3 color, rect r)
 	{
 		u32 hexCol = a3Normalv3ToRGBA(color, 0xffffffff);
 		u32* pixel = (u32*)img->Pixels;
-		for (i32 i = 0; i < img->Width*img->Height; ++i)
+		for (i32 y = r.y; y < (r.y + r.h); ++y)
 		{
-			pixel[i] = hexCol;
+			for (i32 x = r.x; x < (r.x + r.w); ++x)
+			{
+				pixel[x + y * img->Width] = hexCol;
+			}
 		}
+	}
+
+	void FillImageBuffer(a3::image* img, v3 color)
+	{
+		a3::FillImageBuffer(img, color, rect{ 0, 0, img->Width, img->Height });
 	}
 
 	void ClearImageBuffer(a3::image * img)

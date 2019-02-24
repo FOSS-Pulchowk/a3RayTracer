@@ -738,6 +738,7 @@ i32 a3Main()
 	a3::image img = a3::CreateImageBuffer(500, 500, 4);
 	a3::FillImageBuffer(&img, a3::color::Red);
 	a3::FillImageBuffer(&img, a3::color::RebeccaPurple);
+	a3::FillImageBuffer(&img, a3::color::DarkBlue, rect{ 50, 50, 200, 200 });
 
 	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
