@@ -247,39 +247,24 @@ namespace a3 {
 
 	void FillTriangle(a3::image * img, v2 p0, v2 p1, v2 p2, v3 fillColor)
 	{
-		auto rangePoint = [&img](v2* p)
+		auto processTopFlatPart = [&img, &fillColor](v2* p0, v2* p1, v2* p2)
 		{
-			if (p->x < 0.0f) p->x = 0.0f;
-			if (p->y < 0.0f) p->y = 0.0f;
+			if (p2->x > p1->x) a3::Swap(&p2->x, &p1->x);
 
-			if (p->x > (f32)img->Width) p->x = (f32)img->Width;
-			if (p->y > (f32)img->Height) p->y = (f32)img->Height;
-		};
+			f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
+			f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
 
-		rangePoint(&p0);
-		rangePoint(&p1);
-		rangePoint(&p2);
-
-		if (p0.y > p1.y) a3::Swap(&p0, &p1);
-		if (p0.y > p2.y) a3::Swap(&p0, &p2);
-		if (p1.y > p2.y) a3::Swap(&p1, &p2);
-
-		auto processTopFlatPart = [&img, &fillColor](v2 p0, v2 p1, v2 p2)
-		{
-			if (p2.x > p1.x) a3::Swap(&p2.x, &p1.x);
-
-			f32 m0 = (p0.x - p2.x) / (p0.y - p2.y);
-			f32 m1 = (p0.x - p1.x) / (p0.y - p1.y);
-
-			i32 vstep = (i32)(p1.y - p0.y);
-			f32 y = p0.y;
+			i32 vstep = (i32)(p1->y - p0->y + 0.5f);
+			f32 y = p0->y;
 			for (i32 i = 0; i < vstep; ++i)
 			{
-				// NOTE(Zero): 0.5f is added here to be at the middle of the pixel
-				f32 x0 = m0 * (y - p2.y + 0.5f) + p2.x;
-				f32 x1 = m1 * (y - p1.y + 0.5f) + p1.x;
-				i32 hstep = (i32)(x1 - x0);
-				f32 x = x0;
+				f32 x0 = m0 * (y - p2->y) + p2->x;
+				f32 x1 = m1 * (y - p1->y) + p1->x;
+				// NOTE(Zero):
+				// Here 1 is added to the step to balance the 0.5f reduction in x
+				// 0.5f is reduced from x because we sample from the center of the pixel
+				i32 hstep = (i32)(x1 - x0) + 1;
+				f32 x = x0 - 0.5f;
 				for (i32 j = 0; j < hstep; ++j)
 				{
 					a3::SetPixelColor(img, x, y, fillColor);
@@ -289,22 +274,24 @@ namespace a3 {
 			}
 		};
 
-		auto processBottomFlatPart = [&img, &fillColor](v2 p0, v2 p1, v2 p2)
+		auto processBottomFlatPart = [&img, &fillColor](v2* p0, v2* p1, v2* p2)
 		{
-			if (p2.x > p1.x) a3::Swap(&p2.x, &p1.x);
+			if (p2->x > p1->x) a3::Swap(&p2->x, &p1->x);
 
-			f32 m0 = (p0.x - p2.x) / (p0.y - p2.y);
-			f32 m1 = (p0.x - p1.x) / (p0.y - p1.y);
+			f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
+			f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
 
-			i32 vstep = (i32)(p0.y - p1.y);
-			f32 y = p1.y;
+			i32 vstep = (i32)(p0->y - p1->y + 0.5f);
+			f32 y = p1->y;
 			for (i32 i = 0; i < vstep; ++i)
 			{
-				// NOTE(Zero): 0.5f is added here to be at the middle of the pixel
-				f32 x0 = m0 * (y - p2.y + 0.5f) + p2.x;
-				f32 x1 = m1 * (y - p1.y + 0.5f) + p1.x;
-				i32 hstep = (i32)(x1 - x0);
-				f32 x = x0;
+				f32 x0 = m0 * (y - p2->y) + p2->x;
+				f32 x1 = m1 * (y - p1->y) + p1->x;
+				// NOTE(Zero):
+				// Here 1 is added to the step to balance the 0.5f reduction in x
+				// 0.5f is reduced from x because we sample from the center of the pixel
+				i32 hstep = (i32)(x1 - x0) + 1;
+				f32 x = x0 - 0.5f;
 				for (i32 j = 0; j < hstep; ++j)
 				{
 					a3::SetPixelColor(img, x, y, fillColor);
@@ -314,20 +301,174 @@ namespace a3 {
 			}
 		};
 
-		if ((p1.y - p2.y) == 0.0f) // Top
+		auto rasterizeTriangle = [&img, &processTopFlatPart, &processBottomFlatPart](v2* p0, v2* p1, v2* p2)
 		{
-			processTopFlatPart(p0, p1, p2);
-		}
-		else if ((p1.y - p0.y) == 0.0f) // Bottom
+			if (p0->y > p1->y) a3::Swap(&p0, &p1);
+			if (p0->y > p2->y) a3::Swap(&p0, &p2);
+			if (p1->y > p2->y) a3::Swap(&p1, &p2);
+
+			if ((p1->y - p2->y) == 0.0f) // Top
+			{
+				processTopFlatPart(p0, p1, p2);
+			}
+			else if ((p1->y - p0->y) == 0.0f) // Bottom
+			{
+				processBottomFlatPart(p2, p1, p0);
+			}
+			else // Split into 2 flat parts
+			{
+				f32 blend = (p1->y - p0->y) / (p2->y - p0->y);
+				v2 pm = (1.0f - blend) * *p0 + blend * *p2;
+				processTopFlatPart(p0, p1, &pm); // top-flat
+				processBottomFlatPart(p2, p1, &pm); // bottom-flat
+			}
+		};
+
+		i32 numOfTriangles = 1;
+		v2 fTriangles[6 * 3] = {};
+		b32 rasterize[6] = { 1,1,1,1,1,1 };
+		fTriangles[0] = p0;
+		fTriangles[1] = p1;
+		fTriangles[2] = p2;
+
+		auto clipTriangleX = [&fTriangles, &numOfTriangles, &rasterize](b32 (*check)(f32, f32), f32 assign)
 		{
-			processBottomFlatPart(p2, p1, p0);
-		}
-		else // Split into 2 flat parts
+			i32 finalNumOfTriangles = numOfTriangles;
+			for (i32 i = 0; i < numOfTriangles; ++i)
+			{
+				i32 nInsides = 0;
+				v2* insides[] = { 0, 0, 0 };
+				v2* outsides[] = { 0,0,0 };
+				for (i32 n = 0; n < 3; ++n)
+				{
+					if (check(fTriangles[i * 3 + n].x, assign))
+						insides[nInsides++] = &fTriangles[i * 3 + n];
+					else
+						outsides[n - nInsides] = &fTriangles[i * 3 + n];
+				}
+				switch (nInsides)
+				{
+				case 0:
+				{
+					rasterize[i] = false;
+				} break;
+				case 1:
+				{
+					f32 m0 = (insides[0]->y - outsides[0]->y) / (insides[0]->x - outsides[0]->x);
+					f32 m1 = (insides[0]->y - outsides[1]->y) / (insides[0]->x - outsides[1]->x);
+					v2 p0, p1, p2;
+					p0.x = assign;
+					p0.y = m0 * (assign - insides[0]->x) + insides[0]->y;
+					p1 = *insides[0];
+					p2.x = assign;
+					p2.y = m1 * (assign - insides[0]->x) + insides[0]->y;
+					fTriangles[i * 3 + 0] = p0;
+					fTriangles[i * 3 + 1] = p1;
+					fTriangles[i * 3 + 2] = p2;
+				} break;
+				case 2:
+				{
+					f32 m0 = (insides[0]->y - outsides[0]->y) / (insides[0]->x - outsides[0]->x);
+					f32 m1 = (insides[1]->y - outsides[0]->y) / (insides[1]->x - outsides[0]->x);
+					v2 p0, p1, p2, p3;
+					p0.x = assign;
+					p0.y = m0 * (assign - outsides[0]->x) + outsides[0]->y;
+					p1 = *insides[0];
+					p2 = *insides[1];
+					p3.x = assign;
+					p3.y = m1 * (assign - outsides[0]->x) + outsides[0]->y;
+					fTriangles[i * 3 + 0] = p0;
+					fTriangles[i * 3 + 1] = p1;
+					fTriangles[i * 3 + 2] = p3;
+					fTriangles[3 * finalNumOfTriangles + 0] = p1;
+					fTriangles[3 * finalNumOfTriangles + 1] = p2;
+					fTriangles[3 * finalNumOfTriangles + 2] = p3;
+					finalNumOfTriangles++;
+				} break;
+				default:
+				{
+					a3Assert(nInsides == 3);
+				}
+				}
+			}
+			numOfTriangles = finalNumOfTriangles;
+		};
+
+		auto clipTriangleY = [&fTriangles, &numOfTriangles, &rasterize](b32(*check)(f32, f32), f32 assign)
 		{
-			f32 blend = (p1.y - p0.y) / (p2.y - p0.y);
-			v2 pm = (1.0f - blend) * p0 + blend * p2;
-			processTopFlatPart(p0, p1, pm); // top-flat
-			processBottomFlatPart(p2, p1, pm); // bottom-flat
+			i32 finalNumOfTriangles = numOfTriangles;
+			for (i32 i = 0; i < numOfTriangles; ++i)
+			{
+				i32 nInsides = 0;
+				v2* insides[] = { 0, 0, 0 };
+				v2* outsides[] = { 0,0,0 };
+				for (i32 n = 0; n < 3; ++n)
+				{
+					if (check(fTriangles[i * 3 + n].y, assign))
+						insides[nInsides++] = &fTriangles[i * 3 + n];
+					else
+						outsides[n - nInsides] = &fTriangles[i * 3 + n];
+				}
+				switch (nInsides)
+				{
+				case 0:
+				{
+					rasterize[i] = false;
+				} break;
+				case 1:
+				{
+					f32 m0 = (insides[0]->x - outsides[0]->x) / (insides[0]->y - outsides[0]->y);
+					f32 m1 = (insides[0]->x - outsides[1]->x) / (insides[0]->y - outsides[1]->y);
+					v2 p0, p1, p2;
+					p0.y = assign;
+					p0.x = m0 * (assign - insides[0]->y) + insides[0]->x;
+					p1 = *insides[0];
+					p2.y = assign;
+					p2.x = m1 * (assign - insides[0]->x) + insides[0]->x;
+					fTriangles[i * 3 + 0] = p0;
+					fTriangles[i * 3 + 1] = p1;
+					fTriangles[i * 3 + 2] = p2;
+				} break;
+				case 2:
+				{
+					f32 m0 = (insides[0]->x - outsides[0]->x) / (insides[0]->y - outsides[0]->y);
+					f32 m1 = (insides[1]->x - outsides[0]->x) / (insides[1]->y - outsides[0]->y);
+					v2 p0, p1, p2, p3;
+					p0.y = assign;
+					p0.x = m0 * (assign - outsides[0]->y) + outsides[0]->x;
+					p1 = *insides[0];
+					p2 = *insides[1];
+					p3.y = assign;
+					p3.x = m1 * (assign - outsides[0]->y) + outsides[0]->x;
+					fTriangles[i * 3 + 0] = p0;
+					fTriangles[i * 3 + 1] = p1;
+					fTriangles[i * 3 + 2] = p3;
+					fTriangles[3 * finalNumOfTriangles + 0] = p1;
+					fTriangles[3 * finalNumOfTriangles + 1] = p2;
+					fTriangles[3 * finalNumOfTriangles + 2] = p3;
+					finalNumOfTriangles++;
+				} break;
+				default:
+				{
+					a3Assert(nInsides == 3);
+				}
+				}
+			}
+			numOfTriangles = finalNumOfTriangles;
+		};
+
+		clipTriangleX([](f32 x, f32 p) -> b32 { return x >= p; }, 0.0f);
+		clipTriangleY([](f32 y, f32 p) -> b32 { return y <= p; }, (f32)(img->Height));
+		clipTriangleX([](f32 x, f32 p) -> b32 { return x <= p; }, (f32)(img->Width));
+		clipTriangleY([](f32 y, f32 p) -> b32 { return y >= p; }, 0.0f);
+
+		for (i32 i = 0; i < numOfTriangles; ++i)
+		{
+			if (rasterize[i])
+			{
+				i32 n = i * 3;
+				rasterizeTriangle(&fTriangles[n + 0], &fTriangles[n + 1], &fTriangles[n + 2]);
+			}
 		}
 	}
 
