@@ -254,14 +254,17 @@ namespace a3 {
 			f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
 			f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
 
-			i32 vstep = (i32)(p1->y - p0->y);
+			i32 vstep = (i32)(p1->y - p0->y + 0.5f);
 			f32 y = p0->y;
 			for (i32 i = 0; i < vstep; ++i)
 			{
 				f32 x0 = m0 * (y - p2->y) + p2->x;
 				f32 x1 = m1 * (y - p1->y) + p1->x;
-				i32 hstep = (i32)(x1 - x0);
-				f32 x = x0;
+				// NOTE(Zero):
+				// Here 1 is added to the step to balance the 0.5f reduction in x
+				// 0.5f is reduced from x because we sample from the center of the pixel
+				i32 hstep = (i32)(x1 - x0) + 1;
+				f32 x = x0 - 0.5f;
 				for (i32 j = 0; j < hstep; ++j)
 				{
 					a3::SetPixelColor(img, x, y, fillColor);
@@ -278,14 +281,17 @@ namespace a3 {
 			f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
 			f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
 
-			i32 vstep = (i32)(p0->y - p1->y);
+			i32 vstep = (i32)(p0->y - p1->y + 0.5f);
 			f32 y = p1->y;
 			for (i32 i = 0; i < vstep; ++i)
 			{
 				f32 x0 = m0 * (y - p2->y) + p2->x;
 				f32 x1 = m1 * (y - p1->y) + p1->x;
-				i32 hstep = (i32)(x1 - x0);
-				f32 x = x0;
+				// NOTE(Zero):
+				// Here 1 is added to the step to balance the 0.5f reduction in x
+				// 0.5f is reduced from x because we sample from the center of the pixel
+				i32 hstep = (i32)(x1 - x0) + 1;
+				f32 x = x0 - 0.5f;
 				for (i32 j = 0; j < hstep; ++j)
 				{
 					a3::SetPixelColor(img, x, y, fillColor);
@@ -452,8 +458,8 @@ namespace a3 {
 		};
 
 		clipTriangleX([](f32 x, f32 p) -> b32 { return x >= p; }, 0.0f);
-		clipTriangleY([](f32 y, f32 p) -> b32 { return y <= p; }, (f32)img->Height);
-		clipTriangleX([](f32 x, f32 p) -> b32 { return x <= p; }, (f32)img->Width);
+		clipTriangleY([](f32 y, f32 p) -> b32 { return y <= p; }, (f32)(img->Height));
+		clipTriangleX([](f32 x, f32 p) -> b32 { return x <= p; }, (f32)(img->Width));
 		clipTriangleY([](f32 y, f32 p) -> b32 { return y >= p; }, 0.0f);
 
 		for (i32 i = 0; i < numOfTriangles; ++i)

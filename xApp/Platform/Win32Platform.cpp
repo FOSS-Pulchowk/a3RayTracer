@@ -746,7 +746,7 @@ i32 a3Main()
 	//a3::FillTriangle(&img, v2{ 50.0f, 100.0f }, v2{ 200.0f, 100.0f }, v2{ 100.0f, 300.0f }, a3::color::Blue);
 	//a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 500.0f }, v2{ 500.0f, 700.0f }, a3::color::White);
 	a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1300.0f, 500.0f }, v2{ 500.0f, 900.0f }, a3::color::White);
-	a3::FillTriangle(&img, v2{ 1000.0f, 200.0f }, v2{ 1500.0f, 200.0f }, v2{ 1100.0f, 500.0f }, a3::color::Red);
+	a3::FillTriangle(&img, v2{ 1000.0f, 100.0f }, v2{ 1500.0f, 200.0f }, v2{ 1600.0f, 500.0f }, a3::color::Red);
 	//a3::FillTriangle(&img, v2{ 500.0f, 500.0f }, v2{ 600.0f, 600.0f }, v2{ 400.0f, 600.0f }, a3::color::White);
 	//a3::FillTriangle(&img, v2{ -100.0f, 150.0f }, v2{ 150.0f, 50.0f }, v2{ 150.0f, 300.0f }, a3::color::White);
 
@@ -832,7 +832,7 @@ i32 a3Main()
 		f32 height = 25.0f;
 		f32 ypos = 500.0f + height + 5.0f;
 
-		if (ui.Button(1, v2{ 600.0f, ypos }, v2{ width, height }, "Button 1"))
+		/*if (ui.Button(1, v2{ 600.0f, ypos }, v2{ width, height }, "Button 1"))
 		{
 		}
 		ypos -= height + 5.0f;
@@ -852,7 +852,7 @@ i32 a3Main()
 		if (ui.Checkbox(5, v2{ 600.0f, ypos }, v2{ width, height }, checked, "Checkbox"))
 		{
 			checked = !checked;
-		}
+		}*/
 
 		if (renderDebugInformation)
 		{
