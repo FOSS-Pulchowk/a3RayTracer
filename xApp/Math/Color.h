@@ -17,7 +17,7 @@
 #define a3RChannelToNormal(hex) ((f32)(a3GetRChannel(hex)) / 255.0f)
 #define a3GChannelToNormal(hex) ((f32)(a3GetGChannel(hex)) / 255.0f)
 #define a3BChannelToNormal(hex) ((f32)(a3GetBChannel(hex)) / 255.0f)
-#define a3AChannelToNormal(hex) ((f32)(a3GetAChannel(hex)) / 2550.f)
+#define a3AChannelToNormal(hex) ((f32)(a3GetAChannel(hex)) / 255.0f)
 
 #define a3MakeRGBv3(rgb) v3{ a3RChannelToNormal(rgb), a3GChannelToNormal(rgb), a3BChannelToNormal(rgb) }
 #define a3MakeRGBv4(rgba) v4{ a3RChannelToNormal(rgba), a3GChannelToNormal(rgba), a3BChannelToNormal(rgba), a3AChannelToNormal(rgba) }

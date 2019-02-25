@@ -77,7 +77,18 @@ namespace a3 {
 
 		if (alpha)
 		{
-
+			for (i32 y = destRect.y; y < my; ++y)
+			{
+				for (i32 x = destRect.x; x < mx; ++x)
+				{
+					i32 sx = (i32)((f32)x / (f32)dest->Width * srcRect.w) + srcRect.x;
+					i32 sy = (i32)((f32)y / (f32)dest->Height * srcRect.h) + srcRect.y;
+					v4 srcColor = a3MakeRGBv4(srcPixels[sx + sy * src->Width]);
+					v4 destColor = a3MakeRGBv4(destPixels[x + y * dest->Width]);
+					destColor = srcColor.a * srcColor + (1.0f - srcColor.a) * destColor;
+					destPixels[x + y * dest->Width] = a3Normalv4ToRGBA(destColor);
+				}
+			}
 		}
 		else
 		{
