@@ -16,6 +16,17 @@ namespace a3 {
 	// NOTE(Zero): Take alpha into consideration if `alpha` is true
 	void CopyImageBuffer(a3::image* dest, a3::image* src, const rect& destRect, const rect& srcRect, b32 alpha = false);
 	void CopyImageBuffer(a3::image* dest, a3::image* src, const rect& destRect, b32 alpha = false);
+
+	void SetPixelColor(a3::image* img, i32 x, i32 y, v4 color);
+	void SetPixelColor(a3::image* img, i32 x, i32 y, v3 color, f32 alpha = 1.0f);
+	void SetPixelColor(a3::image* img, i32 x, i32 y, u32 color);
+	v4 GetPixelColorNormal(a3::image*, i32 x, i32 y);
+	u64 GetPixelColor(a3::image* img, i32 x, i32 y);
+
+	void DrawLine(a3::image* img, v2 start, v2 end);
+	//template <typename ...Args>
+	//void DrawLineStrips(a3::image* img, Args... args);
+
 	typedef void(*RasterizeFontCallback)(void* userData, i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
 	void ResterizeFontsToBuffer(font_atlas_info* i, void* buffer, i32 length, f32 scale, void* drawBuffer, RasterizeFontCallback callback, void* userData);
 
@@ -107,6 +118,52 @@ namespace a3 {
 	void CopyImageBuffer(a3::image * dest, a3::image * src, const rect& destRect, b32 alpha)
 	{
 		a3::CopyImageBuffer(dest, src, destRect, rect{ 0, 0, src->Width, src->Height }, alpha);
+	}
+
+	void SetPixelColor(a3::image * img, i32 x, i32 y, v4 color)
+	{
+		((u32*)img->Pixels)[x + y * img->Width] = a3Normalv4ToRGBA(color);
+	}
+
+	void SetPixelColor(a3::image * img, i32 x, i32 y, v3 color, f32 alpha)
+	{
+		((u32*)img->Pixels)[x + y * img->Width] = a3Normalv3ToRGBA(color, a3NormalToChannel32(alpha));
+	}
+
+	void SetPixelColor(a3::image * img, i32 x, i32 y, u32 color)
+	{
+		((u32*)img->Pixels)[x + y * img->Width] = color;
+	}
+
+	v4 GetPixelColorNormal(a3::image * img, i32 x, i32 y)
+	{
+		return a3MakeRGBv4(((u32*)img->Pixels)[x + y * img->Width]);
+	}
+
+	u64 GetPixelColor(a3::image * img, i32 x, i32 y)
+	{
+		return ((u32*)img->Pixels)[x + y * img->Width];
+	}
+
+	void DrawLine(a3::image * img, v2 start, v2 end)
+	{
+		f32 dx = end.x - start.x;
+		f32 dy = end.y - start.y;
+		i32 step;
+		if (FAbsf(dx) >= FAbsf(dy))
+			step = (i32)FAbsf(dx);
+		else
+			step = (i32)FAbsf(dy);
+		dx /= step;
+		dy /= step;
+		f32 x = start.x;
+		f32 y = start.y;
+		for (i32 i = 1; i <= step; ++i)
+		{
+			a3::SetPixelColor(img, (i32)x, (i32)y, 0xffffffff);
+			x += dx;
+			y += dy;
+		}
 	}
 
 	void a3::ResterizeFontsToBuffer(font_atlas_info* i, void * buffer, i32 length, f32 scale, void * drawBuffer, RasterizeFontCallback callback, void* userData)

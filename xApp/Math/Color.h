@@ -28,7 +28,7 @@
 
 #define a3Normalv3ToRGB(c) ((a3NormalToChannel32(c.r) << 0) | (a3NormalToChannel32(c.g) << 8) | (a3NormalToChannel32(c.b) << 16))
 #define a3Normalv4ToRGBA(c) ((a3NormalToChannel32(c.a) << 24) | a3Normalv3ToRGB(c.rgb))
-#define a3Normalv3ToRGBA(c, alpha) ((alpha << 24) | a3Normalv3ToRGB(c))
+#define a3Normalv3ToRGBA(c, alpha) (((alpha) << 24) | (a3Normalv3ToRGB(c)))
 
 namespace a3 { namespace color {
 

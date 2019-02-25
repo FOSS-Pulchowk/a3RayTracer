@@ -244,7 +244,8 @@ inline f32 Tanf(f32 n)
 
 inline f32 FAbsf(f32 n)
 {
-	return fabsf(n);
+	if (n > 0.0f) return n;
+	return n * -1.0f;
 }
 
 inline f32 ArcSinf(f32 n)
