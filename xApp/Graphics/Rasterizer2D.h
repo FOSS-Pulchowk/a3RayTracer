@@ -58,6 +58,8 @@ namespace a3 {
 
 	void FillImageBuffer(a3::image * img, v3 color, rect r)
 	{
+		a3Assert(r.x >= 0 && r.y >= 0);
+		a3Assert(r.x + r.w <= img->Width && r.y + r.h <= img->Height);
 		u32 hexCol = a3Normalv3ToRGBA(color, 0xffffffff);
 		u32* pixel = (u32*)img->Pixels;
 		for (i32 y = r.y; y < (r.y + r.h); ++y)
@@ -81,6 +83,11 @@ namespace a3 {
 
 	void CopyImageBuffer(a3::image * dest, a3::image * src, const rect& destRect, const rect& srcRect, b32 alpha)
 	{
+		a3Assert(destRect.x >= 0 && destRect.y >= 0);
+		a3Assert(destRect.x + destRect.w <= dest->Width && destRect.y + destRect.h <= dest->Height);
+		a3Assert(srcRect.x >= 0 && srcRect.y >= 0);
+		a3Assert(srcRect.x + srcRect.w <= src->Width && srcRect.y + srcRect.h <= src->Height);
+
 		i32 mx = destRect.x + destRect.w;
 		i32 my = destRect.y + destRect.h;
 		u32* destPixels = (u32*)dest->Pixels;
