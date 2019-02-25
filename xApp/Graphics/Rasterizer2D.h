@@ -14,8 +14,8 @@ namespace a3 {
 	void FillImageBuffer(a3::image* img, v3 color);
 	void ClearImageBuffer(a3::image* img);
 	// NOTE(Zero): Take alpha into consideration if `alpha` is true
-	void CopyImageBuffer(a3::image* dest, a3::image* src, rect destRect, rect srcRect, b32 alpha = false);
-	void CopyImageBuffer(a3::image* dest, a3::image* src, rect destRect, b32 alpha = false);
+	void CopyImageBuffer(a3::image* dest, a3::image* src, const rect& destRect, const rect& srcRect, b32 alpha = false);
+	void CopyImageBuffer(a3::image* dest, a3::image* src, const rect& destRect, b32 alpha = false);
 	typedef void(*RasterizeFontCallback)(void* userData, i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
 	void ResterizeFontsToBuffer(font_atlas_info* i, void* buffer, i32 length, f32 scale, void* drawBuffer, RasterizeFontCallback callback, void* userData);
 
@@ -68,7 +68,7 @@ namespace a3 {
 		a3::MemorySet(img->Pixels, 0, img->Width * img->Height * img->Channels);
 	}
 
-	void CopyImageBuffer(a3::image * dest, a3::image * src, rect destRect, rect srcRect, b32 alpha)
+	void CopyImageBuffer(a3::image * dest, a3::image * src, const rect& destRect, const rect& srcRect, b32 alpha)
 	{
 		i32 mx = destRect.x + destRect.w;
 		i32 my = destRect.y + destRect.h;
@@ -104,7 +104,7 @@ namespace a3 {
 		}
 	}
 
-	void CopyImageBuffer(a3::image * dest, a3::image * src, rect destRect, b32 alpha)
+	void CopyImageBuffer(a3::image * dest, a3::image * src, const rect& destRect, b32 alpha)
 	{
 		a3::CopyImageBuffer(dest, src, destRect, rect{ 0, 0, src->Width, src->Height }, alpha);
 	}
