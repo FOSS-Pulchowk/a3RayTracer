@@ -21,6 +21,15 @@ vec3d operator-(const vec3d& v1, const vec3d& v2){
 		v.y = v1.y-v2.y;
 		v.z = v1.z-v2.z;
 		return v;
+}
+
+vec3d operator+(const vec3d& v1, const vec3d& v2){
+
+		vec3d v;
+		v.x = v1.x+v2.x;
+		v.y = v1.y+v2.y;
+		v.z = v1.z+v2.z;
+		return v;
 	}
 struct triangle
 {
@@ -85,7 +94,9 @@ private:
 	mesh meshCube;
 	mat4x4 matProj;
 	vec3d vCamera;
-
+	vec3d LookDirection;
+	
+	float fYax;
 	float fTheta;
 
 	vec3d Matrix_MultiplyVector(mat4x4 &m, vec3d &i)
@@ -110,6 +121,25 @@ private:
 	{
 		return { v1.x / k, v1.y / k, v1.z / k };
 	}
+
+	vec3d Vector_mul(vec3d& v, float k)
+	{
+		return {v.x*k, v.y*k, v.z*k};
+	}
+	//Find Required plane
+	vec3d Vector_IntersectPlane(vec3d &plane_p, vec3d &plane_n, vec3d &lineStart, vec3d &lineEnd)
+	{
+		plane_n = Vector_Normalise(plane_n);
+		float plane_d = -Vector_DotProduct(plane_n, plane_p);
+		float ad = Vector_DotProduct(lineStart, plane_n);
+		float bd = Vector_DotProduct(lineEnd, plane_n);
+		float t = (-plane_d - ad) / (bd - ad);
+		vec3d lineStartToEnd = lineEnd - lineStart;
+		vec3d lineToIntersect = Vector_mul(lineStartToEnd, t);
+		return lineStart + lineToIntersect;
+	}
+
+	//Clipping algorithm
 
 	float Vector_DotProduct(vec3d &v1, vec3d &v2)
 	{
@@ -207,6 +237,58 @@ private:
 		return matrix;
 	}
 	
+	mat4x4 Matrix_PointAt(vec3d& from, vec3d& to, vec3d& temp){
+		vec3d forward = from - to;
+		forward = Vector_Normalise(forward);
+
+		// Calculate new Up direction
+		float dot = Vector_DotProduct(temp, forward);
+		
+		vec3d a = Vector_mul(forward, dot );
+		vec3d up = temp - a;
+		up = Vector_Normalise(up);
+
+		// New Right direction is easy, its just cross product
+		vec3d right = Vector_CrossProduct(up, forward); 
+
+		mat4x4 camToWorld;
+
+		camToWorld.m[0][0] = right.x;
+		camToWorld.m[0][1] = right.y;
+		camToWorld.m[0][2] = right.z;
+		camToWorld.m[0][3] = 0.0;
+		camToWorld.m[1][0] = up.x;
+		camToWorld.m[1][1] = up.y;
+		camToWorld.m[1][2] = up.z;
+		camToWorld.m[1][3] = 0.0;
+		camToWorld.m[2][0] = forward.x;
+		camToWorld.m[2][1] = forward.y;
+		camToWorld.m[2][2] = forward.z;
+		camToWorld.m[2][3] = 0.0;
+				  
+		camToWorld.m[3][0] = from.x;
+		camToWorld.m[3][1] = from.y;
+		camToWorld.m[3][2] = from.z; 
+		camToWorld.m[3][3] = 1.0;
+		return camToWorld;
+	}
+	mat4x4 Matrix_Inverse(mat4x4 &m) // Only for Rotation/Translation Matrices not written for generalization
+	{
+		mat4x4 matrix;
+		matrix.m[0][0] = m.m[0][0]; matrix.m[0][1] = m.m[1][0]; matrix.m[0][2] = m.m[2][0]; matrix.m[0][3] = 0.0f;
+		matrix.m[1][0] = m.m[0][1]; matrix.m[1][1] = m.m[1][1]; matrix.m[1][2] = m.m[2][1]; matrix.m[1][3] = 0.0f;
+		matrix.m[2][0] = m.m[0][2]; matrix.m[2][1] = m.m[1][2]; matrix.m[2][2] = m.m[2][2]; matrix.m[2][3] = 0.0f;
+		matrix.m[3][0] = -(m.m[3][0] * matrix.m[0][0] + m.m[3][1] * matrix.m[1][0] + m.m[3][2] * matrix.m[2][0]);
+		matrix.m[3][1] = -(m.m[3][0] * matrix.m[0][1] + m.m[3][1] * matrix.m[1][1] + m.m[3][2] * matrix.m[2][1]);
+		matrix.m[3][2] = -(m.m[3][0] * matrix.m[0][2] + m.m[3][1] * matrix.m[1][2] + m.m[3][2] * matrix.m[2][2]);
+		matrix.m[3][3] = 1.0f;
+		return matrix;
+	}
+
+
+	
+
+
 	// Taken From Command Line Webcam Video
 	CHAR_INFO GetColour(float lum)
 	{
@@ -244,7 +326,7 @@ private:
 public:
 	bool OnUserCreate() override
 	{
-		meshCube.LoadFromFile("teapot.obj");
+		meshCube.LoadFromFile("axis.obj");
 		
 		// Projection Matrix
 		float fNear = 0.1f;
@@ -265,12 +347,40 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
+		if(GetKey(VK_UP).bHeld)
+		vCamera.y += 8.0f* fElapsedTime;
+
+		if(GetKey(VK_DOWN).bHeld)
+		vCamera.y -=8.0f * fElapsedTime;
+
+		if(GetKey(VK_LEFT).bHeld)
+		vCamera.x -= 8.0f* fElapsedTime;
+
+		if(GetKey(VK_RIGHT).bHeld)
+		vCamera.x += 8.0f* fElapsedTime;
+
+		vec3d vForward = Vector_mul(LookDirection, 8.0f * fElapsedTime);
+
+		if (GetKey(L'W').bHeld)
+			vCamera = vCamera + vForward;
+
+		if (GetKey(L'S').bHeld)
+			vCamera = vCamera - vForward;
+
+
+		if (GetKey(L'A').bHeld)
+			fYax -= 2.0f * fElapsedTime;
+
+		if (GetKey(L'D').bHeld)
+			fYax += 2.0f * fElapsedTime;
+
+
 		// Clear Screen
 		Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
 		// Set up rotation matrices
 		mat4x4 matRotZ, matRotX;
-		fTheta += 1.0f * fElapsedTime;
+		//fTheta += 1.0f * fElapsedTime;
 		// Rotation Z
 		matRotZ = Matrix_MakeRotationZ(0.5*fTheta);
 		// Rotation X
@@ -281,6 +391,17 @@ public:
 		mat4x4 worldMat = Matrix_MakeIdentity();
 		worldMat = Matrix_MultiplyMatrix(matRotZ, matRotX);
 		worldMat = Matrix_MultiplyMatrix(worldMat, matTrans);
+
+	
+		vec3d temp = { 0, 1, 0 };
+		vec3d to = { 0, 0, 1 };
+		mat4x4 matCameraRotY = Matrix_MakeRotationY(fYax);
+		LookDirection = Matrix_MultiplyVector(matCameraRotY, to);
+		to = vCamera + LookDirection;
+		//To look at target
+		mat4x4 matCamera = Matrix_PointAt(vCamera, to, temp);
+		//To look back from target
+		mat4x4 matview = Matrix_Inverse(matCamera);
 
 
 		vector<triangle>trianglesToRaster;
@@ -323,16 +444,23 @@ public:
 				CHAR_INFO c = GetColour(dp);
 				triTransformed.col = c.Attributes;
 				triTransformed.sym = c.Char.UnicodeChar;
+				//Set to view
+				triViewed.p[0]=Matrix_MultiplyVector(matview, triTransformed.p[0]);
+				triViewed.p[1]=Matrix_MultiplyVector(matview, triTransformed.p[1]);
+				triViewed.p[2]=Matrix_MultiplyVector(matview, triTransformed.p[2]);
 
-				triProjected.p[0] = Matrix_MultiplyVector(matProj, triTransformed.p[0]);
-				triProjected.p[1] = Matrix_MultiplyVector(matProj, triTransformed.p[1]);
-				triProjected.p[2] = Matrix_MultiplyVector(matProj, triTransformed.p[2]);
+				//2d-->3d
+				triProjected.p[0] = Matrix_MultiplyVector(matProj, triViewed.p[0]);
+				triProjected.p[1] = Matrix_MultiplyVector(matProj, triViewed.p[1]);
+				triProjected.p[2] = Matrix_MultiplyVector(matProj, triViewed.p[2]);
 
 				// MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
 				// MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
 				// MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
 				triProjected.col = triTransformed.col;
 				triProjected.sym = triTransformed.sym;
+				
+
 
 				triProjected.p[0] = Vector_Div(triProjected.p[0], triProjected.p[0].w);
 				triProjected.p[1] = Vector_Div(triProjected.p[1], triProjected.p[1].w);
