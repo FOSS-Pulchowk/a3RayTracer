@@ -81,8 +81,8 @@ namespace a3 {
 			{
 				for (i32 x = destRect.x; x < mx; ++x)
 				{
-					i32 sx = (i32)((f32)x / (f32)dest->Width * srcRect.w) + srcRect.x;
-					i32 sy = (i32)((f32)y / (f32)dest->Height * srcRect.h) + srcRect.y;
+					i32 sx = (i32)((f32)(x - destRect.x) / (f32)destRect.w * srcRect.w) + srcRect.x;
+					i32 sy = (i32)((f32)(y - destRect.y) / (f32)destRect.h * srcRect.h) + srcRect.y;
 					v4 srcColor = a3MakeRGBv4(srcPixels[sx + sy * src->Width]);
 					v4 destColor = a3MakeRGBv4(destPixels[x + y * dest->Width]);
 					destColor = srcColor.a * srcColor + (1.0f - srcColor.a) * destColor;
@@ -96,8 +96,8 @@ namespace a3 {
 			{
 				for (i32 x = destRect.x; x < mx; ++x)
 				{
-					i32 sx = (i32)((f32)x / (f32)dest->Width * srcRect.w) + srcRect.x;
-					i32 sy = (i32)((f32)y / (f32)dest->Height * srcRect.h) + srcRect.y;
+					i32 sx = (i32)((f32)(x - destRect.x) / (f32)destRect.w * srcRect.w) + srcRect.x;
+					i32 sy = (i32)((f32)(y - destRect.y) / (f32)destRect.h * srcRect.h) + srcRect.y;
 					destPixels[x + y * dest->Width] = srcPixels[sx + sy * src->Width];
 				}
 			}
