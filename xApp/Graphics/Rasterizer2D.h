@@ -25,9 +25,8 @@ namespace a3 {
 	v4 GetPixelColorNormal(a3::image*, i32 x, i32 y);
 	u64 GetPixelColor(a3::image* img, i32 x, i32 y);
 
-	void DrawLine(a3::image* img, v2 start, v2 end);
-	//template <typename ...Args>
-	//void DrawLineStrips(a3::image* img, Args... args);
+	void DrawLine(a3::image* img, v2 start, v2 end, v3 color);
+	void DrawLineStrip(a3::image* img, v2* lines, i32 n, v3 color);
 
 	typedef void(*RasterizeFontCallback)(void* userData, i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
 	void ResterizeFontsToBuffer(font_atlas_info* i, void* buffer, i32 length, f32 scale, void* drawBuffer, RasterizeFontCallback callback, void* userData);
@@ -172,7 +171,7 @@ namespace a3 {
 		return ((u32*)img->Pixels)[x + y * img->Width];
 	}
 
-	void DrawLine(a3::image * img, v2 start, v2 end)
+	void DrawLine(a3::image * img, v2 start, v2 end, v3 color)
 	{
 		if (start.x < 0.0f) start.x = 0.0f;
 		if (start.y < 0.0f) end.y = 0.0f;
@@ -197,9 +196,17 @@ namespace a3 {
 		f32 y = start.y;
 		for (i32 i = 1; i <= step; ++i)
 		{
-			a3::SetPixelColor(img, (i32)x, (i32)y, 0xffffffff);
+			a3::SetPixelColor(img, (i32)x, (i32)y, color);
 			x += dx;
 			y += dy;
+		}
+	}
+
+	void DrawLineStrip(a3::image * img, v2 * lines, i32 n, v3 color)
+	{
+		for (i32 i = 0; i < n; ++i)
+		{
+			DrawLine(img, lines[i], lines[(i + 1) % n], color);
 		}
 	}
 

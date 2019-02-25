@@ -737,6 +737,11 @@ i32 a3Main()
 
 	a3::image img = a3::CreateImageBuffer(1280, 720);
 	a3::FillImageBuffer(&img, a3::color::Black);
+	v2 lines[] = {
+		v2{50.0f, 50.0f}, v2{100.0f, 100.0f}, v2{200.0f, 50.0f}
+	};
+	a3::DrawLineStrip(&img, lines, 3, a3::color::Red);
+	a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
 
 	a3::image fontbg = a3::CreateImageBuffer(500, 500);
 	a3::FillImageBuffer(&fontbg, a3::color::Black, 0.5f);
