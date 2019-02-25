@@ -162,6 +162,16 @@ namespace a3 {
 
 	void DrawLine(a3::image * img, v2 start, v2 end)
 	{
+		if (start.x < 0.0f) start.x = 0.0f;
+		if (start.y < 0.0f) end.y = 0.0f;
+		if (end.x < 0.0f) end.x = 0.0f;
+		if (end.y < 0.0f) end.y = 0.0f;
+
+		if (start.x > (f32)img->Width) start.x = (f32)img->Width;
+		if (start.y > (f32)img->Height) start.y = (f32)img->Height;
+		if (end.x > (f32)img->Width) end.x = (f32)img->Width;
+		if (end.y > (f32)img->Height) end.x = (f32)img->Height;
+
 		f32 dx = end.x - start.x;
 		f32 dy = end.y - start.y;
 		i32 step;

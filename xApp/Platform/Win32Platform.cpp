@@ -739,7 +739,7 @@ i32 a3Main()
 	a3::FillImageBuffer(&img, a3::color::Black);
 	a3::image* bbb = a3::Asset.LoadImageFromFile(14, "Resources/BigSmile.png");
 	a3::CopyImageBuffer(&img, bbb, rect{ 50, 50, 200, 200 }, true);
-	a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 500.0f, 500.0f });
+	a3::DrawLine(&img, v2{ -50.0f, 100.0f }, v2{ 500.0f, 500.0f });
 
 	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
