@@ -726,24 +726,25 @@ i32 a3Main()
 	}
 
 	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::shaders::GLFontVertex, a3::shaders::GLFontFragment);
-	fontRenderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
+	fontRenderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
 
 	a3::basic2d_renderer renderer = a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment);
-	renderer.SetRegion(0.0f, 800.0f, 0.0f, 600.0f);
+	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
-	a3::ui_context ui(800.0f, 600.0f);
+	a3::ui_context ui(1280.0f, 720.0f);
 
-	a3::image img = a3::CreateImageBuffer(500, 500);
+	a3::image img = a3::CreateImageBuffer(1280, 720);
 	a3::FillImageBuffer(&img, a3::color::Black);
-	a3::image* bbb = a3::Asset.LoadImageFromFile(14, "Resources/BigSmile.png");
-	a3::CopyImageBuffer(&img, bbb, rect{ 50, 50, 200, 200 }, true);
-	a3::DrawLine(&img, v2{ -50.0f, 100.0f }, v2{ 500.0f, 500.0f });
+
+	a3::image fontbg = a3::CreateImageBuffer(500, 500);
+	a3::FillImageBuffer(&fontbg, a3::color::Black, 0.5f);
 
 	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* raw = a3::Asset.LoadTexture2DFromPixels(13, img.Pixels, img.Width, img.Height, img.Channels, a3::FilterLinear, a3::WrapClampToEdge);
+	a3::image_texture* fontback = a3::Asset.LoadTexture2DFromPixels(14, fontbg.Pixels, fontbg.Width, fontbg.Height, fontbg.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
@@ -793,6 +794,10 @@ i32 a3Main()
 		a3GL(glViewport(0, 0, userData->inputSystem.WindowWidth, userData->inputSystem.WindowHeight));
 
 		ui.UpdateIO(userData->inputSystem);
+		if (userData->inputSystem.Buttons[a3::ButtonRight] == a3::ButtonUp && oldInput.Buttons[a3::ButtonRight] == a3::ButtonDown)
+			renderDebugInformation = !renderDebugInformation;
+
+		oldInput = userData->inputSystem;
 
 		LARGE_INTEGER currentPerformanceCounter;
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
@@ -802,12 +807,18 @@ i32 a3Main()
 		renderer.BeginFrame();
 		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, bigsmile);
 		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, hugesmile);
-		renderer.Push(v3{ 400.0f, 250.0f, 0.0f }, 100.0f, a3::color::White, raw);
+		renderer.Push(v3{ 25.0f, 100.0f, 0.0f }, 600.0f, a3::color::White, raw);
+		if (renderDebugInformation)
+		{
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+			renderer.Push(v3{ 0.0f, 630.0f, 0.0f }, v2{ 270.0f, 100.0f }, a3::color::White, fontback);
+#endif
+		}
 		renderer.EndFrame();
 
 		f32 width = 100.0f;
 		f32 height = 25.0f;
-		f32 ypos = 400.0f + height + 5.0f;
+		f32 ypos = 500.0f + height + 5.0f;
 
 		if (ui.Button(1, v2{ 600.0f, ypos }, v2{ width, height }, "Button 1"))
 		{
@@ -831,22 +842,21 @@ i32 a3Main()
 			checked = !checked;
 		}
 
-
 		if (renderDebugInformation)
 		{
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 			utf8 buffer[256];
 			_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
-			fontRenderer.Render(buffer, v2{ 0.0f, 580.0f }, 20.0f, a3::color::GreenYellow);
+			fontRenderer.Render(buffer, v2{ 0.0f, 700.0f }, 20.0f, a3::color::GreenYellow);
 
 			_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
-			fontRenderer.Render(buffer, v2{ 0.0f, 565.0f }, 15.0f, a3::color::GreenYellow);
+			fontRenderer.Render(buffer, v2{ 0.0f, 685.0f }, 15.0f, a3::color::GreenYellow);
 			_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
-			fontRenderer.Render(buffer, v2{ 0.0f, 550.0f }, 15.0f, a3::color::GreenYellow);
+			fontRenderer.Render(buffer, v2{ 0.0f, 670.0f }, 15.0f, a3::color::GreenYellow);
 			_snprintf_s(buffer, 256, 256, "Total App Memory Used: %.2fKB", (f32)a3::Platform.GetPersistantHeapAllocated() / (1024.0f));
-			fontRenderer.Render(buffer, v2{ 0.0f, 535.0f }, 15.0f, a3::color::GreenYellow);
+			fontRenderer.Render(buffer, v2{ 0.0f, 655.0f }, 15.0f, a3::color::GreenYellow);
 			_snprintf_s(buffer, 256, 256, "Total App Memory Freed: %.2fKB", (f32)a3::Platform.GetPersistantHeapFreed() / (1024.0f));
-			fontRenderer.Render(buffer, v2{ 0.0f, 520.0f }, 15.0f, a3::color::GreenYellow);
+			fontRenderer.Render(buffer, v2{ 0.0f, 640.0f }, 15.0f, a3::color::GreenYellow);
 #endif
 		}
 

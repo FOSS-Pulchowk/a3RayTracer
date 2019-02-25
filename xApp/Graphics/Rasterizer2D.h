@@ -10,8 +10,10 @@
 namespace a3 {
 
 	a3::image CreateImageBuffer(i32 w, i32 h);
-	void FillImageBuffer(a3::image* img, v3 color, rect r);
-	void FillImageBuffer(a3::image* img, v3 color);
+	void FillImageBuffer(a3::image* img, rect r, v3 color, f32 alpha = 1.0f);
+	void FillImageBuffer(a3::image* img, v3 color, f32 alpha = 1.0f);
+	void FillImageBuffer(a3::image* img, rect r, v4 color);
+	void FillImageBuffer(a3::image* img, v4 color);
 	void ClearImageBuffer(a3::image* img);
 	// NOTE(Zero): Take alpha into consideration if `alpha` is true
 	void CopyImageBuffer(a3::image* dest, a3::image* src, const rect& destRect, const rect& srcRect, b32 alpha = false);
@@ -56,11 +58,11 @@ namespace a3 {
 		return result;
 	}
 
-	void FillImageBuffer(a3::image * img, v3 color, rect r)
+	void FillImageBuffer(a3::image * img, rect r, v3 color, f32 alpha)
 	{
 		a3Assert(r.x >= 0 && r.y >= 0);
 		a3Assert(r.x + r.w <= img->Width && r.y + r.h <= img->Height);
-		u32 hexCol = a3Normalv3ToRGBA(color, 0xffffffff);
+		u32 hexCol = a3Normalv3ToRGBA(color, a3NormalToChannel32(alpha));
 		u32* pixel = (u32*)img->Pixels;
 		for (i32 y = r.y; y < (r.y + r.h); ++y)
 		{
@@ -71,9 +73,19 @@ namespace a3 {
 		}
 	}
 
-	void FillImageBuffer(a3::image* img, v3 color)
+	void FillImageBuffer(a3::image* img, v3 color, f32 alpha)
 	{
-		a3::FillImageBuffer(img, color, rect{ 0, 0, img->Width, img->Height });
+		a3::FillImageBuffer(img, rect{ 0, 0, img->Width, img->Height }, color, alpha);
+	}
+
+	void FillImageBuffer(a3::image * img, rect r, v4 color)
+	{
+		a3::FillImageBuffer(img, r, color.rgb, color.a);
+	}
+
+	void FillImageBuffer(a3::image * img, v4 color)
+	{
+		a3::FillImageBuffer(img, color.rgb, color.a);
 	}
 
 	void ClearImageBuffer(a3::image * img)
