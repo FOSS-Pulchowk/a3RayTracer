@@ -2,6 +2,7 @@
 #include "Common/Core.h"
 #include "Utility/AssetData.h"
 #include "Math/Math.h"
+#include "Utility/Algorithm.h"
 
 //
 // DECLARATIONS
@@ -19,17 +20,17 @@ namespace a3 {
 	void CopyImageBuffer(a3::image* dest, a3::image* src, const rect& destRect, const rect& srcRect, b32 alpha = false);
 	void CopyImageBuffer(a3::image* dest, a3::image* src, const rect& destRect, b32 alpha = false);
 
-	void SetPixelColor(a3::image* img, i32 x, i32 y, v4 color);
-	void SetPixelColor(a3::image* img, i32 x, i32 y, v3 color, f32 alpha = 1.0f);
-	void SetPixelColor(a3::image* img, i32 x, i32 y, u32 color);
+	void SetPixel(a3::image* img, i32 x, i32 y, u32 color);
+	void SetPixelColor(a3::image* img, f32 x, f32 y, v4 color);
+	void SetPixelColor(a3::image* img, f32 x, f32 y, v3 color, f32 alpha = 1.0f);
+	u32 GetPixel(a3::image* img, i32 x, i32 y);
 	v4 GetPixelColorNormal(a3::image*, i32 x, i32 y);
-	u64 GetPixelColor(a3::image* img, i32 x, i32 y);
 
 	void DrawLine(a3::image* img, v2 start, v2 end, v3 color, f32 stroke = 1.0f);
 	void DrawLineStrip(a3::image* img, v2* lines, i32 n, v3 color, f32 stroke = 1.0f);
 	void DrawPolygon(a3::image* img, v2* points, i32 n, v3 color, f32 stroke = 1.0f);
 	void DrawTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, v3 color, f32 stroke = 1.0f);
-	void FillTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, f32 stroke, v3 strokeCol, v3 fillCol);
+	// NOTE(Zero): Anti-Clockwise order works better, I guess
 	void FillTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, v3 fillColor);
 
 	typedef void(*RasterizeFontCallback)(void* userData, i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
@@ -54,7 +55,7 @@ namespace a3 {
 	a3::image CreateImageBuffer(i32 w, i32 h)
 	{
 		a3::image result;
-		result.Pixels = a3New u8[w*h*4];
+		result.Pixels = a3New u8[w*h * 4];
 		result.Width = w;
 		result.Height = h;
 		result.Channels = 4;
@@ -116,8 +117,8 @@ namespace a3 {
 				{
 					i32 sx = (i32)((f32)(x - destRect.x) / (f32)destRect.w * srcRect.w) + srcRect.x;
 					i32 sy = (i32)((f32)(y - destRect.y) / (f32)destRect.h * srcRect.h) + srcRect.y;
-					v4 srcColor = a3MakeRGBv4(srcPixels[sx + sy * src->Width]);
-					v4 destColor = a3MakeRGBv4(destPixels[x + y * dest->Width]);
+					v4 srcColor = a3MakeRGBAv4(srcPixels[sx + sy * src->Width]);
+					v4 destColor = a3MakeRGBAv4(destPixels[x + y * dest->Width]);
 					destColor = srcColor.a * srcColor + (1.0f - srcColor.a) * destColor;
 					destPixels[x + y * dest->Width] = a3Normalv4ToRGBA(destColor);
 				}
@@ -142,38 +143,45 @@ namespace a3 {
 		a3::CopyImageBuffer(dest, src, destRect, rect{ 0, 0, src->Width, src->Height }, alpha);
 	}
 
-	void SetPixelColor(a3::image * img, i32 x, i32 y, v4 color)
-	{
-		a3Assert(x >= 0 && x < img->Width);
-		a3Assert(y >= 0 && y < img->Height);
-		((u32*)img->Pixels)[x + y * img->Width] = a3Normalv4ToRGBA(color);
-	}
-
-	void SetPixelColor(a3::image * img, i32 x, i32 y, v3 color, f32 alpha)
-	{
-		//a3Assert(x >= 0 && x < img->Width);
-		//a3Assert(y >= 0 && y < img->Height);
-		if (x >= 0 && x < img->Width && y >= 0 && y < img->Height)
-			((u32*)img->Pixels)[x + y * img->Width] = a3Normalv3ToRGBA(color, a3NormalToChannel32(alpha));
-	}
-
-	void SetPixelColor(a3::image * img, i32 x, i32 y, u32 color)
+	void SetPixel(a3::image * img, i32 x, i32 y, u32 color)
 	{
 		a3Assert(x >= 0 && x < img->Width);
 		a3Assert(y >= 0 && y < img->Height);
 		((u32*)img->Pixels)[x + y * img->Width] = color;
 	}
 
-	v4 GetPixelColorNormal(a3::image * img, i32 x, i32 y)
+	void SetPixelColor(a3::image * img, f32 x, f32 y, v4 color)
+	{
+		i32 px = (i32)x;
+		i32 py = (i32)y;
+
+		f32 bx = (x - (f32)px);
+		f32 by = (y - (f32)py);
+		bx = (bx > 0.5f) ? (bx - 0.5f) : bx;
+		by = (by > 0.5f) ? (by - 0.5f) : by;
+		f32 blend = 4.0f * bx * by;
+		u32 hc = a3::GetPixel(img, px, py);
+		a3::SetPixel(img, px, py, a3Normalv4ToRGBA(a3::BlendColor(color, a3MakeRGBAv4(hc), blend)));
+	}
+
+	void SetPixelColor(a3::image * img, f32 x, f32 y, v3 color, f32 alpha)
+	{
+		v4 c;
+		c.rgb = color;
+		c.a = alpha;
+		SetPixelColor(img, x, y, c);
+	}
+
+	u32 GetPixel(a3::image * img, i32 x, i32 y)
 	{
 		a3Assert(x >= 0 && x < img->Width);
 		a3Assert(y >= 0 && y < img->Height);
-		return a3MakeRGBv4(((u32*)img->Pixels)[x + y * img->Width]);
+		return ((u32*)img->Pixels)[x + y * img->Width];
 	}
 
-	u64 GetPixelColor(a3::image * img, i32 x, i32 y)
+	v4 GetPixelColorNormal(a3::image * img, i32 x, i32 y)
 	{
-		return ((u32*)img->Pixels)[x + y * img->Width];
+		return a3MakeRGBAv4(a3::GetPixel(img, x, y));
 	}
 
 	void DrawLine(a3::image * img, v2 start, v2 end, v3 color, f32 stroke)
@@ -188,39 +196,35 @@ namespace a3 {
 		if (end.x > (f32)img->Width) end.x = (f32)img->Width;
 		if (end.y > (f32)img->Height) end.x = (f32)img->Height;
 
-		f32 dx = end.x - start.x;
-		f32 dy = end.y - start.y;
+		v2 d = end - start;
 		i32 step;
-		if (FAbsf(dx) >= FAbsf(dy))
-			step = (i32)FAbsf(dx);
+		if (FAbsf(d.x) >= FAbsf(d.y))
+			step = (i32)FAbsf(d.x);
 		else
-			step = (i32)FAbsf(dy);
-		dx /= step;
-		dy /= step;
-		f32 x = start.x;
-		f32 y = start.y;
+			step = (i32)FAbsf(d.y);
+		d *= (1.0f / (f32)step);
+		v2 s = start;
 		for (i32 i = 1; i <= step; ++i)
 		{
 			f32 wx = 0.0f;
-			while (FAbsf(wx) < stroke && dy != 0.0f)
+			while (FAbsf(wx) < stroke && d.y != 0.0f)
 			{
-				a3::SetPixelColor(img, (i32)(x+wx), (i32)y, color);
-				wx += dy;
+				a3::SetPixelColor(img, s.x + wx, s.y, color);
+				wx += d.y;
 			}
 			f32 wy = 0.0f;
-			while (FAbsf(wy) < stroke && dx != 0.0f)
+			while (FAbsf(wy) < stroke && d.x != 0.0f)
 			{
-				a3::SetPixelColor(img, (i32)x, (i32)(y+wy), color);
-				wy += dx;
+				a3::SetPixelColor(img, s.x, s.y + wy, color);
+				wy += d.x;
 			}
-			x += dx;
-			y += dy;
+			s += d;
 		}
 	}
 
 	void DrawLineStrip(a3::image * img, v2 * lines, i32 n, v3 color, f32 stroke)
 	{
-		for (i32 i = 0; i < n-1; ++i)
+		for (i32 i = 0; i < n - 1; ++i)
 		{
 			DrawLine(img, lines[i], lines[i + 1], color, stroke);
 		}
@@ -241,12 +245,90 @@ namespace a3 {
 		DrawLine(img, p2, p0, color, stroke);
 	}
 
-	void FillTriangle(a3::image * img, v2 p0, v2 p1, v2 p2, f32 stroke, v3 strokeCol, v3 fillCol)
-	{
-	}
-
 	void FillTriangle(a3::image * img, v2 p0, v2 p1, v2 p2, v3 fillColor)
 	{
+		auto rangePoint = [&img](v2* p)
+		{
+			if (p->x < 0.0f) p->x = 0.0f;
+			if (p->y < 0.0f) p->y = 0.0f;
+
+			if (p->x > (f32)img->Width) p->x = (f32)img->Width;
+			if (p->y > (f32)img->Height) p->y = (f32)img->Height;
+		};
+
+		rangePoint(&p0);
+		rangePoint(&p1);
+		rangePoint(&p2);
+
+		if (p0.y > p1.y) a3::Swap(&p0, &p1);
+		if (p0.y > p2.y) a3::Swap(&p0, &p2);
+		if (p1.y > p2.y) a3::Swap(&p1, &p2);
+
+		auto processTopFlatPart = [&img, &fillColor](v2 p0, v2 p1, v2 p2)
+		{
+			if (p2.x > p1.x) a3::Swap(&p2.x, &p1.x);
+
+			f32 m0 = (p0.x - p2.x) / (p0.y - p2.y);
+			f32 m1 = (p0.x - p1.x) / (p0.y - p1.y);
+
+			i32 vstep = (i32)(p1.y - p0.y);
+			f32 y = p0.y;
+			for (i32 i = 0; i < vstep; ++i)
+			{
+				// NOTE(Zero): 0.5f is added here to be at the middle of the pixel
+				f32 x0 = m0 * (y - p2.y + 0.5f) + p2.x;
+				f32 x1 = m1 * (y - p1.y + 0.5f) + p1.x;
+				i32 hstep = (i32)(x1 - x0);
+				f32 x = x0;
+				for (i32 j = 0; j < hstep; ++j)
+				{
+					a3::SetPixelColor(img, x, y, fillColor);
+					++x;
+				}
+				++y;
+			}
+		};
+
+		auto processBottomFlatPart = [&img, &fillColor](v2 p0, v2 p1, v2 p2)
+		{
+			if (p2.x > p1.x) a3::Swap(&p2.x, &p1.x);
+
+			f32 m0 = (p0.x - p2.x) / (p0.y - p2.y);
+			f32 m1 = (p0.x - p1.x) / (p0.y - p1.y);
+
+			i32 vstep = (i32)(p0.y - p1.y);
+			f32 y = p1.y;
+			for (i32 i = 0; i < vstep; ++i)
+			{
+				// NOTE(Zero): 0.5f is added here to be at the middle of the pixel
+				f32 x0 = m0 * (y - p2.y + 0.5f) + p2.x;
+				f32 x1 = m1 * (y - p1.y + 0.5f) + p1.x;
+				i32 hstep = (i32)(x1 - x0);
+				f32 x = x0;
+				for (i32 j = 0; j < hstep; ++j)
+				{
+					a3::SetPixelColor(img, x, y, fillColor);
+					++x;
+				}
+				++y;
+			}
+		};
+
+		if ((p1.y - p2.y) == 0.0f) // Top
+		{
+			processTopFlatPart(p0, p1, p2);
+		}
+		else if ((p1.y - p0.y) == 0.0f) // Bottom
+		{
+			processBottomFlatPart(p2, p1, p0);
+		}
+		else // Split into 2 flat parts
+		{
+			f32 blend = (p1.y - p0.y) / (p2.y - p0.y);
+			v2 pm = (1.0f - blend) * p0 + blend * p2;
+			processTopFlatPart(p0, p1, pm); // top-flat
+			processBottomFlatPart(p2, p1, pm); // bottom-flat
+		}
 	}
 
 	void a3::ResterizeFontsToBuffer(font_atlas_info* i, void * buffer, i32 length, f32 scale, void * drawBuffer, RasterizeFontCallback callback, void* userData)

@@ -79,6 +79,7 @@ typedef const wchar_t* s16;
 
 inline f32 Sqrtf(f32 x);
 inline f32 Powf(f32 n, f32 p, f32 precision = 0.000001f);
+inline f32 Roundf(f32 f);
 inline f32 Floorf(f32 f);
 inline f32 Ceilf(f32 f);
 inline f32 FModf(f32 y, f32 x);
@@ -205,6 +206,11 @@ inline f32 Powf(f32 n, f32 p, f32 precision)
 	if (p >= 1) return (n * Powf(n, p - 1, precision));
 	if (precision >= 1) return Sqrtf(n);
 	return Sqrtf(Powf(n, p * 2, precision * 2));
+}
+
+inline f32 Roundf(f32 f)
+{
+	return roundf(f);
 }
 
 inline f32 Floorf(f32 f)

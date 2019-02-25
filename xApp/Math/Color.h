@@ -20,7 +20,7 @@
 #define a3AChannelToNormal(hex) ((f32)(a3GetAChannel(hex)) / 255.0f)
 
 #define a3MakeRGBv3(rgb) v3{ a3RChannelToNormal(rgb), a3GChannelToNormal(rgb), a3BChannelToNormal(rgb) }
-#define a3MakeRGBv4(rgba) v4{ a3RChannelToNormal(rgba), a3GChannelToNormal(rgba), a3BChannelToNormal(rgba), a3AChannelToNormal(rgba) }
+#define a3MakeRGBAv4(rgba) v4{ a3RChannelToNormal(rgba), a3GChannelToNormal(rgba), a3BChannelToNormal(rgba), a3AChannelToNormal(rgba) }
 
 #define a3NormalToChannel8(v) ((u8)((v) * 255.0f))
 #define a3NormalToChannel a3NormalToChannel8
@@ -196,6 +196,9 @@ namespace a3 { namespace color {
 namespace a3 {
 
 	inline v3 MixColor(v3 c1, v3 c2);
+	inline v4 MixColor(v4 c1, v4 c2);
+	inline v4 BlendColor(v4 c1, v4 c2, f32 blend = 0.5f);
+	inline v3 BlendColor(v3 c1, v3 c2, f32 blend = 0.5f);
 	inline v3 GrayScaleColor(v3 c);
 
 }
@@ -212,6 +215,26 @@ inline v3 a3::MixColor(v3 c1, v3 c2)
 	result.g = c1.g * c2.g;
 	result.b = c1.b * c2.b;
 	return result;
+}
+
+inline v4 a3::MixColor(v4 c1, v4 c2)
+{
+	v4 result;
+	result.r = c1.r * c2.r;
+	result.g = c1.g * c2.g;
+	result.b = c1.b * c2.b;
+	result.a = c1.a * c2.a;
+	return result;
+}
+
+inline v4 a3::BlendColor(v4 c1, v4 c2, f32 blend)
+{
+	return (1.0f - blend) * c1 + blend * c2;
+}
+
+inline v3 a3::BlendColor(v3 c1, v3 c2, f32 blend)
+{
+	return (1.0f - blend) * c1 + blend * c2;
 }
 
 inline v3 a3::GrayScaleColor(v3 c)

@@ -742,6 +742,11 @@ i32 a3Main()
 	};
 	a3::DrawPolygon(&img, lines, 3, a3::color::Red, 3.0f);
 	a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
+	a3::FillTriangle(&img, v2{ 50.0f, 50.0f }, v2{ 100.0f, 100.0f }, v2{ 30.0f, 100.0f }, a3::color::Green);
+	a3::FillTriangle(&img, v2{ 100.0f, 200.0f }, v2{ 200.0f, 300.0f }, v2{ 20.0f, 350.0f }, a3::color::White);
+	a3::FillTriangle(&img, v2{ 50.0f, 100.0f }, v2{ 200.0f, 100.0f }, v2{ 100.0f, 300.0f }, a3::color::Blue);
+	a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 500.0f }, v2{ 500.0f, 700.0f }, a3::color::White);
+	a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1300.0f, 500.0f }, v2{ 500.0f, 900.0f }, a3::color::White);
 
 	a3::image fontbg = a3::CreateImageBuffer(500, 500);
 	a3::FillImageBuffer(&fontbg, a3::color::Black, 0.5f);
