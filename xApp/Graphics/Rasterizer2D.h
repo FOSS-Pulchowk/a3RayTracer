@@ -25,8 +25,12 @@ namespace a3 {
 	v4 GetPixelColorNormal(a3::image*, i32 x, i32 y);
 	u64 GetPixelColor(a3::image* img, i32 x, i32 y);
 
-	void DrawLine(a3::image* img, v2 start, v2 end, v3 color);
-	void DrawLineStrip(a3::image* img, v2* lines, i32 n, v3 color);
+	void DrawLine(a3::image* img, v2 start, v2 end, v3 color, f32 stroke = 1.0f);
+	void DrawLineStrip(a3::image* img, v2* lines, i32 n, v3 color, f32 stroke = 1.0f);
+	void DrawPolygon(a3::image* img, v2* points, i32 n, v3 color, f32 stroke = 1.0f);
+	void DrawTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, v3 color, f32 stroke = 1.0f);
+	void FillTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, f32 stroke, v3 strokeCol, v3 fillCol);
+	void FillTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, v3 fillColor);
 
 	typedef void(*RasterizeFontCallback)(void* userData, i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
 	void ResterizeFontsToBuffer(font_atlas_info* i, void* buffer, i32 length, f32 scale, void* drawBuffer, RasterizeFontCallback callback, void* userData);
@@ -147,9 +151,10 @@ namespace a3 {
 
 	void SetPixelColor(a3::image * img, i32 x, i32 y, v3 color, f32 alpha)
 	{
-		a3Assert(x >= 0 && x < img->Width);
-		a3Assert(y >= 0 && y < img->Height);
-		((u32*)img->Pixels)[x + y * img->Width] = a3Normalv3ToRGBA(color, a3NormalToChannel32(alpha));
+		//a3Assert(x >= 0 && x < img->Width);
+		//a3Assert(y >= 0 && y < img->Height);
+		if (x >= 0 && x < img->Width && y >= 0 && y < img->Height)
+			((u32*)img->Pixels)[x + y * img->Width] = a3Normalv3ToRGBA(color, a3NormalToChannel32(alpha));
 	}
 
 	void SetPixelColor(a3::image * img, i32 x, i32 y, u32 color)
@@ -171,7 +176,7 @@ namespace a3 {
 		return ((u32*)img->Pixels)[x + y * img->Width];
 	}
 
-	void DrawLine(a3::image * img, v2 start, v2 end, v3 color)
+	void DrawLine(a3::image * img, v2 start, v2 end, v3 color, f32 stroke)
 	{
 		if (start.x < 0.0f) start.x = 0.0f;
 		if (start.y < 0.0f) end.y = 0.0f;
@@ -196,18 +201,52 @@ namespace a3 {
 		f32 y = start.y;
 		for (i32 i = 1; i <= step; ++i)
 		{
-			a3::SetPixelColor(img, (i32)x, (i32)y, color);
+			f32 wx = 0.0f;
+			while (FAbsf(wx) < stroke && dy != 0.0f)
+			{
+				a3::SetPixelColor(img, (i32)(x+wx), (i32)y, color);
+				wx += dy;
+			}
+			f32 wy = 0.0f;
+			while (FAbsf(wy) < stroke && dx != 0.0f)
+			{
+				a3::SetPixelColor(img, (i32)x, (i32)(y+wy), color);
+				wy += dx;
+			}
 			x += dx;
 			y += dy;
 		}
 	}
 
-	void DrawLineStrip(a3::image * img, v2 * lines, i32 n, v3 color)
+	void DrawLineStrip(a3::image * img, v2 * lines, i32 n, v3 color, f32 stroke)
+	{
+		for (i32 i = 0; i < n-1; ++i)
+		{
+			DrawLine(img, lines[i], lines[i + 1], color, stroke);
+		}
+	}
+
+	void DrawPolygon(a3::image * img, v2 * points, i32 n, v3 color, f32 stroke)
 	{
 		for (i32 i = 0; i < n; ++i)
 		{
-			DrawLine(img, lines[i], lines[(i + 1) % n], color);
+			DrawLine(img, points[i], points[(i + 1) % n], color, stroke);
 		}
+	}
+
+	void DrawTriangle(a3::image * img, v2 p0, v2 p1, v2 p2, v3 color, f32 stroke)
+	{
+		DrawLine(img, p0, p1, color, stroke);
+		DrawLine(img, p1, p2, color, stroke);
+		DrawLine(img, p2, p0, color, stroke);
+	}
+
+	void FillTriangle(a3::image * img, v2 p0, v2 p1, v2 p2, f32 stroke, v3 strokeCol, v3 fillCol)
+	{
+	}
+
+	void FillTriangle(a3::image * img, v2 p0, v2 p1, v2 p2, v3 fillColor)
+	{
 	}
 
 	void a3::ResterizeFontsToBuffer(font_atlas_info* i, void * buffer, i32 length, f32 scale, void * drawBuffer, RasterizeFontCallback callback, void* userData)
