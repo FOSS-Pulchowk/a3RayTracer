@@ -129,21 +129,29 @@ namespace a3 {
 
 	void SetPixelColor(a3::image * img, i32 x, i32 y, v4 color)
 	{
+		a3Assert(x >= 0 && x < img->Width);
+		a3Assert(y >= 0 && y < img->Height);
 		((u32*)img->Pixels)[x + y * img->Width] = a3Normalv4ToRGBA(color);
 	}
 
 	void SetPixelColor(a3::image * img, i32 x, i32 y, v3 color, f32 alpha)
 	{
+		a3Assert(x >= 0 && x < img->Width);
+		a3Assert(y >= 0 && y < img->Height);
 		((u32*)img->Pixels)[x + y * img->Width] = a3Normalv3ToRGBA(color, a3NormalToChannel32(alpha));
 	}
 
 	void SetPixelColor(a3::image * img, i32 x, i32 y, u32 color)
 	{
+		a3Assert(x >= 0 && x < img->Width);
+		a3Assert(y >= 0 && y < img->Height);
 		((u32*)img->Pixels)[x + y * img->Width] = color;
 	}
 
 	v4 GetPixelColorNormal(a3::image * img, i32 x, i32 y)
 	{
+		a3Assert(x >= 0 && x < img->Width);
+		a3Assert(y >= 0 && y < img->Height);
 		return a3MakeRGBv4(((u32*)img->Pixels)[x + y * img->Width]);
 	}
 
