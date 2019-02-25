@@ -9,10 +9,13 @@
 
 namespace a3 {
 
-	a3::image CreateImageBuffer(i32 w, i32 h, i32 n);
+	a3::image CreateImageBuffer(i32 w, i32 h);
 	void FillImageBuffer(a3::image* img, v3 color, rect r);
 	void FillImageBuffer(a3::image* img, v3 color);
 	void ClearImageBuffer(a3::image* img);
+	// NOTE(Zero): Take alpha into consideration if `alpha` is true
+	void CopyImageBuffer(a3::image* dest, a3::image* src, rect destRect, rect srcRect, b32 alpha = false);
+	void CopyImageBuffer(a3::image* dest, a3::image* src, rect destRect, b32 alpha = false);
 	typedef void(*RasterizeFontCallback)(void* userData, i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
 	void ResterizeFontsToBuffer(font_atlas_info* i, void* buffer, i32 length, f32 scale, void* drawBuffer, RasterizeFontCallback callback, void* userData);
 
@@ -30,14 +33,15 @@ namespace a3 {
 
 namespace a3 {
 
-	a3::image CreateImageBuffer(i32 w, i32 h, i32 n)
+	// NOTE(Zero): Supporting only RGBA pixel format
+
+	a3::image CreateImageBuffer(i32 w, i32 h)
 	{
-		a3Assert(n == 4);
 		a3::image result;
-		result.Pixels = a3New u8[w*h*n];
+		result.Pixels = a3New u8[w*h*4];
 		result.Width = w;
 		result.Height = h;
-		result.Channels = n;
+		result.Channels = 4;
 		return result;
 	}
 
@@ -62,6 +66,36 @@ namespace a3 {
 	void ClearImageBuffer(a3::image * img)
 	{
 		a3::MemorySet(img->Pixels, 0, img->Width * img->Height * img->Channels);
+	}
+
+	void CopyImageBuffer(a3::image * dest, a3::image * src, rect destRect, rect srcRect, b32 alpha)
+	{
+		i32 mx = destRect.x + destRect.w;
+		i32 my = destRect.y + destRect.h;
+		u32* destPixels = (u32*)dest->Pixels;
+		u32* srcPixels = (u32*)src->Pixels;
+
+		if (alpha)
+		{
+
+		}
+		else
+		{
+			for (i32 y = destRect.y; y < my; ++y)
+			{
+				for (i32 x = destRect.x; x < mx; ++x)
+				{
+					i32 sx = (i32)((f32)x / (f32)dest->Width * srcRect.w) + srcRect.x;
+					i32 sy = (i32)((f32)y / (f32)dest->Height * srcRect.h) + srcRect.y;
+					destPixels[x + y * dest->Width] = srcPixels[sx + sy * src->Width];
+				}
+			}
+		}
+	}
+
+	void CopyImageBuffer(a3::image * dest, a3::image * src, rect destRect, b32 alpha)
+	{
+		a3::CopyImageBuffer(dest, src, destRect, rect{ 0, 0, src->Width, src->Height }, alpha);
 	}
 
 	void a3::ResterizeFontsToBuffer(font_atlas_info* i, void * buffer, i32 length, f32 scale, void * drawBuffer, RasterizeFontCallback callback, void* userData)
