@@ -39,6 +39,11 @@ namespace a3 {
 		v3 m_UIFontColor;
 		v3 m_UIActiveFontColor;
 
+		b32 m_VerticalUI;
+
+		v2 m_RenderPosition;
+		v2 m_RenderPositionOffset;
+
 		struct font_data
 		{
 			a3::dstring text;
@@ -62,9 +67,12 @@ namespace a3 {
         inline void BeginFrame(v2 position);
         inline void EndFrame();
         
-		inline b32 Button(i32 uid, v2 position, v2 dimension, s8 desc);
-		inline b32 Checkbox(i32 uid, v2 position, v2 dimension, b32 checked, s8 desc);
+		inline b32 Button(i32 uid, v2 dimension, s8 desc);
+		inline b32 Checkbox(i32 uid, v2 dimension, b32 checked, s8 desc);
+
 		inline void SetColor(v3 color, v3 hot, v3 active, v3 font);
+		inline void SetVertical(b32 value);
+		inline void SetRenderPositionOffset(f32 x, f32 y);
         
         private:
 		inline i32 IsInteracted(i32 uid, v2 position, v2 dimension);
@@ -87,6 +95,10 @@ m_Fontq(a3Allocate(sizeof(a3::ui_context::font_data) * 25, void*), sizeof(a3::ui
 	m_Active = -1;
 	m_Hot = -1;
 	m_Input.mouseDragging = false;
+
+	m_VerticalUI = true;
+	m_RenderPosition = { 0.0f, 0.0f };
+	m_RenderPositionOffset = { 10.0f, 10.0f };
 	
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::UIFont, "Resources/HackRegular.ttf", 30.0f);
 	a3::Asset.LoadTexture2DFromFile(a3::asset_id::UITexture, "Resources/A3UI.png", a3::FilterLinear, a3::WrapClampToEdge);
@@ -109,6 +121,7 @@ inline void a3::ui_context::UpdateIO(const input_info& input)
 
 inline void a3::ui_context::BeginFrame(v2 position)
 {
+	m_RenderPosition = position;
     m_Batch2DRenderer.BeginFrame();
     m_Fontq.Empty();
 }
@@ -125,8 +138,13 @@ inline void a3::ui_context::EndFrame()
 	m_Fontq.Empty();
 }
 
-inline b32 a3::ui_context::Button(i32 uid, v2 position, v2 dimension, s8 desc)
+inline b32 a3::ui_context::Button(i32 uid, v2 dimension, s8 desc)
 {
+	if (m_VerticalUI)
+		m_RenderPosition.y -= dimension.y + m_RenderPositionOffset.y;
+	else
+		m_RenderPosition.x += dimension.x + m_RenderPositionOffset.x;
+	v2 position = m_RenderPosition;
 	b32 result = IsInteracted(uid, position, dimension);
 	v4 texDimension = { 0.0f, 0.7f, 1.0f, 1.0f };
 	RenderUI(uid, position, dimension, texDimension);
@@ -138,8 +156,13 @@ inline b32 a3::ui_context::Button(i32 uid, v2 position, v2 dimension, s8 desc)
 	return result;
 }
 
-inline b32 a3::ui_context::Checkbox(i32 uid, v2 position, v2 dimension, b32 checked, s8 desc)
+inline b32 a3::ui_context::Checkbox(i32 uid, v2 dimension, b32 checked, s8 desc)
 {
+	if (m_VerticalUI)
+		m_RenderPosition.y -= dimension.y + m_RenderPositionOffset.y;
+	else
+		m_RenderPosition.x += dimension.x + m_RenderPositionOffset.x;
+	v2 position = m_RenderPosition;
 	b32 result = IsInteracted(uid, position, dimension);
 	v4 texDimension;
 	if (checked)
@@ -161,6 +184,17 @@ inline void a3::ui_context::SetColor(v3 ui, v3 activeui, v3 font, v3 activefont)
 	m_ActiveUIColor = activeui;
 	m_UIFontColor = font;
 	m_UIActiveFontColor = activefont;
+}
+
+inline void a3::ui_context::SetVertical(b32 value)
+{
+	m_VerticalUI = value;
+}
+
+inline void a3::ui_context::SetRenderPositionOffset(f32 x, f32 y)
+{
+	m_RenderPositionOffset.x = x;
+	m_RenderPositionOffset.y = y;
 }
 
 inline b32 a3::ui_context::IsInteracted(i32 uid, v2 position, v2 dimension)

@@ -866,29 +866,23 @@ i32 a3Main()
 		}
 		renderer.EndFrame();
 
-		f32 width = 100.0f;
-		f32 height = 25.0f;
-		f32 ypos = 500.0f + height + 5.0f;
+		v2 dim{ 100.0f, 25.0f };
+		ui.BeginFrame(v2{ 600.0f, 550.0f });
 
-		ui.BeginFrame(v2{ 0, 0 });
-		if (ui.Button(1, v2{ 600.0f, ypos }, v2{ width, height }, "Button 1"))
+		if (ui.Button(1, dim, "Button 1"))
 		{
 		}
-		ypos -= height + 5.0f;
-		if (ui.Button(2, v2{ 600.0f, ypos }, v2{ width, height }, "Button 2"))
+		if (ui.Button(2, dim, "Button 2"))
 		{
 		}
-		ypos -= height + 5.0f;
-		if (ui.Button(3, v2{ 600.0f, ypos }, v2{ width, height }, "Button 3"))
+		if (ui.Button(3, dim, "Button 3"))
 		{
 		}
-		ypos -= height + 5.0f;
-		if (ui.Button(4, v2{ 600.0f, ypos }, v2{ width, height }, "Button 4"))
+		if (ui.Button(4, dim, "Button 4"))
 		{
 		}
-		ypos -= height + 5.0f;
 		static b32 checked = false;
-		if (ui.Checkbox(5, v2{ 600.0f, ypos }, v2{ width, height }, checked, "Checkbox"))
+		if (ui.Checkbox(5, dim, checked, "Checkbox"))
 		{
 			checked = !checked;
 		}
