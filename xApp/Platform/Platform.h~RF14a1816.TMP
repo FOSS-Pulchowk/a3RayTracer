@@ -239,12 +239,10 @@ void* operator new[](u64 size);
 #endif
 
 void* operator new(u64 size, void* where);
-void* operator new[](u64 size, void* where);
 
 void operator delete(void* ptr);
 void operator delete[](void* ptr);
 void operator delete(void*, void*);
-void operator delete[](void*, void*);
 
 // Helper macros for memory allocations
 // These should be prefered over other methods

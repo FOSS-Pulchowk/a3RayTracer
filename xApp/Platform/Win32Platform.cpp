@@ -242,7 +242,7 @@ void* a3_platform::A3_DEFINE_ALLOCATION(Malloc) const
 {
 	a3InternalHeapAllocation(
 		void* ptr = HeapAlloc(s_GenericHeapHandle, 0, a3InternalAllocationSize(size))
-        );
+	);
 	return ptr;
 }
 
@@ -250,7 +250,7 @@ void* a3_platform::A3_DEFINE_ALLOCATION(Calloc) const
 {
 	a3InternalHeapAllocation(
 		void* ptr = HeapAlloc(s_GenericHeapHandle, HEAP_ZERO_MEMORY, a3InternalAllocationSize(size))
-        );
+	);
 	return ptr;
 }
 
@@ -260,7 +260,7 @@ void* a3_platform::A3_DEFINE_REALLOCATION(Realloc) const
 	{
 		a3InternalHeapReAllocation(
 			void* ptr = HeapReAlloc(s_GenericHeapHandle, 0, a3InternalGetActualPtr(usrPtr), a3InternalAllocationSize(size))
-            );
+		);
 		return ptr;
 	}
 	// NOTE(Zero):
@@ -275,7 +275,7 @@ void* a3_platform::A3_DEFINE_REALLOCATION(Recalloc) const
 	{
 		a3InternalHeapReAllocation(
 			void* ptr = HeapReAlloc(s_GenericHeapHandle, HEAP_ZERO_MEMORY, a3InternalGetActualPtr(usrPtr), a3InternalAllocationSize(size))
-            );
+		);
 		return ptr;
 	}
 	// NOTE(Zero):
@@ -298,7 +298,7 @@ void * a3_platform::A3_DEFINE_ALLOCATION(AllocMemory) const
 {
 	a3InternalPersistantHeapAllocation(
 		void* ptr = HeapAlloc(s_PersistentHeapHandle, HEAP_ZERO_MEMORY, a3InternalAllocationSize(size))
-        );
+	);
 	return ptr;
 }
 
@@ -308,7 +308,7 @@ void * a3_platform::A3_DEFINE_REALLOCATION(ResizeMemory) const
 	{
 		a3InternalPersistantHeapReAllocation(
 			void* ptr = HeapReAlloc(s_PersistentHeapHandle, HEAP_ZERO_MEMORY, a3InternalGetActualPtr(usrPtr), a3InternalAllocationSize(size))
-            );
+		);
 		return ptr;
 	}
 	// NOTE(Zero):
@@ -331,7 +331,7 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 {
 	IFileOpenDialog *pOpenDialog = A3NULL;
 	HRESULT hr;
-    
+
 	hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, (void**)&pOpenDialog);
 	if (SUCCEEDED(hr))
 	{
@@ -341,7 +341,7 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 		MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, size);
 		pOpenDialog->SetTitle(wTitle);
 		a3Delete[] wTitle;
-        
+
 		if (type == a3::FileTypePNG)
 		{
 			COMDLG_FILTERSPEC filterTypes = {
@@ -351,7 +351,7 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 			pOpenDialog->SetFileTypes(1, &filterTypes);
 			pOpenDialog->SetFileTypeIndex(1);
 		}
-        
+
 		hr = pOpenDialog->Show(Win32GetUserData()->windowHandle);
 		utf8* resultPath = A3NULL;
 		if (SUCCEEDED(hr))
@@ -386,7 +386,7 @@ utf8 * a3_platform::SaveFromDialogue(s8 title, a3::file_type type) const
 {
 	IFileSaveDialog *pSaveDialog = A3NULL;
 	HRESULT hr;
-    
+
 	hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_ALL, IID_IFileSaveDialog, (void**)&pSaveDialog);
 	if (SUCCEEDED(hr))
 	{
@@ -396,7 +396,7 @@ utf8 * a3_platform::SaveFromDialogue(s8 title, a3::file_type type) const
 		MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, size);
 		pSaveDialog->SetTitle(wTitle);
 		a3Delete[] wTitle;
-        
+
 		if (type == a3::FileTypePNG)
 		{
 			COMDLG_FILTERSPEC filterTypes = {
@@ -406,7 +406,7 @@ utf8 * a3_platform::SaveFromDialogue(s8 title, a3::file_type type) const
 			pSaveDialog->SetFileTypes(1, &filterTypes);
 			pSaveDialog->SetFileTypeIndex(1);
 		}
-        
+
 		hr = pSaveDialog->Show(Win32GetUserData()->windowHandle);
 		utf8* resultPath = A3NULL;
 		if (SUCCEEDED(hr))
@@ -451,40 +451,40 @@ a3::message_box_result a3_platform::MessageBox(s8 title, s8 caption, a3::message
 	u32 flags = 0;
 	switch (type)
 	{
-        case a3::message_box_type::MessageBoxTypeAbortRetryIgnore: flags |= MB_ABORTRETRYIGNORE; break;
-        case a3::message_box_type::MessageBoxTypeCancelTryContinue: flags |= MB_CANCELTRYCONTINUE; break;
-        case a3::message_box_type::MessageBoxTypeHelp: flags |= MB_HELP; break;
-        case a3::message_box_type::MessageBoxTypeOk: flags |= MB_OK; break;
-        case a3::message_box_type::MessageBoxTypeOkCancel: flags |= MB_OKCANCEL; break;
-        case a3::message_box_type::MessageBoxTypeRetryCancel: flags |= MB_RETRYCANCEL; break;
-        case a3::message_box_type::MessageBoxTypeYesNo: flags |= MB_YESNO; break;
-        case a3::message_box_type::MessageBoxTypeYesNoCancel: flags |= MB_YESNOCANCEL; break;
+	case a3::message_box_type::MessageBoxTypeAbortRetryIgnore: flags |= MB_ABORTRETRYIGNORE; break;
+	case a3::message_box_type::MessageBoxTypeCancelTryContinue: flags |= MB_CANCELTRYCONTINUE; break;
+	case a3::message_box_type::MessageBoxTypeHelp: flags |= MB_HELP; break;
+	case a3::message_box_type::MessageBoxTypeOk: flags |= MB_OK; break;
+	case a3::message_box_type::MessageBoxTypeOkCancel: flags |= MB_OKCANCEL; break;
+	case a3::message_box_type::MessageBoxTypeRetryCancel: flags |= MB_RETRYCANCEL; break;
+	case a3::message_box_type::MessageBoxTypeYesNo: flags |= MB_YESNO; break;
+	case a3::message_box_type::MessageBoxTypeYesNoCancel: flags |= MB_YESNOCANCEL; break;
 	}
 	switch (icon)
 	{
-        case a3::message_box_icon::MessageBoxIconNone: flags |= 0; break;
-        case a3::message_box_icon::MessageBoxIconExclamation: flags |= MB_ICONEXCLAMATION; break;
-        case a3::message_box_icon::MessageBoxIconWarning: flags |= MB_ICONWARNING; break;
-        case a3::message_box_icon::MessageBoxIconInformation: flags |= MB_ICONINFORMATION; break;
-        case a3::message_box_icon::MessageBoxIconAsterisk: flags |= MB_ICONASTERISK; break;
-        case a3::message_box_icon::MessageBoxIconQuestion: flags |= MB_ICONQUESTION; break;
-        case a3::message_box_icon::MessageBoxIconStop: flags |= MB_ICONSTOP; break;
-        case a3::message_box_icon::MessageBoxIconError: flags |= MB_ICONERROR; break;
-        case a3::message_box_icon::MessageBoxIconHand: flags |= MB_ICONHAND; break;
+	case a3::message_box_icon::MessageBoxIconNone: flags |= 0; break;
+	case a3::message_box_icon::MessageBoxIconExclamation: flags |= MB_ICONEXCLAMATION; break;
+	case a3::message_box_icon::MessageBoxIconWarning: flags |= MB_ICONWARNING; break;
+	case a3::message_box_icon::MessageBoxIconInformation: flags |= MB_ICONINFORMATION; break;
+	case a3::message_box_icon::MessageBoxIconAsterisk: flags |= MB_ICONASTERISK; break;
+	case a3::message_box_icon::MessageBoxIconQuestion: flags |= MB_ICONQUESTION; break;
+	case a3::message_box_icon::MessageBoxIconStop: flags |= MB_ICONSTOP; break;
+	case a3::message_box_icon::MessageBoxIconError: flags |= MB_ICONERROR; break;
+	case a3::message_box_icon::MessageBoxIconHand: flags |= MB_ICONHAND; break;
 	}
 	i32 result = MessageBoxA(Win32GetUserData()->windowHandle, caption, title, flags);
 	switch (result)
 	{
-        case IDABORT: return a3::message_box_result::MessageBoxResultAbort;
-        case IDCANCEL: return a3::message_box_result::MessageBoxResultCancel;
-        case IDCONTINUE: return a3::message_box_result::MessageBoxResultContinue;
-        case IDIGNORE: return a3::message_box_result::MessageBoxResultIgnore;
-        case IDNO: return a3::message_box_result::MessageBoxResultNo;
-        case IDOK: return a3::message_box_result::MessageBoxResultOk;
-        case IDRETRY: return a3::message_box_result::MessageBoxResultRetry;
-        case IDTRYAGAIN: return a3::message_box_result::MessageBoxResultTryAgain;
-        case IDYES: return a3::message_box_result::MessageBoxResultYes;
-        default: return a3::message_box_result::MessageBoxResultError;
+	case IDABORT: return a3::message_box_result::MessageBoxResultAbort;
+	case IDCANCEL: return a3::message_box_result::MessageBoxResultCancel;
+	case IDCONTINUE: return a3::message_box_result::MessageBoxResultContinue;
+	case IDIGNORE: return a3::message_box_result::MessageBoxResultIgnore;
+	case IDNO: return a3::message_box_result::MessageBoxResultNo;
+	case IDOK: return a3::message_box_result::MessageBoxResultOk;
+	case IDRETRY: return a3::message_box_result::MessageBoxResultRetry;
+	case IDTRYAGAIN: return a3::message_box_result::MessageBoxResultTryAgain;
+	case IDYES: return a3::message_box_result::MessageBoxResultYes;
+	default: return a3::message_box_result::MessageBoxResultError;
 	}
 }
 
@@ -530,6 +530,11 @@ void * operator new(u64 size, void * where)
 	return where;
 }
 
+void * operator new[](u64 size, void * where)
+{
+	return where;
+}
+
 void operator delete(void* ptr)
 {
 	a3::Platform.Free(ptr);
@@ -538,6 +543,14 @@ void operator delete(void* ptr)
 void operator delete[](void* ptr)
 {
 	a3::Platform.Free(ptr);
+}
+
+void operator delete[](void*, void*)
+{
+}
+
+void operator delete(void*, void*)
+{
 }
 
 // TODO(Zero):
@@ -561,7 +574,7 @@ memory_arena NewMemoryBlock(u32 size)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	win32_user_data& userData = *(win32_user_data*)Win32GetUserData();
-    
+
 	auto l_StoreInputData = [&userData](LPARAM lParam)
 	{
 		i32 mx = GET_X_LPARAM(lParam);
@@ -572,92 +585,92 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// TODO(Zero): Y coordinate for mouse position is inversed
 		userData.inputSystem.MouseY = (f32)(wh - my) / (f32)wh;
 	};
-    
+
 	switch (msg)
 	{
-        case WM_CREATE:
-        {
-            GLLoad(hWnd);
-            return 0;
-        }
-        
-        case WM_MOUSEMOVE:
-        {
-            l_StoreInputData(lParam);
-            break;
-        }
-        
-        case WM_LBUTTONDOWN:
-        {
-            l_StoreInputData(lParam);
-            userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonDown;
-            break;
-        }
-        
-        case WM_LBUTTONUP:
-        {
-            l_StoreInputData(lParam);
-            userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonUp;
-            break;
-        }
-        
-        case WM_RBUTTONDOWN:
-        {
-            l_StoreInputData(lParam);
-            userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonDown;
-            break;
-        }
-        
-        case WM_RBUTTONUP:
-        {
-            l_StoreInputData(lParam);
-            userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonUp;
-            break;
-        }
-        
-        case WM_MBUTTONDOWN:
-        {
-            l_StoreInputData(lParam);
-            userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonDown;
-            break;
-        }
-        
-        case WM_MBUTTONUP:
-        {
-            l_StoreInputData(lParam);
-            userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonUp;
-            break;
-        }
-        
-        case WM_SIZE:
-        {
-            // TODO(Zero): This needs to handle more things then it is currently
-            if (wParam == SIZE_MINIMIZED)
-            {
-                a3Log("Window minimized");
-            }
-            a3Log("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
-            userData.inputSystem.WindowWidth = LOWORD(lParam);
-            userData.inputSystem.WindowHeight = HIWORD(lParam);
-            HDC hDC = GetDC(hWnd);
-            SwapBuffers(hDC);
-            ReleaseDC(hWnd, hDC);
-            return 0;
-        }
-        
-        case WM_SETCURSOR:
+	case WM_CREATE:
+	{
+		GLLoad(hWnd);
+		return 0;
+	}
+
+	case WM_MOUSEMOVE:
+	{
+		l_StoreInputData(lParam);
+		break;
+	}
+
+	case WM_LBUTTONDOWN:
+	{
+		l_StoreInputData(lParam);
+		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonDown;
+		break;
+	}
+
+	case WM_LBUTTONUP:
+	{
+		l_StoreInputData(lParam);
+		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonUp;
+		break;
+	}
+
+	case WM_RBUTTONDOWN:
+	{
+		l_StoreInputData(lParam);
+		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonDown;
+		break;
+	}
+
+	case WM_RBUTTONUP:
+	{
+		l_StoreInputData(lParam);
+		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonUp;
+		break;
+	}
+
+	case WM_MBUTTONDOWN:
+	{
+		l_StoreInputData(lParam);
+		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonDown;
+		break;
+	}
+
+	case WM_MBUTTONUP:
+	{
+		l_StoreInputData(lParam);
+		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonUp;
+		break;
+	}
+
+	case WM_SIZE:
+	{
+		// TODO(Zero): This needs to handle more things then it is currently
+		if (wParam == SIZE_MINIMIZED)
+		{
+			a3Log("Window minimized");
+		}
+		a3Log("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
+		userData.inputSystem.WindowWidth = LOWORD(lParam);
+		userData.inputSystem.WindowHeight = HIWORD(lParam);
+		HDC hDC = GetDC(hWnd);
+		SwapBuffers(hDC);
+		ReleaseDC(hWnd, hDC);
+		return 0;
+	}
+
+	case WM_SETCURSOR:
 		SetCursor(LoadCursorW(A3NULL, IDC_ARROW));
 		return 0;
-        
-        case WM_DESTROY:
+
+	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
 
-		case WM_QUIT:
+	case WM_QUIT:
 		PostQuitMessage(0);
 		return 0;
-        
-        default:
+
+	default:
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 	return 0;
@@ -691,7 +704,7 @@ struct entity
 i32 a3Main()
 {
 	HMODULE hInstance = GetModuleHandleW(0);
-    
+
 	WNDCLASSEXW wndClassExW = {};
 	wndClassExW.cbSize = sizeof(wndClassExW);
 	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
@@ -703,7 +716,7 @@ i32 a3Main()
 	//wndClassExW.hIconSm =
 	wndClassExW.hCursor = LoadCursorW(hInstance, IDC_ARROW);
 	RegisterClassExW(&wndClassExW);
-    
+
 	DWORD wndStyles = WS_OVERLAPPEDWINDOW;
 	i32 width = A3_WINDOW_WIDTH;
 	i32 height = A3_WINDOW_HEIGHT;
@@ -721,26 +734,26 @@ i32 a3Main()
 	}
 	a3Log("Window of resolution {i} X {i} created.", A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT);
 	HDC hDC = GetDC(hWnd);
-    
+
 	HRESULT hr = CoInitializeEx(0, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-    
+
 	if (FAILED(hr))
 	{
 		a3LogError("Could not initialize COM objects!");
 		return -1;
 	}
-    
-    // NOTE(Zero): Seeding for random generator is done here
-    {
-        u32 seeds[16];
+
+	// NOTE(Zero): Seeding for random generator is done here
+	{
+		u32 seeds[16];
 		LARGE_INTEGER li;
 		for (i32 i = 0; i < 16; ++i)
 		{
 			QueryPerformanceCounter(&li);
 			seeds[i] = li.LowPart;
 		}
-        a3::InitializeGenerator(seeds);
-    }
+		a3::InitializeGenerator(seeds);
+	}
 
 	{
 		a3::random_generator<f32> g(500, 600);
@@ -748,22 +761,22 @@ i32 a3Main()
 		a3LogTrace("Random (500, 600): {f}", g.Get());
 		a3LogTrace("Random (500, 600): {f}", g.Get());
 	}
-    
+
 	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::shaders::GLFontVertex, a3::shaders::GLFontFragment);
 	fontRenderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
-    
+
 	a3::basic2d_renderer renderer = a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment);
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
-    
+
 	a3::ui_context ui(1280.0f, 720.0f);
-    
+
 	a3::image* temp = a3::Asset.LoadImageFromFile(19, "Resources/BigSmile.png");
-    
+
 	a3::image img = a3::CreateImageBuffer(1280, 720);
 	a3::FillImageBuffer(&img, a3::color::Black);
-    
+
 	//a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
 	//a3::FillTriangle(&img, v2{ 50.0f, 50.0f }, v2{ 100.0f, 100.0f }, v2{ 30.0f, 100.0f }, a3::color::Green);
 	//a3::FillTriangle(&img, v2{ 100.0f, 200.0f }, v2{ 200.0f, 300.0f }, v2{ 20.0f, 350.0f }, a3::color::White);
@@ -774,32 +787,32 @@ i32 a3Main()
 	//a3::FillTriangle(&img, v2{ 1000.0f, 100.0f }, v2{ 1500.0f, 200.0f }, v2{ 1600.0f, 500.0f }, a3::color::Red);
 	//a3::FillTriangle(&img, v2{ 500.0f, 500.0f }, v2{ 600.0f, 600.0f }, v2{ 400.0f, 600.0f }, a3::color::White);
 	//a3::FillTriangle(&img, v2{ -100.0f, 150.0f }, v2{ 150.0f, 50.0f }, v2{ 150.0f, 300.0f }, a3::color::White);
-    
+
 	a3::image fontbg = a3::CreateImageBuffer(500, 500);
 	a3::FillImageBuffer(&fontbg, a3::color::Black, 0.5f);
-    
+
 	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* raw = a3::Asset.LoadTexture2DFromPixels(13, img.Pixels, img.Width, img.Height, img.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* fontback = a3::Asset.LoadTexture2DFromPixels(14, fontbg.Pixels, fontbg.Width, fontbg.Height, fontbg.Channels, a3::FilterLinear, a3::WrapClampToEdge);
-    
+
 	ShowWindow(hWnd, SW_SHOW);
 	UpdateWindow(hWnd);
 	a3Log("Window displayed.");
-    
+
 	win32_user_data* userData = Win32GetUserData();
 	userData->windowHandle = hWnd;
-    
+
 	a3::input_info oldInput = {};
 	LARGE_INTEGER performanceFrequency;
 	a3Assert(QueryPerformanceFrequency(&performanceFrequency));
 	LARGE_INTEGER performanceCounter;
 	QueryPerformanceCounter(&performanceCounter);
-    
+
 	b32 renderDebugInformation = true;
-    
+
 	f32 deltaTime = 0.0f;
-    
+
 	b32 shouldRun = true;
 	while (shouldRun)
 	{
@@ -817,30 +830,30 @@ i32 a3Main()
 				DispatchMessageW(&sMsg);
 			}
 		}
-        
+
 		v3 cc = a3::color::NotQuiteBlack;
 		a3GL(glClearColor(cc.r, cc.g, cc.b, 1.0f));
 		a3GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		a3GL(glDisable(GL_DEPTH_TEST));
 		a3GL(glEnable(GL_BLEND));
 		a3GL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-        
+
 		// TODO(Zero):
 		// Only change the viewport if the window has been resized
 		// Should we setup callbacks for window resizing?
 		a3GL(glViewport(0, 0, userData->inputSystem.WindowWidth, userData->inputSystem.WindowHeight));
-        
+
 		ui.UpdateIO(userData->inputSystem);
 		if (userData->inputSystem.Buttons[a3::ButtonRight] == a3::ButtonUp && oldInput.Buttons[a3::ButtonRight] == a3::ButtonDown)
 			renderDebugInformation = !renderDebugInformation;
-        
+
 		oldInput = userData->inputSystem;
-        
+
 		LARGE_INTEGER currentPerformanceCounter;
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
-        
+
 		renderer.BeginFrame();
 		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, bigsmile);
 		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, hugesmile);
@@ -852,40 +865,42 @@ i32 a3Main()
 #endif
 		}
 		renderer.EndFrame();
-        
+
 		f32 width = 100.0f;
 		f32 height = 25.0f;
 		f32 ypos = 500.0f + height + 5.0f;
-        
-		/*if (ui.Button(1, v2{ 600.0f, ypos }, v2{ width, height }, "Button 1"))
-  {
-  }
-  ypos -= height + 5.0f;
-  if (ui.Button(2, v2{ 600.0f, ypos }, v2{ width, height }, "Button 2"))
-  {
-  }
-  ypos -= height + 5.0f;
-  if (ui.Button(3, v2{ 600.0f, ypos }, v2{ width, height }, "Button 3"))
-  {
-  }
-  ypos -= height + 5.0f;
-  if (ui.Button(4, v2{ 600.0f, ypos }, v2{ width, height }, "Button 4"))
-  {
-  }
-  ypos -= height + 5.0f;
-  static b32 checked = false;
-  if (ui.Checkbox(5, v2{ 600.0f, ypos }, v2{ width, height }, checked, "Checkbox"))
-  {
-   checked = !checked;
-  }*/
-        
+
+		ui.BeginFrame(v2{ 0, 0 });
+		if (ui.Button(1, v2{ 600.0f, ypos }, v2{ width, height }, "Button 1"))
+		{
+		}
+		ypos -= height + 5.0f;
+		if (ui.Button(2, v2{ 600.0f, ypos }, v2{ width, height }, "Button 2"))
+		{
+		}
+		ypos -= height + 5.0f;
+		if (ui.Button(3, v2{ 600.0f, ypos }, v2{ width, height }, "Button 3"))
+		{
+		}
+		ypos -= height + 5.0f;
+		if (ui.Button(4, v2{ 600.0f, ypos }, v2{ width, height }, "Button 4"))
+		{
+		}
+		ypos -= height + 5.0f;
+		static b32 checked = false;
+		if (ui.Checkbox(5, v2{ 600.0f, ypos }, v2{ width, height }, checked, "Checkbox"))
+		{
+			checked = !checked;
+		}
+		ui.EndFrame();
+
 		if (renderDebugInformation)
 		{
 #if defined(A3DEBUG) || defined(A3INTERNAL)
 			utf8 buffer[256];
 			_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
 			fontRenderer.Render(buffer, v2{ 0.0f, 700.0f }, 20.0f, a3::color::GreenYellow);
-            
+
 			_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
 			fontRenderer.Render(buffer, v2{ 0.0f, 685.0f }, 15.0f, a3::color::GreenYellow);
 			_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
@@ -896,9 +911,9 @@ i32 a3Main()
 			fontRenderer.Render(buffer, v2{ 0.0f, 640.0f }, 15.0f, a3::color::GreenYellow);
 #endif
 		}
-        
+
 		SwapBuffers(hDC);
 	}
-    
+
 	return 0;
 }

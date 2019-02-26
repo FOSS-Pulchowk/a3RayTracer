@@ -145,7 +145,7 @@ f32 a3::ParseF32(s8 buffer)
 inline u64 a3::GetStringLength(s8 s)
 {
 	u64 len = 0;
-	for (utf8 c = s[0]; c != '\0'; ++c)
+	for (utf8* c = (utf8*)s; *c != 0; ++c)
 		len++;
 	return (len + 1);
 }
