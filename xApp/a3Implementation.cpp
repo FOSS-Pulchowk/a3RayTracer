@@ -1,4 +1,7 @@
 
+#define A3_IMPLEMENT_DSTRING
+#include "Utility/DString.h"
+
 #define A3_IMPLEMENT_MATRIX
 #include "Math/Matrix4.h"
 #define A3_IMPLEMENT_QUATERNION
