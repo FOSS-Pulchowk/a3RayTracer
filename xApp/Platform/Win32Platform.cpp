@@ -126,7 +126,7 @@ if(result) { \
     s_PersistantHeapFreed += freed; \
 }
 #else
-#define a3Main() CALLBACK wWinMain(HINSTANCE, HINSTANCE, LPWSTR, i32)
+#define a3Main() CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, i32)
 #define a3InternalAllocationSize(x) (x)
 #define a3InternalGetActualPtr(p) (p)
 #define a3InternalHeapAllocation(x) x
@@ -158,7 +158,7 @@ const a3::file_content a3_platform::LoadFileContent(s8 fileName) const
 		{
 			if (GetLastError())
 			{
-				VirtualFree(buffer, result.Size, MEM_RELEASE);
+				VirtualFree(buffer, 0, MEM_RELEASE);
 				CloseHandle(hFile);
 				result.Size = 0;
 				return result;
@@ -184,7 +184,7 @@ void a3_platform::FreeFileContent(a3::file_content fileReadInfo) const
 {
 	if (fileReadInfo.Buffer)
 	{
-		VirtualFree(fileReadInfo.Buffer, fileReadInfo.Size, MEM_RELEASE);
+		VirtualFree(fileReadInfo.Buffer, 0, MEM_RELEASE);
 	}
 }
 
@@ -588,9 +588,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	switch (msg)
 	{
+	case WM_SYSCHAR:
+		return 0;
+
+	case WM_ACTIVATEAPP:
+		return 0;
+
 	case WM_CREATE:
 	{
 		GLLoad(hWnd);
+		userData.windowHandle = hWnd;
 		return 0;
 	}
 
@@ -652,26 +659,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		a3Log("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
 		userData.inputSystem.WindowWidth = LOWORD(lParam);
 		userData.inputSystem.WindowHeight = HIWORD(lParam);
-		HDC hDC = GetDC(hWnd);
-		SwapBuffers(hDC);
-		ReleaseDC(hWnd, hDC);
+		HDC dc = GetDC(hWnd);
+		SwapBuffers(dc);
+		ReleaseDC(hWnd, dc);
 		return 0;
 	}
 
 	case WM_SETCURSOR:
-		SetCursor(LoadCursorW(A3NULL, IDC_ARROW));
+		SetCursor(LoadCursorA(A3NULL, IDC_ARROW));
 		return 0;
+
+	case WM_CLOSE:
+		PostQuitMessage(0);
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
 
-	case WM_QUIT:
-		PostQuitMessage(0);
-		return 0;
-
 	default:
-		return DefWindowProc(hWnd, msg, wParam, lParam);
+		return DefWindowProcA(hWnd, msg, wParam, lParam);
 	}
 	return 0;
 }
@@ -704,164 +710,38 @@ void Test()
 {
 	a3::file_content fc = a3::Platform.LoadFileContent("Resources/Axis.obj");
 
-	u8* buffer = (u8*)fc.Buffer;
+	v3* vertices = 0;
+	u32* faces = 0;
 
-	v3* vertices = a3Malloc(sizeof(v3) * 500, v3);
-	i32 vc = 0, vn = 500;
-	v2* texCoords = a3Malloc(sizeof(v2) * 500, v2);
-	i32 tc = 0, tn = 500;
-	v2* normals = a3Malloc(sizeof(v2) * 500, v2);
-	i32 nc = 0, nn = 500;
-	u32* faces = a3Malloc(sizeof(u32) * 500, u32);
-	i32 ic = 0, in = 500;
+	a3::mesh_size ms = a3::QueryMeshSizeFromBuffer(fc.Buffer);
+	if (ms.VerticesSize)
+		vertices = a3Malloc(ms.VerticesSize, v3);
+	if (ms.IndicesSize)
+		faces = a3Malloc(ms.IndicesSize, u32);
 
-	i32 numOfTraingles = 0;
-
-	auto pushVertex = [&vertices, &vc, &vn](f32 x, f32 y, f32 z) {
-		if (vc == vn)
-		{
-			vn += 50;
-			vertices = a3Realloc(vertices, sizeof(v3) * vn, v3);
-		}
-		vertices[vc++] = v3{ x,y,z };
-	};
-
-	auto pushTexCoords = [&texCoords, &tc, &tn](f32 u, f32 v) {
-		if (tc == tn)
-		{
-			tn += 50;
-			texCoords = a3Realloc(texCoords, sizeof(v2) * tn, v2);
-		}
-		texCoords[tc++] = v2{ u,v };
-	};
-
-	auto pushNormals = [&normals, &nc, &nn](f32 x, f32 y) {
-		if (nc == nn)
-		{
-			nn += 50;
-			normals = a3Realloc(normals, sizeof(v2) * nn, v2);
-		}
-		normals[nc++] = v2{ x,y };
-	};
-
-	auto pushFaces = [&faces, &ic, &in](u32 f) {
-		if (ic == in)
-		{
-			in += 50;
-			faces = a3Realloc(faces, sizeof(u32) * in, u32);
-		}
-		faces[ic++] = f;
-	};
-
-	auto moveToChar = [](u8** s, utf8 c) {
-		while (**s != c && **s != 0) (*s)++;
-		(*s)++;
-	};
-
-	u8* traverser = buffer;
-	while (*traverser != 0)
-	{
-		switch (*traverser)
-		{
-		case '#':
-		{
-			moveToChar(&traverser, '\n');
-		} break;
-		case 'v':
-		{
-			traverser++;
-			if (*traverser == ' ')
-			{
-				traverser++;
-				f32 x = a3::ParseF32((utf8*)traverser, ' ');
-				moveToChar(&traverser, ' ');
-				f32 y = a3::ParseF32((utf8*)traverser, ' ');
-				moveToChar(&traverser, ' ');
-				f32 z = a3::ParseF32((utf8*)traverser, ' ');
-				pushVertex(x, y, z);
-				moveToChar(&traverser, '\n');
-			}
-			else
-			{
-				utf8 type = *traverser++;
-				traverser++;
-				switch (type)
-				{
-				case 't':
-				{
-					traverser++;
-					f32 x = a3::ParseF32((utf8*)traverser, ' ');
-					moveToChar(&traverser, ' ');
-					f32 y = a3::ParseF32((utf8*)traverser, ' ');
-					moveToChar(&traverser, '\n');
-					pushTexCoords(x, y);
-				} break;
-				case 'n':
-				{
-					traverser++;
-					f32 x = a3::ParseF32((utf8*)traverser, ' ');
-					moveToChar(&traverser, ' ');
-					f32 y = a3::ParseF32((utf8*)traverser, ' ');
-					moveToChar(&traverser, '\n');
-					pushNormals(x, y);
-				} break;
-				}
-				moveToChar(&traverser, '\n');
-			}
-		} break;
-		case 'f':
-		{
-			traverser++;
-			u32 f0 = a3::ParseU32((utf8*)traverser, ' ');
-			moveToChar(&traverser, ' ');
-			u32 f1 = a3::ParseU32((utf8*)traverser, ' ');
-			moveToChar(&traverser, ' ');
-			u32 f2 = a3::ParseU32((utf8*)traverser, ' ');
-			moveToChar(&traverser, '\n');
-			numOfTraingles++;
-			pushFaces(f0);
-			pushFaces(f1);
-			pushFaces(f2);
-		} break;
-		case 'l':
-		{
-			moveToChar(&traverser, '\n');
-		} break;
-		default:
-		{
-			if (*traverser == 's' || *traverser == 'o')
-			{
-				moveToChar(&traverser, '\n');
-			}
-			else
-			{
-				a3TriggerBreakPoint(); // Error:: Not object file
-			}
-		}
-		}
-	}
+	a3::mesh m = a3::DecodeMeshFromBuffer(fc.Buffer, vertices, 0, 0, faces);
 
 	a3::Platform.FreeFileContent(fc);
 }
 
 
-#define A3_WINDOW_CLASS_NAME L"a3WindowClass"
+#define A3_WINDOW_CLASS_NAME "a3WindowClass"
 
 i32 a3Main()
 {
-	HMODULE hInstance = GetModuleHandleW(0);
+	HMODULE hInstance = GetModuleHandleA(0);
 
-	WNDCLASSEXW wndClassExW = {};
-	wndClassExW.cbSize = sizeof(wndClassExW);
-	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
-	wndClassExW.lpfnWndProc = WndProc;
-	wndClassExW.hInstance = hInstance;
-	wndClassExW.lpszClassName = A3_WINDOW_CLASS_NAME;
+	WNDCLASSEXA wndClassExA = {};
+	wndClassExA.cbSize = sizeof(wndClassExA);
+	wndClassExA.style = CS_HREDRAW | CS_VREDRAW;
+	wndClassExA.lpfnWndProc = WndProc;
+	wndClassExA.hInstance = hInstance;
+	wndClassExA.lpszClassName = A3_WINDOW_CLASS_NAME;
 	//TODO(Zero): Put icons
 	//wndClassExW.hIcon = 
 	//wndClassExW.hIconSm =
-	wndClassExW.hCursor = LoadCursorW(hInstance, IDC_ARROW);
-	RegisterClassExW(&wndClassExW);
+	wndClassExA.hCursor = LoadCursorA(hInstance, IDC_ARROW);
+	RegisterClassExA(&wndClassExA);
 
 	DWORD wndStyles = WS_OVERLAPPEDWINDOW;
 	i32 width = A3_WINDOW_WIDTH;
@@ -872,14 +752,13 @@ i32 a3Main()
 	AdjustWindowRectEx(&wrc, wndStyles, FALSE, 0);
 	width = wrc.right - wrc.left;
 	height = wrc.bottom - wrc.top;
-	HWND hWnd = CreateWindowExW(0, A3_WINDOW_CLASS_NAME, L"a3 Ray Tracer", wndStyles, CW_USEDEFAULT, CW_USEDEFAULT, width, height, A3NULL, A3NULL, hInstance, 0);
+	HWND hWnd = CreateWindowExA(0, A3_WINDOW_CLASS_NAME, "a3 Ray Tracer", wndStyles, CW_USEDEFAULT, CW_USEDEFAULT, width, height, A3NULL, A3NULL, hInstance, 0);
 	if (!hWnd)
 	{
 		a3LogError("Window could not be created!");
 		return 1;
 	}
 	a3Log("Window of resolution {i} X {i} created.", A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT);
-	HDC hDC = GetDC(hWnd);
 
 	HRESULT hr = CoInitializeEx(0, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
@@ -889,9 +768,8 @@ i32 a3Main()
 		return -1;
 	}
 
-	Test();
-
-	// NOTE(Zero): Seeding for random generator is done here
+	// NOTE(Zero):
+	// Seeding for random generator is done here
 	{
 		u32 seeds[16];
 		LARGE_INTEGER li;
@@ -903,27 +781,14 @@ i32 a3Main()
 		a3::InitializeGenerator(seeds);
 	}
 
-	{
-		a3::random_generator<f32> g(500, 600);
-		a3LogTrace("Random (500, 600): {f}", g.Get());
-		a3LogTrace("Random (500, 600): {f}", g.Get());
-		a3LogTrace("Random (500, 600): {f}", g.Get());
-	}
-
-	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::shaders::GLFontVertex, a3::shaders::GLFontFragment);
-	fontRenderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
-	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
-	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
-
+	Test();
 	a3::basic2d_renderer renderer = a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment);
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
-	a3::ui_context ui(1280.0f, 720.0f);
-
 	a3::image* temp = a3::Asset.LoadImageFromFile(19, "Resources/BigSmile.png");
-
 	a3::image img = a3::CreateImageBuffer(1280, 720);
 	a3::FillImageBuffer(&img, a3::color::Black);
+
 
 	a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
 	a3::FillTriangle(&img, v2{ 50.0f, 50.0f }, v2{ 100.0f, 100.0f }, v2{ 30.0f, 100.0f }, a3::color::Green);
@@ -944,12 +809,7 @@ i32 a3Main()
 	a3::image_texture* raw = a3::Asset.LoadTexture2DFromPixels(13, img.Pixels, img.Width, img.Height, img.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* fontback = a3::Asset.LoadTexture2DFromPixels(14, fontbg.Pixels, fontbg.Width, fontbg.Height, fontbg.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 
-	ShowWindow(hWnd, SW_SHOW);
-	UpdateWindow(hWnd);
 	a3Log("Window displayed.");
-
-	win32_user_data* userData = Win32GetUserData();
-	userData->windowHandle = hWnd;
 
 	a3::input_info oldInput = {};
 	LARGE_INTEGER performanceFrequency;
@@ -959,23 +819,36 @@ i32 a3Main()
 
 	b32 renderDebugInformation = true;
 
+	ShowWindow(hWnd, SW_SHOWNORMAL);
+	UpdateWindow(hWnd);
+
 	f32 deltaTime = 0.0f;
+	win32_user_data* userData = Win32GetUserData();
+	HDC windowDeviceContext = GetDC(userData->windowHandle);
+
+
+	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::shaders::GLFontVertex, a3::shaders::GLFontFragment);
+	fontRenderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
+	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
+	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
+	a3::ui_context ui(1280.0f, 720.0f);
 
 	b32 shouldRun = true;
 	while (shouldRun)
 	{
 		MSG sMsg;
-		while (PeekMessageW(&sMsg, A3NULL, 0, 0, PM_REMOVE))
+		while (PeekMessageA(&sMsg, A3NULL, 0, 0, PM_REMOVE))
 		{
-			if (sMsg.message == WM_QUIT || sMsg.message == WM_DESTROY)
+			if (sMsg.message == WM_QUIT)
 			{
 				shouldRun = false;
 				a3Log("Quitting");
+				break;
 			}
 			else
 			{
 				TranslateMessage(&sMsg);
-				DispatchMessageW(&sMsg);
+				DispatchMessageA(&sMsg);
 			}
 		}
 
@@ -1054,7 +927,7 @@ i32 a3Main()
 #endif
 		}
 
-		SwapBuffers(hDC);
+		SwapBuffers(windowDeviceContext);
 	}
 
 	return 0;

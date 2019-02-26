@@ -58,7 +58,7 @@ namespace a3 {
 		v3* Vertices;
 		v2* TextureCoords;
 		v2* Normals;
-		u32* Faces;
+		u32* Indices;
 		u32 NumOfTriangles;
 	};
     
@@ -67,7 +67,7 @@ namespace a3 {
 		u64 VerticesSize;
 		u64 TextureCoordsSize;
 		u64 NormalsSize;
-		u64 FacesSize;
+		u64 IndicesSize;
 		u32 NumOfTriangles;
 	};
     
@@ -439,11 +439,11 @@ namespace a3 {
                     if (*traverser == ' ')
                     {
                         traverser++;
-                        f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                        f32 x = a3::ParseF32((utf8*)traverser);
                         moveToChar(&traverser, ' ');
-                        f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                        f32 y = a3::ParseF32((utf8*)traverser);
                         moveToChar(&traverser, ' ');
-                        f32 z = a3::ParseF32((utf8*)traverser, ' ');
+                        f32 z = a3::ParseF32((utf8*)traverser);
                         fnVertex(x, y, z, ctx);
                         moveToChar(&traverser, '\n');
                     }
@@ -456,18 +456,18 @@ namespace a3 {
                             case 't':
                             {
                                 traverser++;
-                                f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                                f32 x = a3::ParseF32((utf8*)traverser);
                                 moveToChar(&traverser, ' ');
-                                f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                                f32 y = a3::ParseF32((utf8*)traverser);
                                 moveToChar(&traverser, '\n');
                                 fnTexCoords(x, y, ctx);
                             } break;
                             case 'n':
                             {
                                 traverser++;
-                                f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                                f32 x = a3::ParseF32((utf8*)traverser);
                                 moveToChar(&traverser, ' ');
-                                f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                                f32 y = a3::ParseF32((utf8*)traverser);
                                 moveToChar(&traverser, '\n');
                                 fnNorms(x, y, ctx);
                             } break;
@@ -477,12 +477,12 @@ namespace a3 {
                 } break;
                 case 'f':
                 {
-                    traverser++;
-                    u32 f0 = a3::ParseU32((utf8*)traverser, ' ');
+                    traverser+=2;
+                    u32 f0 = a3::ParseU32((utf8*)traverser);
                     moveToChar(&traverser, ' ');
-                    u32 f1 = a3::ParseU32((utf8*)traverser, ' ');
+                    u32 f1 = a3::ParseU32((utf8*)traverser);
                     moveToChar(&traverser, ' ');
-                    u32 f2 = a3::ParseU32((utf8*)traverser, ' ');
+                    u32 f2 = a3::ParseU32((utf8*)traverser);
                     moveToChar(&traverser, '\n');
                     numOfTraingles++;
                     fnFaces(f0, f1, f2, ctx);
@@ -560,7 +560,6 @@ namespace a3 {
                 } break;
                 case 'f':
                 {
-                    traverser++;
                     nTriangles++;
                     moveToChar(&traverser, '\n');
                 } break;
@@ -586,7 +585,7 @@ namespace a3 {
         result.VerticesSize = sizeof(v3) * nVertices;
         result.TextureCoordsSize = sizeof(v2) * nTextures;
         result.NormalsSize = sizeof(v2) * nNormals;
-        result.FacesSize = sizeof(u32) * nTriangles;
+        result.IndicesSize = sizeof(u32) * nTriangles * 3;
         result.NumOfTriangles = nTriangles;
         
         return result;
@@ -598,7 +597,7 @@ namespace a3 {
         result.Vertices = pVertices;
         result.TextureCoords = pTexCoords;
         result.Normals = pNormals;
-        result.Faces = pFaces;
+        result.Indices = pFaces;
         
         auto moveToChar = [](u8** s, utf8 c) {
             while (**s != c && **s != 0) (*s)++;
@@ -621,11 +620,11 @@ namespace a3 {
                     if (*traverser == ' ')
                     {
                         traverser++;
-                        f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                        f32 x = a3::ParseF32((utf8*)traverser);
                         moveToChar(&traverser, ' ');
-                        f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                        f32 y = a3::ParseF32((utf8*)traverser);
                         moveToChar(&traverser, ' ');
-                        f32 z = a3::ParseF32((utf8*)traverser, ' ');
+                        f32 z = a3::ParseF32((utf8*)traverser);
                         *pVertices++ = v3{ x, y, z };
                         moveToChar(&traverser, '\n');
                     }
@@ -638,18 +637,18 @@ namespace a3 {
                             case 't':
                             {
                                 traverser++;
-                                f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                                f32 x = a3::ParseF32((utf8*)traverser);
                                 moveToChar(&traverser, ' ');
-                                f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                                f32 y = a3::ParseF32((utf8*)traverser);
                                 moveToChar(&traverser, '\n');
                                 *pTexCoords++ = v2{ x, y };
                             } break;
                             case 'n':
                             {
                                 traverser++;
-                                f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                                f32 x = a3::ParseF32((utf8*)traverser);
                                 moveToChar(&traverser, ' ');
-                                f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                                f32 y = a3::ParseF32((utf8*)traverser);
                                 moveToChar(&traverser, '\n');
                                 *pNormals++ = v2{ x, y };
                             } break;
@@ -659,12 +658,12 @@ namespace a3 {
                 } break;
                 case 'f':
                 {
-                    traverser++;
-                    u32 f0 = a3::ParseU32((utf8*)traverser, ' ');
+                    traverser+=2;
+                    u32 f0 = a3::ParseU32((utf8*)traverser);
                     moveToChar(&traverser, ' ');
-                    u32 f1 = a3::ParseU32((utf8*)traverser, ' ');
+                    u32 f1 = a3::ParseU32((utf8*)traverser);
                     moveToChar(&traverser, ' ');
-                    u32 f2 = a3::ParseU32((utf8*)traverser, ' ');
+                    u32 f2 = a3::ParseU32((utf8*)traverser);
                     moveToChar(&traverser, '\n');
                     numOfTraingles++;
                     *pFaces++ = f0;

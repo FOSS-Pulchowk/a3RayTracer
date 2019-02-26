@@ -27,14 +27,14 @@ inline void* GLFunctionLoader(s8 name)
 inline void GLLoad(HWND hWnd)
 {
 	a3Log("Initializing OpenGL context");
-	WNDCLASSEXW wndClassExW = {};
-	wndClassExW.cbSize = sizeof(wndClassExW);
-	wndClassExW.style = CS_HREDRAW | CS_VREDRAW;
-	wndClassExW.lpfnWndProc = DefWindowProcW;
-	wndClassExW.hInstance = GetModuleHandleW(0);
-	wndClassExW.lpszClassName = L"xDummyWindow";
-	RegisterClassExW(&wndClassExW);
-	HWND hDummyWnd = CreateWindowExW(0, L"xDummyWindow", L"xDummyWindow", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, GetModuleHandleW(0), 0);
+	WNDCLASSEXA wndClassExA = {};
+	wndClassExA.cbSize = sizeof(wndClassExA);
+	wndClassExA.style = CS_HREDRAW | CS_VREDRAW;
+	wndClassExA.lpfnWndProc = DefWindowProcA;
+	wndClassExA.hInstance = GetModuleHandleA(0);
+	wndClassExA.lpszClassName = "xDummyWindow";
+	RegisterClassExA(&wndClassExA);
+	HWND hDummyWnd = CreateWindowExA(0, "xDummyWindow", "xDummyWindow", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, GetModuleHandleA(0), 0);
 	HDC hDummyDC = GetDC(hDummyWnd);
 	PIXELFORMATDESCRIPTOR dummyPDF = {};
 	dummyPDF.nSize = sizeof(dummyPDF);
@@ -58,7 +58,7 @@ inline void GLLoad(HWND hWnd)
 	wglCreateContextAttribsARB = (tag_wglCreateContextAttribsARB*)wglGetProcAddress("wglCreateContextAttribsARB");
 	wglChoosePixelFormatARB = (tag_wglChoosePixelFormatARB*)wglGetProcAddress("wglChoosePixelFormatARB");
 	gl_version glVersion;
-	g_OpenGLLibrary = LoadLibraryW(L"opengl32.dll");
+	g_OpenGLLibrary = LoadLibraryA("opengl32.dll");
 	a3Assert(GladLoadGLLoader(GLFunctionLoader, &glVersion));
 	a3Log("OpenGL Context created. Loaded OpenGL Version: {i}.{i}", glVersion.major, glVersion.minor);
 	FreeLibrary(g_OpenGLLibrary);

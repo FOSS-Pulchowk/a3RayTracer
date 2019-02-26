@@ -105,9 +105,15 @@ inline i32 a3::WriteF32ToBuffer(utf8* buffer, u32 length, f32 number)
 u32 a3::ParseU32(s8 buffer, utf8 end)
 {
 	u32 result = 0;
-	for (utf8* s = (utf8*)buffer; *s != end; ++s)
+
+	utf8* s = (utf8*)buffer;
+	while (*s != end)
 	{
-		result = result * 10 + (*s - 48);
+		if (*s > 47 && *s < 58)
+			result = result * 10 + (*s - 48);
+		else
+			break;
+		++s;
 	}
 	return result;
 }
@@ -119,25 +125,32 @@ f32 a3::ParseF32(s8 buffer, utf8 end)
 	f32 result = 0.0f;
 	f32 divisor = 1.0f;
 	f32 dividend = 0.0f;
-	for (utf8* s = (utf8*)buffer; *s != end && *s != 'f' && *s != 'F'; ++s)
+	utf8* s = (utf8*)buffer;
+	while (*s != end && *s != 'f' && *s != 'F')
 	{
 		if (*s == '.')
 		{
 			period = true;
-			continue;
 		}
-		if (*s == '-')
+		else if (*s == '-')
 		{
 			negative = -1.0f;
-			continue;
 		}
-		if (period)
+		else if (*s > 47 && *s < 58)
 		{
-			dividend = dividend * 10.0f + (f32)(*s - 48);
-			divisor *= 10.0f;
+			if (period)
+			{
+				dividend = dividend * 10.0f + (f32)(*s - 48);
+				divisor *= 10.0f;
+			}
+			else
+				result = result * 10.0f + (f32)(*s - 48);
 		}
 		else
-			result = result * 10.0f + (f32)(*s - 48);
+		{
+			break;
+		}
+		++s;
 	}
 	return negative * (result + dividend / divisor);
 }
