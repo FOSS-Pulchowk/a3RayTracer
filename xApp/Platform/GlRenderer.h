@@ -95,9 +95,6 @@ struct a3_renderer
 	a3::basic2d_renderer Create2DRenderer(s8 vSource, s8 fSource) const;
 	a3::font_renderer CreateFontRenderer(s8 vSource, s8 fSource) const;
 	a3::batch2d_renderer CreateBatch2DRenderer(s8 vSource, s8 fSource) const;
-    void Release(a3::basic2d_renderer& r) const;
-    void Release(a3::font_renderer& r) const;
-    void Release(a3::batch2d_renderer& r) const;
 };
 
 namespace a3 {
