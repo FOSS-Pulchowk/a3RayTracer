@@ -3,8 +3,8 @@
 #include "GlRenderer.h"
 #include "GLSL/GLSLShaders.h"
 #include "Utility/AssetManager.h"
-#include "Assets.h"
 #include "Math/Color.h"
+#include "Utility/Memory.h"
 
 //
 // DECLARATIONS
