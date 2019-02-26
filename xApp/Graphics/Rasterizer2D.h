@@ -265,7 +265,7 @@ namespace a3 {
 				// NOTE(Zero):
 				// Here 1 is added to the step to balance the 0.5f reduction in x
 				// 0.5f is reduced from x because we sample from the center of the pixel
-				i32 hstep = 2 * (i32)(x1 - x0 + 0.5f) + 1;
+				i32 hstep = 2 * (i32)(x1 - x0 + 0.5f);
 				f32 x = x0 - 0.5f;
 				for (i32 j = 0; j < hstep; ++j)
 				{
@@ -295,7 +295,7 @@ namespace a3 {
 				// NOTE(Zero):
 				// Here 1 is added to the step to balance the 0.5f reduction in x
 				// 0.5f is reduced from x because we sample from the center of the pixel
-				i32 hstep = 2 * (i32)(x1 - x0 + 0.5f) + 1;
+				i32 hstep = 2 * (i32)(x1 - x0 + 0.5f);
 				f32 x = x0 - 0.5f;
 				for (i32 j = 0; j < hstep; ++j)
 				{
