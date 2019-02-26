@@ -895,13 +895,13 @@ i32 a3Main()
 			_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
 			fontRenderer.Render(buffer, v2{ 0.0f, 700.0f }, 20.0f, a3::color::GreenYellow);
 
-			_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
+			_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fMB", (f32)a3::Platform.GetTotalHeapAllocated() / (f32)a3MegaBytes(1));
 			fontRenderer.Render(buffer, v2{ 0.0f, 685.0f }, 15.0f, a3::color::GreenYellow);
-			_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
+			_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fMB", (f32)a3::Platform.GetTotalHeapFreed() / (f32)a3MegaBytes(1));
 			fontRenderer.Render(buffer, v2{ 0.0f, 670.0f }, 15.0f, a3::color::GreenYellow);
-			_snprintf_s(buffer, 256, 256, "Total App Memory Used: %.2fKB", (f32)a3::Platform.GetPersistantHeapAllocated() / (1024.0f));
+			_snprintf_s(buffer, 256, 256, "Total App Memory Used: %.2fMB", (f32)a3::Platform.GetPersistantHeapAllocated() / (f32)a3MegaBytes(1));
 			fontRenderer.Render(buffer, v2{ 0.0f, 655.0f }, 15.0f, a3::color::GreenYellow);
-			_snprintf_s(buffer, 256, 256, "Total App Memory Freed: %.2fKB", (f32)a3::Platform.GetPersistantHeapFreed() / (1024.0f));
+			_snprintf_s(buffer, 256, 256, "Total App Memory Freed: %.2fMB", (f32)a3::Platform.GetPersistantHeapFreed() / (f32)a3MegaBytes(1));
 			fontRenderer.Render(buffer, v2{ 0.0f, 640.0f }, 15.0f, a3::color::GreenYellow);
 #endif
 		}
