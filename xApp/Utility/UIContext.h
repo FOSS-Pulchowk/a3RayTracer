@@ -151,6 +151,11 @@ inline b32 a3::ui_context::Button(i32 uid, v2 dimension, s8 desc)
 	position += 0.25f * dimension;
 	v2 fontRegionDim = dimension;
 	fontRegionDim.y *= 0.6f;
+	if (m_Fontq.QueryEmptyCounts() == 0)
+	{
+		EndFrame();
+		BeginFrame(m_RenderPosition);
+	}
 	m_Fontq.Emplace(desc, position, position + fontRegionDim, fontRegionDim.y, (m_Active != uid && m_Hot != uid) ? m_UIFontColor : m_UIActiveFontColor);
 	return result;
 }
@@ -172,6 +177,11 @@ inline b32 a3::ui_context::Checkbox(i32 uid, v2 dimension, b32 checked, s8 desc)
 	position += (0.25f * dimension + v2{ 0.1f * dimension.x, 0.0f });
 	v2 fontRegionDim = dimension;
 	fontRegionDim.y *= 0.6f;
+	if (m_Fontq.QueryEmptyCounts() == 0)
+	{
+		EndFrame();
+		BeginFrame(m_RenderPosition);
+	}
 	m_Fontq.Emplace(desc, position, position + fontRegionDim, fontRegionDim.y, (m_Active != uid && m_Hot != uid) ? m_UIFontColor : m_UIActiveFontColor);
 	return result;
 }
