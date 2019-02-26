@@ -22,6 +22,7 @@ namespace a3 {
         u8* GetWorkingBufferEnd(); // NOTE(Zero): Return 1 past the end
         u64 GetWorkingBufferLength();
         u8* GetWorkingBufferPointer();
+        u8 GetCurrentPointerValue();
         stream& Seek(u64 position);
         stream& MoveForward(u64 step);
         stream& MoveBackward(u64 step);
@@ -87,6 +88,11 @@ namespace a3 {
     u8* stream::GetWorkingBufferPointer()
     {
         return m_Current;
+    }
+    
+    u8 stream::GetCurrentPointerValue()
+    {
+        return *m_Current;
     }
     
     stream& stream::Seek(u64 position)
