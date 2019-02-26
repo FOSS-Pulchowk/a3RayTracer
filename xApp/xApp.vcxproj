@@ -277,6 +277,7 @@
     <ClInclude Include="Math\Color.h" />
     <ClInclude Include="Platform\Assets.h" />
     <ClInclude Include="Platform\GLSL\GLSLShaders.h" />
+    <ClInclude Include="Utility\Stream.h" />
     <ClInclude Include="Utility\UIContext.h" />
     <ClInclude Include="Utility\AssetData.h" />
     <ClInclude Include="Utility\STBLibs.h" />
