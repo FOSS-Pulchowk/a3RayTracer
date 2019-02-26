@@ -157,8 +157,8 @@ namespace a3 {
 
 		f32 bx = (x - (f32)px);
 		f32 by = (y - (f32)py);
-		bx = (bx > 0.5f) ? (bx - 0.5f) : bx;
-		by = (by > 0.5f) ? (by - 0.5f) : by;
+		bx = (bx > 0.5f) ? (1.0f - bx) : bx;
+		by = (by > 0.5f) ? (1.0f - by) : by;
 		f32 blend = 4.0f * bx * by;
 		u32 hc = a3::GetPixel(img, px, py);
 		a3::SetPixel(img, px, py, a3Normalv4ToRGBA(a3::BlendColor(color, a3MakeRGBAv4(hc), blend)));
@@ -251,10 +251,12 @@ namespace a3 {
 		{
 			if (p2->x > p1->x) a3::Swap(&p2->x, &p1->x);
 
+			//p0->y -= 0.5f;
+
 			f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
 			f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
+			i32 vstep = 2 * (i32)(p1->y - p0->y + 0.5f);
 
-			i32 vstep = (i32)(p1->y - p0->y + 0.5f);
 			f32 y = p0->y;
 			for (i32 i = 0; i < vstep; ++i)
 			{
@@ -263,14 +265,14 @@ namespace a3 {
 				// NOTE(Zero):
 				// Here 1 is added to the step to balance the 0.5f reduction in x
 				// 0.5f is reduced from x because we sample from the center of the pixel
-				i32 hstep = (i32)(x1 - x0) + 1;
+				i32 hstep = 2 * (i32)(x1 - x0 + 0.5f) + 1;
 				f32 x = x0 - 0.5f;
 				for (i32 j = 0; j < hstep; ++j)
 				{
 					a3::SetPixelColor(img, x, y, fillColor);
-					++x;
+					x+=0.5f;
 				}
-				++y;
+				y+=0.5f;
 			}
 		};
 
@@ -278,10 +280,13 @@ namespace a3 {
 		{
 			if (p2->x > p1->x) a3::Swap(&p2->x, &p1->x);
 
+			//p1->y -= 0.5f;
+			//p2->y -= 0.5f;
+
 			f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
 			f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
+			i32 vstep = 2 * (i32)(p0->y - p1->y + 0.5f);
 
-			i32 vstep = (i32)(p0->y - p1->y + 0.5f);
 			f32 y = p1->y;
 			for (i32 i = 0; i < vstep; ++i)
 			{
@@ -290,14 +295,14 @@ namespace a3 {
 				// NOTE(Zero):
 				// Here 1 is added to the step to balance the 0.5f reduction in x
 				// 0.5f is reduced from x because we sample from the center of the pixel
-				i32 hstep = (i32)(x1 - x0) + 1;
+				i32 hstep = 2 * (i32)(x1 - x0 + 0.5f) + 1;
 				f32 x = x0 - 0.5f;
 				for (i32 j = 0; j < hstep; ++j)
 				{
 					a3::SetPixelColor(img, x, y, fillColor);
-					++x;
+					x+=0.5f;
 				}
-				++y;
+				y+=0.5f;
 			}
 		};
 
