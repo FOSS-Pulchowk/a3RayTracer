@@ -152,7 +152,6 @@ inline b32 a3::ui_context::Button(i32 uid, v2 dimension, s8 desc)
 	v2 fontRegionDim = dimension;
 	fontRegionDim.y *= 0.6f;
 	m_Fontq.Emplace(desc, position, position + fontRegionDim, fontRegionDim.y, (m_Active != uid && m_Hot != uid) ? m_UIFontColor : m_UIActiveFontColor);
-	//m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, (m_Active != uid && m_Hot != uid) ? m_UIFontColor : m_UIActiveFontColor);
 	return result;
 }
 
@@ -174,7 +173,6 @@ inline b32 a3::ui_context::Checkbox(i32 uid, v2 dimension, b32 checked, s8 desc)
 	v2 fontRegionDim = dimension;
 	fontRegionDim.y *= 0.6f;
 	m_Fontq.Emplace(desc, position, position + fontRegionDim, fontRegionDim.y, (m_Active != uid && m_Hot != uid) ? m_UIFontColor : m_UIActiveFontColor);
-	//m_FontRenderer.Render(desc, position, position + fontRegionDim, fontRegionDim.y, (m_Active != uid && m_Hot != uid) ? m_UIFontColor : m_UIActiveFontColor);
 	return result;
 }
 
@@ -255,8 +253,5 @@ inline void a3::ui_context::RenderUI(i32 uid, v2 position, v2 dimension, v4 texD
 	{
 		finalColor = m_UIColor;
 	}
-    
-	//m_Batch2DRenderer.BeginFrame();
 	m_Batch2DRenderer.Push(position, dimension, finalColor, texDimension);
-	//m_Batch2DRenderer.EndFrame();
 }
