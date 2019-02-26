@@ -1,0 +1,15 @@
+version(1);
+
+project_name = "a3";
+
+patterns = {
+"**.cpp",
+"**.h",
+"**.c",
+"**.4coder"
+};
+
+blacklist_patterns = {
+".*",
+};
+
