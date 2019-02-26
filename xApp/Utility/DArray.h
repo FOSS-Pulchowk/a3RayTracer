@@ -34,7 +34,7 @@ namespace a3 {
 		inline Type& Push(const Type& e);
 		
 		template <typename ...Args>
-		inline Type& Emplace(Args... args);
+		inline Type& Emplace(Args&&... args);
 
 		inline Type& Pop();
 		inline u64 QuerySize() const;
@@ -161,7 +161,7 @@ namespace a3 {
 
 	template<typename Type>
 	template<typename ...Args>
-	inline Type & darray<Type>::Emplace(Args ...args)
+	inline Type & darray<Type>::Emplace(Args&& ...args)
 	{
 		if (m_Size == m_Capacity) {
 			if (!Resize(m_Capacity + 10))

@@ -30,9 +30,6 @@
     <ClCompile Include="a3Implementation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utility\DString.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Platform\GLPlatform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

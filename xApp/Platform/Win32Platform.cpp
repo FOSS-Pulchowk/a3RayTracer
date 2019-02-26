@@ -9,6 +9,7 @@
 #include "Math/Math.h"
 #include "Math/Color.h"
 #include "Utility/UIContext.h"
+#include "Utility/Algorithm.h"
 
 #include "HardwarePlatform.h"
 
@@ -529,6 +530,11 @@ void * operator new(u64 size, void * where)
 	return where;
 }
 
+void * operator new[](u64 size, void * where)
+{
+	return where;
+}
+
 void operator delete(void* ptr)
 {
 	a3::Platform.Free(ptr);
@@ -537,6 +543,14 @@ void operator delete(void* ptr)
 void operator delete[](void* ptr)
 {
 	a3::Platform.Free(ptr);
+}
+
+void operator delete[](void*, void*)
+{
+}
+
+void operator delete(void*, void*)
+{
 }
 
 // TODO(Zero):
@@ -652,6 +666,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 		return 0;
 
+	case WM_QUIT:
+		PostQuitMessage(0);
+		return 0;
+
 	default:
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
@@ -680,6 +698,152 @@ struct entity
 	v2 moveFinalPosition;
 	f32 moveFrameTime;
 };
+
+
+void Test()
+{
+	a3::file_content fc = a3::Platform.LoadFileContent("Resources/Axis.obj");
+
+	u8* buffer = (u8*)fc.Buffer;
+
+	v3* vertices = a3Malloc(sizeof(v3) * 500, v3);
+	i32 vc = 0, vn = 500;
+	v2* texCoords = a3Malloc(sizeof(v2) * 500, v2);
+	i32 tc = 0, tn = 500;
+	v2* normals = a3Malloc(sizeof(v2) * 500, v2);
+	i32 nc = 0, nn = 500;
+	u32* faces = a3Malloc(sizeof(u32) * 500, u32);
+	i32 ic = 0, in = 500;
+
+	i32 numOfTraingles = 0;
+
+	auto pushVertex = [&vertices, &vc, &vn](f32 x, f32 y, f32 z) {
+		if (vc == vn)
+		{
+			vn += 50;
+			vertices = a3Realloc(vertices, sizeof(v3) * vn, v3);
+		}
+		vertices[vc++] = v3{ x,y,z };
+	};
+
+	auto pushTexCoords = [&texCoords, &tc, &tn](f32 u, f32 v) {
+		if (tc == tn)
+		{
+			tn += 50;
+			texCoords = a3Realloc(texCoords, sizeof(v2) * tn, v2);
+		}
+		texCoords[tc++] = v2{ u,v };
+	};
+
+	auto pushNormals = [&normals, &nc, &nn](f32 x, f32 y) {
+		if (nc == nn)
+		{
+			nn += 50;
+			normals = a3Realloc(normals, sizeof(v2) * nn, v2);
+		}
+		normals[nc++] = v2{ x,y };
+	};
+
+	auto pushFaces = [&faces, &ic, &in](u32 f) {
+		if (ic == in)
+		{
+			in += 50;
+			faces = a3Realloc(faces, sizeof(u32) * in, u32);
+		}
+		faces[ic++] = f;
+	};
+
+	auto moveToChar = [](u8** s, utf8 c) {
+		while (**s != c && **s != 0) (*s)++;
+		(*s)++;
+	};
+
+	u8* traverser = buffer;
+	while (*traverser != 0)
+	{
+		switch (*traverser)
+		{
+		case '#':
+		{
+			moveToChar(&traverser, '\n');
+		} break;
+		case 'v':
+		{
+			traverser++;
+			if (*traverser == ' ')
+			{
+				traverser++;
+				f32 x = a3::ParseF32((utf8*)traverser, ' ');
+				moveToChar(&traverser, ' ');
+				f32 y = a3::ParseF32((utf8*)traverser, ' ');
+				moveToChar(&traverser, ' ');
+				f32 z = a3::ParseF32((utf8*)traverser, ' ');
+				pushVertex(x, y, z);
+				moveToChar(&traverser, '\n');
+			}
+			else
+			{
+				utf8 type = *traverser++;
+				traverser++;
+				switch (type)
+				{
+				case 't':
+				{
+					traverser++;
+					f32 x = a3::ParseF32((utf8*)traverser, ' ');
+					moveToChar(&traverser, ' ');
+					f32 y = a3::ParseF32((utf8*)traverser, ' ');
+					moveToChar(&traverser, '\n');
+					pushTexCoords(x, y);
+				} break;
+				case 'n':
+				{
+					traverser++;
+					f32 x = a3::ParseF32((utf8*)traverser, ' ');
+					moveToChar(&traverser, ' ');
+					f32 y = a3::ParseF32((utf8*)traverser, ' ');
+					moveToChar(&traverser, '\n');
+					pushNormals(x, y);
+				} break;
+				}
+				moveToChar(&traverser, '\n');
+			}
+		} break;
+		case 'f':
+		{
+			traverser++;
+			u32 f0 = a3::ParseU32((utf8*)traverser, ' ');
+			moveToChar(&traverser, ' ');
+			u32 f1 = a3::ParseU32((utf8*)traverser, ' ');
+			moveToChar(&traverser, ' ');
+			u32 f2 = a3::ParseU32((utf8*)traverser, ' ');
+			moveToChar(&traverser, '\n');
+			numOfTraingles++;
+			pushFaces(f0);
+			pushFaces(f1);
+			pushFaces(f2);
+		} break;
+		case 'l':
+		{
+			moveToChar(&traverser, '\n');
+		} break;
+		default:
+		{
+			if (*traverser == 's' || *traverser == 'o')
+			{
+				moveToChar(&traverser, '\n');
+			}
+			else
+			{
+				a3TriggerBreakPoint(); // Error:: Not object file
+			}
+		}
+		}
+	}
+
+	a3::Platform.FreeFileContent(fc);
+}
+
 
 #define A3_WINDOW_CLASS_NAME L"a3WindowClass"
 
@@ -725,6 +889,27 @@ i32 a3Main()
 		return -1;
 	}
 
+	Test();
+
+	// NOTE(Zero): Seeding for random generator is done here
+	{
+		u32 seeds[16];
+		LARGE_INTEGER li;
+		for (i32 i = 0; i < 16; ++i)
+		{
+			QueryPerformanceCounter(&li);
+			seeds[i] = li.LowPart;
+		}
+		a3::InitializeGenerator(seeds);
+	}
+
+	{
+		a3::random_generator<f32> g(500, 600);
+		a3LogTrace("Random (500, 600): {f}", g.Get());
+		a3LogTrace("Random (500, 600): {f}", g.Get());
+		a3LogTrace("Random (500, 600): {f}", g.Get());
+	}
+
 	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::shaders::GLFontVertex, a3::shaders::GLFontFragment);
 	fontRenderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
@@ -740,13 +925,14 @@ i32 a3Main()
 	a3::image img = a3::CreateImageBuffer(1280, 720);
 	a3::FillImageBuffer(&img, a3::color::Black);
 
-	//a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
-	//a3::FillTriangle(&img, v2{ 50.0f, 50.0f }, v2{ 100.0f, 100.0f }, v2{ 30.0f, 100.0f }, a3::color::Green);
-	//a3::FillTriangle(&img, v2{ 100.0f, 200.0f }, v2{ 200.0f, 300.0f }, v2{ 20.0f, 350.0f }, a3::color::White);
-	//a3::FillTriangle(&img, v2{ 50.0f, 100.0f }, v2{ 200.0f, 100.0f }, v2{ 100.0f, 300.0f }, a3::color::Blue);
-	//a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 500.0f }, v2{ 500.0f, 700.0f }, a3::color::White);
-	a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1300.0f, 500.0f }, v2{ 500.0f, 900.0f }, a3::color::White);
-	a3::FillTriangle(&img, v2{ 1000.0f, 100.0f }, v2{ 1500.0f, 200.0f }, v2{ 1600.0f, 500.0f }, a3::color::Red);
+	a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
+	a3::FillTriangle(&img, v2{ 50.0f, 50.0f }, v2{ 100.0f, 100.0f }, v2{ 30.0f, 100.0f }, a3::color::Green);
+	a3::FillTriangle(&img, v2{ 100.0f, 200.0f }, v2{ 200.0f, 300.0f }, v2{ 20.0f, 350.0f }, a3::color::White);
+	a3::FillTriangle(&img, v2{ 50.0f, 100.0f }, v2{ 200.0f, 100.0f }, v2{ 100.0f, 300.0f }, a3::color::Blue);
+	a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 500.0f }, v2{ 500.0f, 700.0f }, a3::color::White);
+	a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1300.0f, 500.0f }, v2{ 800.0f, 900.0f }, a3::color::White);
+	//a3::FillTriangle(&img, v2{ 1235.0f, 492.0f }, v2{ 1280.0f, 492.0f }, v2{ 1280.0f, 510.0f }, a3::color::Red);
+	//a3::FillTriangle(&img, v2{ 1000.0f, 100.0f }, v2{ 1500.0f, 200.0f }, v2{ 1600.0f, 500.0f }, a3::color::Red);
 	//a3::FillTriangle(&img, v2{ 500.0f, 500.0f }, v2{ 600.0f, 600.0f }, v2{ 400.0f, 600.0f }, a3::color::White);
 	//a3::FillTriangle(&img, v2{ -100.0f, 150.0f }, v2{ 150.0f, 50.0f }, v2{ 150.0f, 300.0f }, a3::color::White);
 
@@ -781,7 +967,7 @@ i32 a3Main()
 		MSG sMsg;
 		while (PeekMessageW(&sMsg, A3NULL, 0, 0, PM_REMOVE))
 		{
-			if (sMsg.message == WM_QUIT)
+			if (sMsg.message == WM_QUIT || sMsg.message == WM_DESTROY)
 			{
 				shouldRun = false;
 				a3Log("Quitting");
@@ -828,31 +1014,27 @@ i32 a3Main()
 		}
 		renderer.EndFrame();
 
-		f32 width = 100.0f;
-		f32 height = 25.0f;
-		f32 ypos = 500.0f + height + 5.0f;
+		v2 dim{ 100.0f, 25.0f };
+		ui.BeginFrame(v2{ 600.0f, 550.0f });
 
-		/*if (ui.Button(1, v2{ 600.0f, ypos }, v2{ width, height }, "Button 1"))
+		if (ui.Button(1, dim, "Button 1"))
 		{
 		}
-		ypos -= height + 5.0f;
-		if (ui.Button(2, v2{ 600.0f, ypos }, v2{ width, height }, "Button 2"))
+		if (ui.Button(2, dim, "Button 2"))
 		{
 		}
-		ypos -= height + 5.0f;
-		if (ui.Button(3, v2{ 600.0f, ypos }, v2{ width, height }, "Button 3"))
+		if (ui.Button(3, dim, "Button 3"))
 		{
 		}
-		ypos -= height + 5.0f;
-		if (ui.Button(4, v2{ 600.0f, ypos }, v2{ width, height }, "Button 4"))
+		if (ui.Button(4, dim, "Button 4"))
 		{
 		}
-		ypos -= height + 5.0f;
 		static b32 checked = false;
-		if (ui.Checkbox(5, v2{ 600.0f, ypos }, v2{ width, height }, checked, "Checkbox"))
+		if (ui.Checkbox(5, dim, checked, "Checkbox"))
 		{
 			checked = !checked;
-		}*/
+		}
+		ui.EndFrame();
 
 		if (renderDebugInformation)
 		{
@@ -861,13 +1043,13 @@ i32 a3Main()
 			_snprintf_s(buffer, 256, 256, "FPS: %d", (i32)(1.0f / deltaTime));
 			fontRenderer.Render(buffer, v2{ 0.0f, 700.0f }, 20.0f, a3::color::GreenYellow);
 
-			_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fKB", (f32)a3::Platform.GetTotalHeapAllocated() / (1024.0f));
+			_snprintf_s(buffer, 256, 256, "Total Heap Allocations: %.2fMB", (f32)a3::Platform.GetTotalHeapAllocated() / (f32)a3MegaBytes(1));
 			fontRenderer.Render(buffer, v2{ 0.0f, 685.0f }, 15.0f, a3::color::GreenYellow);
-			_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fKB", (f32)a3::Platform.GetTotalHeapFreed() / (1024.0f));
+			_snprintf_s(buffer, 256, 256, "Total Heap Freed: %.2fMB", (f32)a3::Platform.GetTotalHeapFreed() / (f32)a3MegaBytes(1));
 			fontRenderer.Render(buffer, v2{ 0.0f, 670.0f }, 15.0f, a3::color::GreenYellow);
-			_snprintf_s(buffer, 256, 256, "Total App Memory Used: %.2fKB", (f32)a3::Platform.GetPersistantHeapAllocated() / (1024.0f));
+			_snprintf_s(buffer, 256, 256, "Total App Memory Used: %.2fMB", (f32)a3::Platform.GetPersistantHeapAllocated() / (f32)a3MegaBytes(1));
 			fontRenderer.Render(buffer, v2{ 0.0f, 655.0f }, 15.0f, a3::color::GreenYellow);
-			_snprintf_s(buffer, 256, 256, "Total App Memory Freed: %.2fKB", (f32)a3::Platform.GetPersistantHeapFreed() / (1024.0f));
+			_snprintf_s(buffer, 256, 256, "Total App Memory Freed: %.2fMB", (f32)a3::Platform.GetPersistantHeapFreed() / (f32)a3MegaBytes(1));
 			fontRenderer.Render(buffer, v2{ 0.0f, 640.0f }, 15.0f, a3::color::GreenYellow);
 #endif
 		}

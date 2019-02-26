@@ -10,7 +10,7 @@
 #define A3MAXLOADGLYPHY 16
 
 namespace a3 {
-
+    
 	struct image
 	{
 		u8* Pixels;
@@ -18,7 +18,7 @@ namespace a3 {
 		i32 Height;
 		i32 Channels;
 	};
-
+    
 	struct character
 	{
 		i32 GlyphIndex;
@@ -33,7 +33,7 @@ namespace a3 {
 		f32 NormalY1;
 		f32 Advance;
 	};
-
+    
 	struct font
 	{
 		stbtt_fontinfo Info;
@@ -44,7 +44,7 @@ namespace a3 {
 		f32 HeightInPixels;
 		character Characters[A3MAXLOADGLYPHX * A3MAXLOADGLYPHY];
 	};
-
+    
 	struct font_atlas_info
 	{
 		stbtt_fontinfo Info;
@@ -52,46 +52,72 @@ namespace a3 {
 		f32 HeightInPixels;
 		character Characters[A3MAXLOADGLYPHX * A3MAXLOADGLYPHY];
 	};
-
+    
+	struct mesh
+	{
+		v3* Vertices;
+		v2* TextureCoords;
+		v2* Normals;
+		u32* Faces;
+		u32 NumOfTriangles;
+	};
+    
+	struct mesh_size
+	{
+		u64 VerticesSize;
+		u64 TextureCoordsSize;
+		u64 NormalsSize;
+		u64 FacesSize;
+		u32 NumOfTriangles;
+	};
+    
 	struct image_texture
 	{
 		u32 Id;
 		i32 Width;
 		i32 Height;
 	};
-
+    
 	struct font_texture
 	{
 		a3::image_texture Texture;
 		a3::font_atlas_info AtlasInfo;
 	};
-
+    
 	enum texture_type
 	{
 		TextureType2D
 	};
-
+    
 	enum filter
 	{
 		FilterLinear, FilterNearest
 	};
-
+    
 	enum wrap
 	{
 		WrapClampToEdge, WrapRepeat
 	};
-
+    
 	u64 QueryDecodedImageSize(void* buffer, i32 length);
 	image DecodeImageFromBuffer(void* imgeBuffer, i32 length, void* destination);
 	u64 QueryEncodedImageSize(i32 w, i32 h, i32 channels, i32 bytesPerPixel, void* pixels);
 	u64 WriteImageToBuffer(void* buffer, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
-
+    
 	u64 QueryDecodedFontSize(void* buffer, i32 length, f32 scale);
 	void QueryMaxFontDimension(void * buffer, i32 length, f32 scale, i32* x, i32* y);
 	void QueryAtlasSizeForFontSize(i32 x, i32 y, i32* w, i32* h);
 	a3::font DecodeFontFromBuffer(void* buffer, f32 scale, void* destination);
 	f32 QueryTTFontKernalAdvance(const stbtt_fontinfo & info, f32 scalingFactor, i32 glyph0, i32 glyph1);
-
+    
+    // NOTE(Zero): Returns number of triangles
+    u32 ScanMeshFromBuffer(void* buffer, void(*fnVertex)(f32, f32, f32, void*), void(*fnTexCoords)(f32, f32, void*),
+                           void(*fnNorms)(f32, f32, void*),
+                           void(*fnFaces)(u32, u32, u32, void*), void* ctx);
+    
+    mesh_size QueryMeshSizeFromBuffer(void* buffer);
+    mesh DecodeMeshFromBuffer(void* buffer, v3* pVertices, v2* pTexCoords, v2* pNormals, u32* pFaces);
+    
 }
 
 //
@@ -101,15 +127,15 @@ namespace a3 {
 #ifdef A3_IMPLEMENT_ASSETDATA
 
 namespace a3 {
-
+    
 #define A3_MAX_LOAD_GLYPH (A3MAXLOADGLYPHX * A3MAXLOADGLYPHY)
-
+    
 	struct a3_buffer
 	{
 		void* buffer;
 		u64 size;
 	};
-
+    
 	static inline void a3_STBWriteCallback(void* context, void* data, i32 size)
 	{
 		a3::file_content* fc = (a3::file_content*)context;
@@ -120,7 +146,7 @@ namespace a3 {
 			a3::MemoryCopy(fc->Buffer, data, size);
 		}
 	}
-
+    
 	static inline void a3_STBWriteBufferCallback(void* context, void* data, i32 size)
 	{
 		a3_buffer* fc = (a3_buffer*)context;
@@ -131,13 +157,13 @@ namespace a3 {
 			a3::MemoryCopy(fc->buffer, data, size);
 		}
 	}
-
-	static inline void a3_STbQueryImageSizeCallback(void* context, void* data, i32 size)
+    
+	static inline void a3_STBQueryImageSizeCallback(void* context, void* data, i32 size)
 	{
 		a3_buffer* fc = (a3_buffer*)context;
 		fc->size = size;
 	}
-
+    
 	u64 a3::QueryDecodedImageSize(void * buffer, i32 length)
 	{
 		stbi_set_flip_vertically_on_load(1);
@@ -145,7 +171,7 @@ namespace a3 {
 		stbi_info_from_memory((u8*)buffer, length, &w, &h, &n);
 		return w * h * n * sizeof(u8);
 	}
-
+    
 	a3::image a3::DecodeImageFromBuffer(void * imgeBuffer, i32 length, void * destination)
 	{
 		i32 x, y, n;
@@ -164,7 +190,7 @@ namespace a3 {
 		stbi_image_free(pixels);
 		return result;
 	}
-
+    
 	u64 a3::QueryEncodedImageSize(i32 w, i32 h, i32 channels, i32 bytesPerPixel, void * pixels)
 	{
 		i32 stride;
@@ -176,15 +202,15 @@ namespace a3 {
 			stride = w;
 		else
 			return false; // NOTE(Zero): Ouput only for 1, 3 and 4 channel images
-
+        
 		a3_buffer buffer = {};
-		if (stbi_write_png_to_func(a3_STbQueryImageSizeCallback, &buffer, w, h, channels, pixels, stride))
+		if (stbi_write_png_to_func(a3_STBQueryImageSizeCallback, &buffer, w, h, channels, pixels, stride))
 		{
 			return buffer.size;
 		}
 		return 0;
 	}
-
+    
 	u64 a3::WriteImageToBuffer(void * destination, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void * pixels)
 	{
 		stbi_flip_vertically_on_write(1);
@@ -203,7 +229,7 @@ namespace a3 {
 			stride = width;
 		else
 			return false; // NOTE(Zero): Ouput only for 1, 3 and 4 channel images
-
+        
 		a3_buffer buffer = {};
 		if (stbi_write_png_to_func(a3_STBWriteBufferCallback, &buffer, width, height, channels, pixels, stride))
 		{
@@ -213,7 +239,7 @@ namespace a3 {
 		}
 		return 0;
 	}
-
+    
 	static inline void a3_CalculateFontBitmapMaxDimension(stbtt_fontinfo& info, f32 scale, i32* w, i32* h)
 	{
 		// NOTE(Zero):
@@ -224,11 +250,11 @@ namespace a3 {
 		// If 1 is not added, there may be chance that a line of another bitmap may be shown
 		i32 maxWidth = 0;
 		i32 maxHeight = (u32)(scale + 0.5f) + 1;
-
+        
 		// NOTE(Zero):
 		// Now the scale is changed into unit of points and it is no more pixel
 		f32 pscale = stbtt_ScaleForPixelHeight(&info, scale);
-
+        
 		for (i32 index = 0; index < A3_MAX_LOAD_GLYPH; ++index)
 		{
 			int glyphIndex = stbtt_FindGlyphIndex(&info, index);
@@ -250,7 +276,7 @@ namespace a3 {
 		*w = maxWidth + 5; // NOTE(Zero): Similarly for width as well
 		*h = maxHeight;
 	}
-
+    
 	u64 a3::QueryDecodedFontSize(void * buffer, i32 length, f32 scale)
 	{
 		stbtt_fontinfo info;
@@ -259,20 +285,20 @@ namespace a3 {
 		a3_CalculateFontBitmapMaxDimension(info, scale, &mw, &mh);
 		return (sizeof(u8) * A3_MAX_LOAD_GLYPH * mw * mh);
 	}
-
+    
 	void a3::QueryMaxFontDimension(void * buffer, i32 length, f32 scale, i32* x, i32* y)
 	{
 		stbtt_fontinfo info;
 		stbtt_InitFont(&info, (u8*)buffer, stbtt_GetFontOffsetForIndex((u8*)buffer, 0));
 		a3_CalculateFontBitmapMaxDimension(info, scale, x, y);
 	}
-
+    
 	void a3::QueryAtlasSizeForFontSize(i32 x, i32 y, i32* w, i32* h)
 	{
 		*w = x * A3MAXLOADGLYPHX * A3MAXLOADGLYPHY;
 		*h = y;
 	}
-
+    
 	a3::font a3::DecodeFontFromBuffer(void * buffer, f32 scale, void * destination)
 	{
 		stbtt_fontinfo info;
@@ -280,14 +306,14 @@ namespace a3 {
 		a3::font result;
 		result.Info = info;
 		result.HeightInPixels = scale;
-
+        
 		// NOTE(Zero):
 		// These temp buffers are used to store extracted bitmap from stb
 		// This is requied because stb extracts bitmap from top-bottom
 		// But we use from bottom-top, so we use this buffer to flip the bitmap vertically
 		u8* tempBuffer = A3NULL;
 		u64 tempBufferSize = 0;
-
+        
 		// NOTE(Zero):
 		// Maximum dimention for the bitmap required by the largest character in the font
 		// Maximum height is set as the given scale factor
@@ -296,12 +322,12 @@ namespace a3 {
 		// If 1 is not added, there may be chance that a line of another bitmap may be shown
 		i32 maxWidth = 0;
 		i32 maxHeight = (u32)(scale + 0.5f) + 1;
-
+        
 		// NOTE(Zero):
 		// Now the scale is changed into unit of points and it is no more pixel
 		f32 pscale = stbtt_ScaleForPixelHeight(&result.Info, scale);
 		result.ScalingFactor = pscale;
-
+        
 		u8* bitmaps[A3_MAX_LOAD_GLYPH];
 		for (i32 index = 0; index < A3_MAX_LOAD_GLYPH; ++index)
 		{
@@ -341,7 +367,7 @@ namespace a3 {
 		}
 		a3::Platform.Free(tempBuffer);
 		maxWidth++; // NOTE(Zero): Similar case as in height
-
+        
 		// NOTE(Zero):
 		// Here we multiple max dimensions by 16 to get altas dimension
 		// We extract bitmaps for 256(0-255) characters from the font file
@@ -349,7 +375,7 @@ namespace a3 {
 		result.AtlasWidth = A3MAXLOADGLYPHX * maxWidth;
 		result.AtlasHeight = A3MAXLOADGLYPHY * maxHeight;
 		result.Atlas = (u8*)destination;
-
+        
 		for (i32 blockY = 0; blockY < A3MAXLOADGLYPHY; ++blockY)
 		{
 			u8* destBlockY = result.Atlas + blockY * maxHeight * result.AtlasWidth;
@@ -381,13 +407,292 @@ namespace a3 {
 		}
 		return result;
 	}
-
+    
 	f32 a3::QueryTTFontKernalAdvance(const stbtt_fontinfo & info, f32 scalingFactor, i32 glyph0, i32 glyph1)
 	{
 		i32 res = stbtt_GetGlyphKernAdvance(&info, glyph0, glyph1);
 		return res * scalingFactor;
 	}
-
+    
+    u32 a3::ScanMeshFromBuffer(void* buffer, void(*fnVertex)(f32, f32, f32, void*), void(*fnTexCoords)(f32, f32, void*),
+                               void(*fnNorms)(f32, f32, void*),
+                               void(*fnFaces)(u32, u32, u32, void*), void* ctx)
+    {
+        auto moveToChar = [](u8** s, utf8 c) {
+            while (**s != c && **s != 0) (*s)++;
+            (*s)++;
+        };
+        
+        i32 numOfTraingles=0;
+        u8* traverser = (u8*)buffer;
+        while (*traverser != 0)
+        {
+            switch (*traverser)
+            {
+                case '#':
+                {
+                    moveToChar(&traverser, '\n');
+                } break;
+                case 'v':
+                {
+                    traverser++;
+                    if (*traverser == ' ')
+                    {
+                        traverser++;
+                        f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                        moveToChar(&traverser, ' ');
+                        f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                        moveToChar(&traverser, ' ');
+                        f32 z = a3::ParseF32((utf8*)traverser, ' ');
+                        fnVertex(x, y, z, ctx);
+                        moveToChar(&traverser, '\n');
+                    }
+                    else
+                    {
+                        utf8 type = *traverser++;
+                        traverser++;
+                        switch (type)
+                        {
+                            case 't':
+                            {
+                                traverser++;
+                                f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                                moveToChar(&traverser, ' ');
+                                f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                                moveToChar(&traverser, '\n');
+                                fnTexCoords(x, y, ctx);
+                            } break;
+                            case 'n':
+                            {
+                                traverser++;
+                                f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                                moveToChar(&traverser, ' ');
+                                f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                                moveToChar(&traverser, '\n');
+                                fnNorms(x, y, ctx);
+                            } break;
+                        }
+                        moveToChar(&traverser, '\n');
+                    }
+                } break;
+                case 'f':
+                {
+                    traverser++;
+                    u32 f0 = a3::ParseU32((utf8*)traverser, ' ');
+                    moveToChar(&traverser, ' ');
+                    u32 f1 = a3::ParseU32((utf8*)traverser, ' ');
+                    moveToChar(&traverser, ' ');
+                    u32 f2 = a3::ParseU32((utf8*)traverser, ' ');
+                    moveToChar(&traverser, '\n');
+                    numOfTraingles++;
+                    fnFaces(f0, f1, f2, ctx);
+                } break;
+                case 'l':
+                {
+                    moveToChar(&traverser, '\n');
+                } break;
+                default:
+                {
+                    if (*traverser == 's' || *traverser == 'o')
+                    {
+                        moveToChar(&traverser, '\n');
+                    }
+                    else
+                    {
+                        a3TriggerBreakPoint(); // Error:: Not object file
+                    }
+                }
+            }
+        }
+        
+        return numOfTraingles;
+    }
+    
+    
+    mesh_size a3::QueryMeshSizeFromBuffer(void* buffer)
+    {
+        auto moveToChar = [](u8** s, utf8 c) {
+            while (**s != c && **s != 0) (*s)++;
+            (*s)++;
+        };
+        
+        u32 nVertices=0;
+        u32 nTextures=0;
+        u32 nNormals=0;
+        u32 nTriangles=0;
+        
+        u8* traverser = (u8*)buffer;
+        while (*traverser != 0)
+        {
+            switch (*traverser)
+            {
+                case '#':
+                {
+                    moveToChar(&traverser, '\n');
+                } break;
+                case 'v':
+                {
+                    traverser++;
+                    if (*traverser == ' ')
+                    {
+                        nVertices++;
+                        moveToChar(&traverser, '\n');
+                    }
+                    else
+                    {
+                        utf8 type = *traverser++;
+                        traverser++;
+                        switch (type)
+                        {
+                            case 't':
+                            {
+                                nTextures++;
+                                moveToChar(&traverser, '\n');
+                            } break;
+                            case 'n':
+                            {
+                                nNormals++;
+                                moveToChar(&traverser, '\n');
+                            } break;
+                        }
+                        moveToChar(&traverser, '\n');
+                    }
+                } break;
+                case 'f':
+                {
+                    traverser++;
+                    nTriangles++;
+                    moveToChar(&traverser, '\n');
+                } break;
+                case 'l':
+                {
+                    moveToChar(&traverser, '\n');
+                } break;
+                default:
+                {
+                    if (*traverser == 's' || *traverser == 'o')
+                    {
+                        moveToChar(&traverser, '\n');
+                    }
+                    else
+                    {
+                        a3TriggerBreakPoint(); // Error:: Not object file
+                    }
+                }
+            }
+        }
+        
+        a3::mesh_size result;
+        result.VerticesSize = sizeof(v3) * nVertices;
+        result.TextureCoordsSize = sizeof(v2) * nTextures;
+        result.NormalsSize = sizeof(v2) * nNormals;
+        result.FacesSize = sizeof(u32) * nTriangles;
+        result.NumOfTriangles = nTriangles;
+        
+        return result;
+    }
+    
+    mesh a3::DecodeMeshFromBuffer(void* buffer, v3* pVertices, v2* pTexCoords, v2* pNormals, u32* pFaces)
+    {
+        mesh result;
+        result.Vertices = pVertices;
+        result.TextureCoords = pTexCoords;
+        result.Normals = pNormals;
+        result.Faces = pFaces;
+        
+        auto moveToChar = [](u8** s, utf8 c) {
+            while (**s != c && **s != 0) (*s)++;
+            (*s)++;
+        };
+        
+        i32 numOfTraingles=0;
+        u8* traverser = (u8*)buffer;
+        while (*traverser != 0)
+        {
+            switch (*traverser)
+            {
+                case '#':
+                {
+                    moveToChar(&traverser, '\n');
+                } break;
+                case 'v':
+                {
+                    traverser++;
+                    if (*traverser == ' ')
+                    {
+                        traverser++;
+                        f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                        moveToChar(&traverser, ' ');
+                        f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                        moveToChar(&traverser, ' ');
+                        f32 z = a3::ParseF32((utf8*)traverser, ' ');
+                        *pVertices++ = v3{ x, y, z };
+                        moveToChar(&traverser, '\n');
+                    }
+                    else
+                    {
+                        utf8 type = *traverser++;
+                        traverser++;
+                        switch (type)
+                        {
+                            case 't':
+                            {
+                                traverser++;
+                                f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                                moveToChar(&traverser, ' ');
+                                f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                                moveToChar(&traverser, '\n');
+                                *pTexCoords++ = v2{ x, y };
+                            } break;
+                            case 'n':
+                            {
+                                traverser++;
+                                f32 x = a3::ParseF32((utf8*)traverser, ' ');
+                                moveToChar(&traverser, ' ');
+                                f32 y = a3::ParseF32((utf8*)traverser, ' ');
+                                moveToChar(&traverser, '\n');
+                                *pNormals++ = v2{ x, y };
+                            } break;
+                        }
+                        moveToChar(&traverser, '\n');
+                    }
+                } break;
+                case 'f':
+                {
+                    traverser++;
+                    u32 f0 = a3::ParseU32((utf8*)traverser, ' ');
+                    moveToChar(&traverser, ' ');
+                    u32 f1 = a3::ParseU32((utf8*)traverser, ' ');
+                    moveToChar(&traverser, ' ');
+                    u32 f2 = a3::ParseU32((utf8*)traverser, ' ');
+                    moveToChar(&traverser, '\n');
+                    numOfTraingles++;
+                    *pFaces++ = f0;
+                    *pFaces++ = f1;
+                    *pFaces++ = f2;
+                } break;
+                case 'l':
+                {
+                    moveToChar(&traverser, '\n');
+                } break;
+                default:
+                {
+                    if (*traverser == 's' || *traverser == 'o')
+                    {
+                        moveToChar(&traverser, '\n');
+                    }
+                    else
+                    {
+                        a3TriggerBreakPoint(); // Error:: Not object file
+                    }
+                }
+            }
+        }
+        
+        result.NumOfTriangles = numOfTraingles;
+        return result;
+    }
+    
 }
 
 #endif

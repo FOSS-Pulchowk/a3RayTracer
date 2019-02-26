@@ -1,8 +1,14 @@
 
+#define A3_IMPLEMENT_DSTRING
+#include "Utility/DString.h"
+
 #define A3_IMPLEMENT_MATRIX
 #include "Math/Matrix4.h"
 #define A3_IMPLEMENT_QUATERNION
 #include "Math/Quaterniod.h"
+
+#define A3_IMPLEMENT_ALGORITHM
+#include "Utility/Algorithm.h"
 
 #define A3_IMPLEMENT_STBLIBS
 #include "Utility/STBLibs.h"

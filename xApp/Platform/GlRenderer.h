@@ -11,11 +11,11 @@
 struct a3_renderer;
 
 namespace a3 {
-
+    
 #define A3_BASIC_RENDERER_MAX_COUNT 32
 	struct basic2d_renderer
 	{
-	private:
+        private:
 		u32 m_VertexArrayObject;
 		u32 m_VertexArrayBuffer;
 		u32 m_ElementArrayBuffer;
@@ -24,7 +24,7 @@ namespace a3 {
 		u32 m_uTextureDiffuse;
 		u32 m_Count;
 		basic2d_renderer(){}
-	public:
+        public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void BeginFrame();
@@ -33,13 +33,15 @@ namespace a3 {
 		void Push(v3 position, v2 dimension, const v3 color[4], a3::image_texture* image_texture, rect dest = rect{ 0, 0, 0, 0 });
 		void Push(v3 position, f32 height, const v3 color[4], a3::image_texture* image_texture, rect dest = rect{ 0, 0, 0, 0 });
 		void EndFrame();
-
+        
+        void Release();
+        
 		friend struct a3_renderer;
 	};
-
+    
 	struct font_renderer
 	{
-	private:
+        private:
 		u32 m_VertexArrayObject;
 		u32 m_VertexArrayBuffer;
 		u32 m_ElementArrayBuffer;
@@ -48,21 +50,22 @@ namespace a3 {
 		u32 m_uFontAtlas;
 		u32 m_uColor;
 		a3::font_texture* m_FontTexture;
-		
 		font_renderer(){}
-	public:
+        public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void SetFont(a3::font_texture* ft);
 		void Render(s8 font, v2 position, f32 height, v3 color);
 		void Render(s8 font, v2 c1, v2 c2, f32 height, v3 color);
-
+        
+        void Release();
+        
 		friend struct a3_renderer;
 	};
-
+    
 	struct batch2d_renderer
 	{
-	private:
+        private:
 		u32 m_VertexArrayObject;
 		u32 m_VertexArrayBuffer;
 		u32 m_ElementArrayBuffer;
@@ -71,14 +74,17 @@ namespace a3 {
 		u32 m_uTextureAtlas;
 		u32 m_Count;
 		image_texture* m_Texture;
-	public:
+		batch2d_renderer(){}
+        public:
 		void SetRegion(f32 left, f32 right, f32 bottom, f32 top);
 		void SetRegion(const m4x4& p);
 		void SetTexture(a3::image_texture* image_texture);
 		void Push(v2 position, v2 dimension, v3 color, v4 texDimension);
 		void BeginFrame();
 		void EndFrame();
-
+        
+        void Release();
+        
 		friend struct a3_renderer;
 	};
 }
@@ -111,12 +117,12 @@ struct a3_current_bound
 	u32 VertexArrayBuffer;
 	u32 ElementArrayBuffer;
 	u32 ShaderProgram;
-
+    
 	b32 VertexArrayBufferIsMapped;
 	b32 ElementArrayBufferIsMapped;
 	void* MappedVertexArrayPointer;
 	u32* MappedElementArrayPointer;
-
+    
 	i32 MaxTextureUnits; // 80 is gaurenteed, use more if available
 	const i32 FontTextureAtlasSlot = 50;
 	const i32 UITextureSlot = 51;
@@ -208,7 +214,7 @@ inline u32 a3_CreateShaderProgramFromBuffer(s8 vSource, s8 fSource)
 {
 	u32 vShader = a3_CompileShader(GL_VERTEX_SHADER, vSource);
 	u32 fShader = a3_CompileShader(GL_FRAGMENT_SHADER, fSource);
-
+    
 	a3GL(u32 program = glCreateProgram());
 	a3GL(glAttachShader(program, vShader));
 	a3GL(glAttachShader(program, fShader));
@@ -288,42 +294,42 @@ a3::basic2d_renderer a3_renderer::Create2DRenderer(s8 vSource, s8 fSource) const
 	a3::basic2d_renderer r;
 	r.m_Count = 0;
 	a3_GenerateAndBind(&r.m_VertexArrayObject, &r.m_VertexArrayBuffer, &r.m_ElementArrayBuffer);
-
+    
 	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex2d) * 4 * A3_BASIC_RENDERER_MAX_COUNT, A3NULL, GL_DYNAMIC_DRAW));
-
+    
 	a3GL(glVertexAttribPointer(a3_vertex2d::POSITION, 3, GL_FLOAT,
-		GL_FALSE, sizeof(a3_vertex2d),
-		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::position))));
-
+                               GL_FALSE, sizeof(a3_vertex2d),
+                               (void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::position))));
+    
 	a3GL(glVertexAttribPointer(a3_vertex2d::COLOR, 3, GL_FLOAT,
-		GL_FALSE, sizeof(a3_vertex2d),
-		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::color))));
-
+                               GL_FALSE, sizeof(a3_vertex2d),
+                               (void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::color))));
+    
 	a3GL(glVertexAttribPointer(a3_vertex2d::TEXCOORDS, 2, GL_FLOAT,
-		GL_FALSE, sizeof(a3_vertex2d),
-		(void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texCoords))));
-
+                               GL_FALSE, sizeof(a3_vertex2d),
+                               (void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texCoords))));
+    
 	a3GL(glVertexAttribIPointer(a3_vertex2d::TEXINDEX, 1, GL_INT,
-		sizeof(a3_vertex2d), (void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texIndex))));
-
+                                sizeof(a3_vertex2d), (void*)(a3OffsetOf(a3_vertex2d, a3_vertex2d::texIndex))));
+    
 	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * 6 * A3_BASIC_RENDERER_MAX_COUNT, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::POSITION));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::COLOR));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::TEXCOORDS));
 	a3GL(glEnableVertexAttribArray(a3_vertex2d::TEXINDEX));
-
+    
 	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_uProjection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
-
-
-
+    
+    
+    
 	i32 textureIds[A3_BASIC_RENDERER_MAX_COUNT];
 	for (i32 i = 0; i < A3_BASIC_RENDERER_MAX_COUNT; ++i)
 		textureIds[i] = i;
 	a3GL(r.m_uTextureDiffuse = glGetUniformLocation(r.m_ShaderProgram, "u_Diffuse"));
 	a3GL(glUniform1iv(r.m_uTextureDiffuse, A3_BASIC_RENDERER_MAX_COUNT, textureIds));
-
+    
 	return r;
 }
 
@@ -331,19 +337,19 @@ a3::font_renderer a3_renderer::CreateFontRenderer(s8 vSource, s8 fSource) const
 {
 	a3::font_renderer r;
 	a3_GenerateAndBind(&r.m_VertexArrayObject, &r.m_VertexArrayBuffer, &r.m_ElementArrayBuffer);
-
+    
 	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex_font) * A3_VERTICES_FONT_MAX, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glVertexAttribPointer(a3_vertex_font::POSTEXCOORDS, 4, GL_FLOAT, GL_FALSE, sizeof(a3_vertex_font), (void*)(a3OffsetOf(a3_vertex_font, a3_vertex_font::posTexCoords))));
 	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * A3_INDICES_FONT_MAX, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glEnableVertexAttribArray(a3_vertex_font::POSTEXCOORDS));
-
+    
 	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_uProjection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_uColor = glGetUniformLocation(r.m_ShaderProgram, "u_Color"));
 	a3GL(r.m_uFontAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_FontAtlas"));
 	a3GL(glUniform1i(r.m_uFontAtlas, s_CurrentBound.FontTextureAtlasSlot));
-
+    
 	return r;
 }
 
@@ -351,7 +357,7 @@ a3::batch2d_renderer a3_renderer::CreateBatch2DRenderer(s8 vSource, s8 fSource) 
 {
 	a3::batch2d_renderer r;
 	a3_GenerateAndBind(&r.m_VertexArrayObject, &r.m_VertexArrayBuffer, &r.m_ElementArrayBuffer);
-
+    
 	a3GL(glBufferData(GL_ARRAY_BUFFER, sizeof(a3_vertex_ui) * A3_VERTICES_UI_MAX, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u32) * A3_INDICES_UI_MAX, A3NULL, GL_DYNAMIC_DRAW));
 	a3GL(glVertexAttribPointer(a3_vertex_ui::POSITION, 2, GL_FLOAT, GL_FALSE, sizeof(a3_vertex_ui), (void*)(a3OffsetOf(a3_vertex_ui, a3_vertex_ui::position))));
@@ -360,30 +366,30 @@ a3::batch2d_renderer a3_renderer::CreateBatch2DRenderer(s8 vSource, s8 fSource) 
 	a3GL(glEnableVertexAttribArray(a3_vertex_ui::POSITION));
 	a3GL(glEnableVertexAttribArray(a3_vertex_ui::COLOR));
 	a3GL(glEnableVertexAttribArray(a3_vertex_ui::TEXCOORDS));
-
+    
 	r.m_ShaderProgram = a3_CreateShaderProgramFromBuffer(vSource, fSource);
 	a3_BindProgram(r.m_ShaderProgram);
 	a3GL(r.m_uProjection = glGetUniformLocation(r.m_ShaderProgram, "u_Projection"));
 	a3GL(r.m_uTextureAtlas = glGetUniformLocation(r.m_ShaderProgram, "u_TextureAtlas"));
 	a3GL(glUniform1i(r.m_uTextureAtlas, s_CurrentBound.UITextureSlot));
 	r.m_Count = 0;
-
+    
 	return r;
 }
 
 namespace a3 {
-
+    
 	void basic2d_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
 	{
 		SetRegion(m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f));
 	}
-
+    
 	void basic2d_renderer::SetRegion(const m4x4& p)
 	{
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glUniformMatrix4fv(m_uProjection, 1, GL_FALSE, p.elements));
 	}
-
+    
 	void basic2d_renderer::BeginFrame()
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
@@ -394,7 +400,7 @@ namespace a3 {
 		a3_MapElementPointer();
 		m_Count = 0;
 	}
-
+    
 	void basic2d_renderer::Push(v3 position, v2 dimension, v3 color, a3::image_texture * image_texture, rect dest)
 	{
 		static v3 acolor[4];
@@ -404,7 +410,7 @@ namespace a3 {
 		acolor[3] = color;
 		Push(position, dimension, acolor, image_texture, dest);
 	}
-
+    
 	void basic2d_renderer::Push(v3 position, f32 height, v3 color, a3::image_texture * image_texture, rect dest)
 	{
 		static v3 acolor[4];
@@ -414,7 +420,7 @@ namespace a3 {
 		acolor[3] = color;
 		Push(position, height, acolor, image_texture, dest);
 	}
-
+    
 	void basic2d_renderer::Push(v3 position, v2 dimension, const v3 color[4], a3::image_texture* image_texture, rect dest)
 	{
 		if (m_Count == A3_BASIC_RENDERER_MAX_COUNT)
@@ -422,10 +428,10 @@ namespace a3 {
 			EndFrame();
 			BeginFrame();
 		}
-
+        
 		a3_vertex2d* v = a3GetMappedVertexPointer(a3_vertex2d);
 		u32* i = a3GetMappedElementPointer();
-
+        
 		v4 texCoords;
 		if (dest == rect{ 0, 0, 0, 0 })
 		{
@@ -441,7 +447,7 @@ namespace a3 {
 			texCoords.z = (f32)(dest.x + dest.w) / (f32)image_texture->Width;
 			texCoords.w = (f32)(dest.y + dest.h) / (f32)image_texture->Height;
 		}
-
+        
 		a3GL(glActiveTexture(GL_TEXTURE0 + m_Count));
 		a3GL(glBindTexture(GL_TEXTURE_2D, image_texture->Id));
 		v[m_Count * 4 + 0].position = position;
@@ -463,17 +469,17 @@ namespace a3 {
 		v[m_Count * 4 + 1].texIndex = m_Count;
 		v[m_Count * 4 + 2].texIndex = m_Count;
 		v[m_Count * 4 + 3].texIndex = m_Count;
-
+        
 		i[m_Count * 6 + 0] = m_Count * 4 + 0;
 		i[m_Count * 6 + 1] = m_Count * 4 + 1;
 		i[m_Count * 6 + 2] = m_Count * 4 + 2;
 		i[m_Count * 6 + 3] = m_Count * 4 + 0;
 		i[m_Count * 6 + 4] = m_Count * 4 + 2;
 		i[m_Count * 6 + 5] = m_Count * 4 + 3;
-
+        
 		m_Count++;
 	}
-
+    
 	void basic2d_renderer::Push(v3 position, f32 height, const v3 color[4], a3::image_texture * image_texture, rect dest)
 	{
 		v2 dimension;
@@ -481,7 +487,7 @@ namespace a3 {
 		dimension.x = image_texture->Width * (height / image_texture->Height);
 		Push(position, dimension, color, image_texture, dest);
 	}
-
+    
 	void basic2d_renderer::EndFrame()
 	{
 		a3_UnmapVertexPointer();
@@ -489,23 +495,31 @@ namespace a3 {
 		a3GL(glDrawElements(GL_TRIANGLES, m_Count * 6, GL_UNSIGNED_INT, A3NULL));
 		m_Count = 0;
 	}
-
+    
+    void basic2d_renderer::Release()
+    {
+        a3GL(glDeleteVertexArrays(1, &m_VertexArrayObject));
+        a3GL(glDeleteBuffers(1, &m_VertexArrayBuffer));
+        a3GL(glDeleteBuffers(1, &m_ElementArrayBuffer));
+        a3GL(glDeleteProgram(m_ShaderProgram));
+    }
+    
 	void font_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
 	{
 		SetRegion(m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f));
 	}
-
+    
 	void font_renderer::SetRegion(const m4x4& p)
 	{
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glUniformMatrix4fv(m_uProjection, 1, GL_FALSE, p.elements));
 	}
-
+    
 	void font_renderer::SetFont(a3::font_texture * ft)
 	{
 		m_FontTexture = ft;
 	}
-
+    
 	void font_renderer::Render(s8 font, v2 position, f32 height, v3 color)
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
@@ -515,7 +529,7 @@ namespace a3 {
 		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
 		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontTexture->Texture.Id));
 		a3GL(glUniform3fv(m_uColor, 1, color.values));
-
+        
 		u8* t = (u8*)font;
 		f32 hBegin = position.x;
 		a3_MapVertexPointer();
@@ -523,7 +537,7 @@ namespace a3 {
 		a3_vertex_font* vertices = a3GetMappedVertexPointer(a3_vertex_font);
 		u32* indices = a3GetMappedElementPointer();
 		f32 scale = height / m_FontTexture->AtlasInfo.HeightInPixels;
-
+        
 		u32 counter = 0;
 		for (; ; ++t)
 		{
@@ -540,7 +554,7 @@ namespace a3 {
 				a3_vertex_font* vertices = a3GetMappedVertexPointer(a3_vertex_font);
 				u32* indices = a3GetMappedElementPointer();
 			}
-
+            
 			const a3::character& c = m_FontTexture->AtlasInfo.Characters[*t];
 			if (c.HasBitmap)
 			{
@@ -548,24 +562,24 @@ namespace a3 {
 				f32 y = position.y + c.OffsetY * scale;
 				f32 w = c.Width * scale;
 				f32 h = c.Height * scale;
-
+                
 				f32 tx0 = c.NormalX0;
 				f32 tx1 = c.NormalX1;
 				f32 ty0 = c.NormalY0;
 				f32 ty1 = c.NormalY1;
-
+                
 				vertices[counter * 4 + 0].posTexCoords = { x, y, tx0, ty0 };
 				vertices[counter * 4 + 1].posTexCoords = { x + w, y, tx1, ty0 };
 				vertices[counter * 4 + 2].posTexCoords = { x + w, y + h, tx1, ty1 };
 				vertices[counter * 4 + 3].posTexCoords = { x, y + h, tx0, ty1 };
-
+                
 				indices[counter * 6 + 0] = counter * 4 + 0;
 				indices[counter * 6 + 1] = counter * 4 + 1;
 				indices[counter * 6 + 2] = counter * 4 + 2;
 				indices[counter * 6 + 3] = counter * 4 + 0;
 				indices[counter * 6 + 4] = counter * 4 + 2;
 				indices[counter * 6 + 5] = counter * 4 + 3;
-
+                
 				counter++;
 			}
 			hBegin += c.Advance * scale;
@@ -573,7 +587,7 @@ namespace a3 {
 				hBegin += (a3::QueryTTFontKernalAdvance(m_FontTexture->AtlasInfo.Info, m_FontTexture->AtlasInfo.ScalingFactor, c.GlyphIndex, (m_FontTexture->AtlasInfo.Characters[*(t + 1)]).GlyphIndex) * scale);
 		}
 	}
-
+    
 	void font_renderer::Render(s8 font, v2 c1, v2 c2, f32 height, v3 color)
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
@@ -583,7 +597,7 @@ namespace a3 {
 		a3GL(glActiveTexture(GL_TEXTURE0 + s_CurrentBound.FontTextureAtlasSlot));
 		a3GL(glBindTexture(GL_TEXTURE_2D, m_FontTexture->Texture.Id));
 		a3GL(glUniform3fv(m_uColor, 1, color.values));
-
+        
 		u8* t = (u8*)font;
 		f32 hBegin = c1.x;
 		f32 vBegin = c2.y - height;
@@ -592,7 +606,7 @@ namespace a3 {
 		a3_vertex_font* vertices = a3GetMappedVertexPointer(a3_vertex_font);
 		u32* indices = a3GetMappedElementPointer();
 		f32 scale = height / m_FontTexture->AtlasInfo.HeightInPixels;
-
+        
 		u32 counter = 0;
 		for (; ; ++t)
 		{
@@ -609,7 +623,7 @@ namespace a3 {
 				a3_vertex_font* vertices = a3GetMappedVertexPointer(a3_vertex_font);
 				u32* indices = a3GetMappedElementPointer();
 			}
-
+            
 			const a3::character& c = m_FontTexture->AtlasInfo.Characters[*t];
 			if (c.HasBitmap)
 			{
@@ -617,24 +631,24 @@ namespace a3 {
 				f32 y = vBegin + c.OffsetY * scale;
 				f32 w = c.Width * scale;
 				f32 h = c.Height * scale;
-
+                
 				f32 tx0 = c.NormalX0;
 				f32 tx1 = c.NormalX1;
 				f32 ty0 = c.NormalY0;
 				f32 ty1 = c.NormalY1;
-
+                
 				vertices[counter * 4 + 0].posTexCoords = { x, y, tx0, ty0 };
 				vertices[counter * 4 + 1].posTexCoords = { x + w, y, tx1, ty0 };
 				vertices[counter * 4 + 2].posTexCoords = { x + w, y + h, tx1, ty1 };
 				vertices[counter * 4 + 3].posTexCoords = { x, y + h, tx0, ty1 };
-
+                
 				indices[counter * 6 + 0] = counter * 4 + 0;
 				indices[counter * 6 + 1] = counter * 4 + 1;
 				indices[counter * 6 + 2] = counter * 4 + 2;
 				indices[counter * 6 + 3] = counter * 4 + 0;
 				indices[counter * 6 + 4] = counter * 4 + 2;
 				indices[counter * 6 + 5] = counter * 4 + 3;
-
+                
 				counter++;
 			}
 			hBegin += c.Advance * scale;
@@ -647,23 +661,31 @@ namespace a3 {
 			}
 		}
 	}
-
+    
+    void font_renderer::Release()
+    {
+        a3GL(glDeleteVertexArrays(1, &m_VertexArrayObject));
+        a3GL(glDeleteBuffers(1, &m_VertexArrayBuffer));
+        a3GL(glDeleteBuffers(1, &m_ElementArrayBuffer));
+        a3GL(glDeleteProgram(m_ShaderProgram));
+    }
+    
 	void batch2d_renderer::SetRegion(f32 left, f32 right, f32 bottom, f32 top)
 	{
 		SetRegion(m4x4::OrthographicR(left, right, bottom, top, -1.0f, 1.0f));
 	}
-
+    
 	void batch2d_renderer::SetRegion(const m4x4& p)
 	{
 		a3_BindProgram(m_ShaderProgram);
 		a3GL(glUniformMatrix4fv(m_uProjection, 1, GL_FALSE, p.elements));
 	}
-
+    
 	void batch2d_renderer::SetTexture(a3::image_texture * tex)
 	{
 		m_Texture = tex;
 	}
-
+    
 	void batch2d_renderer::Push(v2 position, v2 dimension, v3 color, v4 texDimension)
 	{
 		if (m_Count == A3_UI_RENDER_MAX)
@@ -673,12 +695,12 @@ namespace a3 {
 		}
 		a3_vertex_ui* v = a3GetMappedVertexPointer(a3_vertex_ui);
 		u32* i = a3GetMappedElementPointer();
-
+        
 		f32 tx0 = texDimension.x;
 		f32 ty0 = texDimension.y;
 		f32 tx1 = texDimension.z;
 		f32 ty1 = texDimension.w;
-
+        
 		v[m_Count * 4 + 0].position = position;
 		v[m_Count * 4 + 1].position = position;
 		v[m_Count * 4 + 2].position = position;
@@ -694,17 +716,17 @@ namespace a3 {
 		v[m_Count * 4 + 1].texCoords = { tx1, ty0 };
 		v[m_Count * 4 + 2].texCoords = { tx1, ty1 };
 		v[m_Count * 4 + 3].texCoords = { tx0, ty1 };
-
+        
 		i[m_Count * 6 + 0] = m_Count * 4 + 0;
 		i[m_Count * 6 + 1] = m_Count * 4 + 1;
 		i[m_Count * 6 + 2] = m_Count * 4 + 2;
 		i[m_Count * 6 + 3] = m_Count * 4 + 0;
 		i[m_Count * 6 + 4] = m_Count * 4 + 2;
 		i[m_Count * 6 + 5] = m_Count * 4 + 3;
-
+        
 		m_Count++;
 	}
-
+    
 	void batch2d_renderer::BeginFrame()
 	{
 		a3_BindVertexArrayObject(m_VertexArrayObject);
@@ -714,7 +736,7 @@ namespace a3 {
 		a3_MapElementPointer();
 		m_Count = 0;
 	}
-
+    
 	void batch2d_renderer::EndFrame()
 	{
 		a3_UnmapVertexPointer();
@@ -725,7 +747,15 @@ namespace a3 {
 		a3GL(glDrawElements(GL_TRIANGLES, m_Count * 6, GL_UNSIGNED_INT, A3NULL));
 		m_Count = 0;
 	}
-
+    
+    void batch2d_renderer::Release()
+    {
+        a3GL(glDeleteVertexArrays(1, &m_VertexArrayObject));
+        a3GL(glDeleteBuffers(1, &m_VertexArrayBuffer));
+        a3GL(glDeleteBuffers(1, &m_ElementArrayBuffer));
+        a3GL(glDeleteProgram(m_ShaderProgram));
+    }
+    
 }
 
 #endif

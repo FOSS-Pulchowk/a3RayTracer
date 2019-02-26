@@ -7,32 +7,37 @@
 
 namespace a3 {
 
-	// NOTE(Zero):
-	// The implementation of this stack does not return error codes
-	// Asserts are placed in case something happens that should not happen
-	// User of this class is responsible for accessing or pushing invalid memory address and other invalid calls
-	struct mstack
+	template <typename Type>
+	struct queue
 	{
 	private:
-		u8* m_Memory;
-		u8* m_Current;
-		u32 m_Capacity;
-		u32 m_Consumed;
+		Type* m_Base;
+		Type* m_Current;
+		u32 m_Counts;
+		u32 m_FillCounts;
+
 	public:
-		inline mstack(u8* memory, u32 size);
+		queue(void* memory, u64 size);
 
-		template <typename Type>
-		inline Type* Push();
+		u32 QueryTotalCounts();
+		u32 QueryFillCounts();
+		u32 QueryEmptyCounts();
 
-		template <typename Type>
-		inline Type* PushArray(u32 num);
+		// NOTE(Zero):
+		// When the memory is already full and Push/Emplace is called then the function will write out of memory
+		// For debug mode assertion is added
+		// If is doubt call QueryEmptyCounts to get available number of push
+		Type* Push();
+		Type* Push(const Type& e);
+		template <typename ...Args>
+		Type* Emplace(Args&&... args);
 
-		template <typename Type>
-		inline Type Pop();
+		Type* GetBack();
+		Type* GetFront();
+		void Pop();
+		b32 Scan(b32(*fn)(Type* e, void* usrData), void* usrData); // Returns true if whole of queue gets accessed
 
-		inline u32 QueryCapacity() const;
-		inline u32 QueryConsumed() const;
-		inline u32 QueryEmpty() const;
+		void Empty();
 	};
 
 	// Helper memory management functions
@@ -50,59 +55,101 @@ namespace a3 {
 
 namespace a3 {
 
-	inline mstack::mstack(u8 * memory, u32 size) : 
-		m_Memory(memory), m_Capacity(size), m_Current(memory), m_Consumed(0)
+	template <typename Type>
+	queue<Type>::queue(void* memory, u64 size)
 	{
+		a3Assert(size % sizeof(Type) == 0);
+		m_Base = (Type*)memory;
+		m_Current = (Type*)memory;
+		m_Counts = (u32)(size / sizeof(Type));
+		m_FillCounts = 0;
 	}
 
-	inline u32 mstack::QueryCapacity() const
+	template <typename Type>
+	u32 queue<Type>::QueryTotalCounts()
 	{
-		return m_Capacity;
+		return m_Counts;
 	}
 
-	inline u32 mstack::QueryConsumed() const
+	template <typename Type>
+	u32 queue<Type>::QueryFillCounts()
 	{
-		return m_Consumed;
+		return m_FillCounts;
 	}
 
-	inline u32 mstack::QueryEmpty() const
+	template <typename Type>
+	u32 queue<Type>::QueryEmptyCounts()
 	{
-		return m_Capacity - m_Consumed;
+		return m_Counts - m_FillCounts;
 	}
 
-	template<typename Type>
-	inline Type * mstack::Push()
+	template <typename Type>
+	Type* queue<Type>::Push()
 	{
-		a3Assert(m_Capacity > (m_Consumed + sizeof(Type)));
-		Type* dest = (Type*)m_Current;
-		*(u32*)((u8*)m_Current + sizeof(Type)) = sizeof(Type);
-		m_Consumed += (sizeof(Type) + sizeof(u32));
-		m_Current += (sizeof(Type) + sizeof(u32));
+		a3Assert(m_FillCounts < m_Counts);
+		m_FillCounts++;
+		return m_Current++;
+	}
+
+	template <typename Type>
+	Type* queue<Type>::Push(const Type& e)
+	{
+		a3Assert(m_FillCounts < m_Counts);
+		m_FillCounts++;
+		Type* dest = m_Current++;
+		*dest = e;
 		return dest;
 	}
 
-	template<typename Type>
-	inline Type * mstack::PushArray(u32 num)
-
+	template <typename Type>
+	template <typename ...Args>
+	Type* queue<Type>::Emplace(Args&&... args)
 	{
-		a3Assert(m_Capacity > (m_Consumed + sizeof(Type) * num));
-		Type* dest = (Type*)m_Current;
-		*(u32*)((u8*)m_Current + sizeof(Type) * num) = sizeof(Type);
-		m_Consumed += (sizeof(Type) * num + sizeof(u32));
-		m_Current += (sizeof(Type) * num + sizeof(u32));
+		a3Assert(m_FillCounts < m_Counts);
+		m_FillCounts++;
+		Type* dest = m_Current++;
+		a3Place(dest) Type(args...);
 		return dest;
 	}
 
-	template<typename Type>
-	inline Type mstack::Pop()
+	template <typename Type>
+	Type* queue<Type>::GetBack()
 	{
-		u32 size = *(u32*)((u8*)m_Current - sizeof(u32));
-		Type result = *(Type*)((u8*)m_Current - sizeof(u32) - size);
-		m_Current -= (sizeof(u32) + size);
-		m_Consumed -= (sizeof(u32) + size);
-		return result;
+		return m_Current - 1;
 	}
 
+	template<typename Type>
+	inline Type * queue<Type>::GetFront()
+	{
+		return m_Base;
+	}
+
+	template <typename Type>
+	void queue<Type>::Pop()
+	{
+		m_Current->~Type();
+		m_Current--;
+		m_FillCounts--;
+	}
+
+	template <typename Type>
+	b32 queue<Type>::Scan(b32(*fn)(Type* e, void* usrData), void* usrData)
+	{
+		for (i32 i = 0; i < m_FillCounts; ++i)
+		{
+			if (!fn(m_Base + i, usrData)) return false;
+		}
+		return true;
+	}
+
+	template <typename Type>
+	void queue<Type>::Empty()
+	{
+		m_Current = m_Base;
+		for (u32 i = 0; i < m_FillCounts; ++i)
+			(m_Base + i)->~Type();
+		m_FillCounts = 0;
+	}
 
 	inline void MemoryCopy(void* dst, const void* src, u64 size)
 	{
