@@ -10,8 +10,8 @@ namespace a3 {
 	inline i32 WriteU32ToBuffer(utf8* buffer, u32 length, u32 number, u32 base);
 	inline i32 WriteF32ToBuffer(utf8* buffer, u32 length, f32 number);
 
-	inline u32 ParseU32(s8 buffer);
-	inline f32 ParseF32(s8 buffer);
+	inline u32 ParseU32(s8 buffer, utf8 end = 0);
+	inline f32 ParseF32(s8 buffer, utf8 end = 0);
 
 	inline u64 GetStringLength(s8 s);
 
@@ -102,24 +102,24 @@ inline i32 a3::WriteF32ToBuffer(utf8* buffer, u32 length, f32 number)
 	return bufferIndex;
 }
 
-u32 a3::ParseU32(s8 buffer)
+u32 a3::ParseU32(s8 buffer, utf8 end)
 {
 	u32 result = 0;
-	for (utf8* s = (utf8*)buffer; *s != 0; ++s)
+	for (utf8* s = (utf8*)buffer; *s != end; ++s)
 	{
 		result = result * 10 + (*s - 48);
 	}
 	return result;
 }
 
-f32 a3::ParseF32(s8 buffer)
+f32 a3::ParseF32(s8 buffer, utf8 end)
 {
 	b32 period = false;
 	f32 negative = 1.0f;
 	f32 result = 0.0f;
 	f32 divisor = 1.0f;
 	f32 dividend = 0.0f;
-	for (utf8* s = (utf8*)buffer; *s != 0 && *s != 'f' && *s != 'F'; ++s)
+	for (utf8* s = (utf8*)buffer; *s != end && *s != 'f' && *s != 'F'; ++s)
 	{
 		if (*s == '.')
 		{
