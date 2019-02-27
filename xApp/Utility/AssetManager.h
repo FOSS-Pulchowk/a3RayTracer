@@ -22,6 +22,8 @@ public:
 	a3::image_texture* LoadTexture2DFromFile(u64 id, s8 file, a3::filter filter, a3::wrap wrap);
 	a3::font_texture* LoadFontTextureAtlasFromBuffer(u64 id, void* buffer, i32 length, f32 scale);
 	a3::font_texture* LoadFontTextureAtlasFromFile(u64 id, s8 file, f32 scale);
+	a3::mesh* LoadMeshFromBuffer(u64 id, void* buffer, u64 len);
+	a3::mesh* LoadMeshFromFile(u64 id, s8 file);
 
 	void Free(u64 id);
 
@@ -159,6 +161,59 @@ a3::font_texture* a3_asset::LoadFontTextureAtlasFromFile(u64 id, s8 file, f32 sc
 {
 	a3::file_content fc = a3::Platform.LoadFileContent(file);
 	a3::font_texture* res = a3::Asset.LoadFontTextureAtlasFromBuffer(id, fc.Buffer, (i32)fc.Size, scale);
+	a3::Platform.FreeFileContent(fc);
+	return res;
+}
+
+a3::mesh * a3_asset::LoadMeshFromBuffer(u64 id, void * buffer, u64 len)
+{
+	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
+
+	a3::mesh_size ms = a3::QueryMeshSizeFromBuffer(buffer, len);
+	
+	v3* vertices = 0;
+	v2* texCoords = 0;
+	v3* normals = 0;
+	u32* inVertices = 0;
+	u32* inTexCoords = 0;
+	u32* inNorms = 0;
+
+	u64 size = ms.VerticesSize + ms.TextureCoordsSize + ms.NormalsSize + ms.VertexIndicesSize + ms.TextureCoordsIndicesSize + ms.NormalIndicesSize + sizeof(a3::mesh);
+	a3IsBufferTooLarge(sizeof(a3::mesh) + size);
+
+	m_Assets[id] = a3Reallocate(m_Assets[id], size, void*);
+	a3IsOutOfMemory(m_Assets[id]);
+
+	a3::mesh* result = (a3::mesh*)m_Assets[id];
+	u8* ptr = (u8*)m_Assets[id] + sizeof(a3::mesh);
+
+	if (ms.VerticesSize) vertices = (v3*)ptr;
+	ptr += ms.VerticesSize;
+	
+	if (ms.TextureCoordsSize) texCoords = (v2*)ptr;
+	ptr += ms.TextureCoordsSize;
+	
+	if (ms.NormalsSize) normals = (v3*)ptr;
+	ptr += ms.NormalsSize;
+
+	if (ms.VertexIndicesSize) inVertices = (u32*)ptr;
+	ptr += ms.VertexIndicesSize;
+
+	if (ms.TextureCoordsIndicesSize) inTexCoords = (u32*)ptr;
+	ptr += ms.TextureCoordsIndicesSize;
+
+	if (ms.NormalIndicesSize) inNorms = (u32*)ptr;
+	ptr += ms.NormalIndicesSize;
+
+	*result = a3::DecodeMeshFromBuffer(buffer, len, &ms, vertices, texCoords, normals, inVertices, inTexCoords, inNorms);
+
+	return result;
+}
+
+a3::mesh * a3_asset::LoadMeshFromFile(u64 id, s8 file)
+{
+	a3::file_content fc = a3::Platform.LoadFileContent(file);
+	a3::mesh* res = a3::Asset.LoadMeshFromBuffer(id, fc.Buffer, fc.Size);
 	a3::Platform.FreeFileContent(fc);
 	return res;
 }
