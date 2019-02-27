@@ -11,6 +11,8 @@
 #include "Utility/UIContext.h"
 #include "Utility/Algorithm.h"
 
+#include "Graphics/Rasterizer3D.h"
+
 #include "HardwarePlatform.h"
 
 #include <Windows.h>
@@ -765,17 +767,21 @@ i32 a3Main()
 	a3::basic2d_renderer renderer = a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment);
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
-	a3::image* temp = a3::Asset.LoadImageFromFile(19, "Resources/BigSmile.png");
-	a3::image img = a3::CreateImageBuffer(1280, 720);
+	//a3::image* temp = a3::Asset.LoadImageFromFile(19, "Resources/BigSmile.png");
+	a3::image img = a3::CreateImageBuffer(800, 600);
 	a3::FillImageBuffer(&img, a3::color::Black);
 
+	a3::swapchain sc;
+	sc.SetFrameBuffer(&img);
+	sc.SetViewport(0, 0, 800, 600);
+	//sc.SetMesh(a3::Asset.LoadMesh)
 
-	a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
-	a3::FillTriangle(&img, v2{ 50.0f, 50.0f }, v2{ 100.0f, 100.0f }, v2{ 30.0f, 100.0f }, a3::color::Green);
-	a3::FillTriangle(&img, v2{ 100.0f, 200.0f }, v2{ 200.0f, 300.0f }, v2{ 20.0f, 350.0f }, a3::color::White);
-	a3::FillTriangle(&img, v2{ 50.0f, 100.0f }, v2{ 200.0f, 100.0f }, v2{ 100.0f, 300.0f }, a3::color::Blue);
-	a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 500.0f }, v2{ 500.0f, 700.0f }, a3::color::White);
-	a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1300.0f, 500.0f }, v2{ 800.0f, 900.0f }, a3::color::White);
+	//a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
+	//a3::FillTriangle(&img, v2{ 50.0f, 50.0f }, v2{ 100.0f, 100.0f }, v2{ 30.0f, 100.0f }, a3::color::Green);
+	//a3::FillTriangle(&img, v2{ 100.0f, 200.0f }, v2{ 200.0f, 300.0f }, v2{ 20.0f, 350.0f }, a3::color::White);
+	//a3::FillTriangle(&img, v2{ 50.0f, 100.0f }, v2{ 200.0f, 100.0f }, v2{ 100.0f, 300.0f }, a3::color::Blue);
+	//a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 500.0f }, v2{ 500.0f, 700.0f }, a3::color::White);
+	//a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1300.0f, 500.0f }, v2{ 800.0f, 900.0f }, a3::color::White);
 	//a3::FillTriangle(&img, v2{ 1235.0f, 492.0f }, v2{ 1280.0f, 492.0f }, v2{ 1280.0f, 510.0f }, a3::color::Red);
 	//a3::FillTriangle(&img, v2{ 1000.0f, 100.0f }, v2{ 1500.0f, 200.0f }, v2{ 1600.0f, 500.0f }, a3::color::Red);
 	//a3::FillTriangle(&img, v2{ 500.0f, 500.0f }, v2{ 600.0f, 600.0f }, v2{ 400.0f, 600.0f }, a3::color::White);

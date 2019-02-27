@@ -92,7 +92,7 @@ void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...);
 
 //
 // CONTAINS: Screen Macros
-#define a3AspectRatio (16.0f / 9.0f)
+#define a3AspectRatio() (16.0f / 9.0f)
 #define a3AspectHeight(width) ((width) / a3AspectRatio)
 #define a3AspectWidth(height) (a3AspectRatio * (height))
 
