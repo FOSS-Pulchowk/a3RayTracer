@@ -706,25 +706,6 @@ struct entity
 };
 
 
-void Test()
-{
-	a3::file_content fc = a3::Platform.LoadFileContent("Resources/Axis.obj");
-
-	v3* vertices = 0;
-	u32* faces = 0;
-
-	a3::mesh_size ms = a3::QueryMeshSizeFromBuffer(fc.Buffer);
-	if (ms.VerticesSize)
-		vertices = a3Malloc(ms.VerticesSize, v3);
-	if (ms.IndicesSize)
-		faces = a3Malloc(ms.IndicesSize, u32);
-
-	a3::mesh m = a3::DecodeMeshFromBuffer(fc.Buffer, vertices, 0, 0, faces);
-
-	a3::Platform.FreeFileContent(fc);
-}
-
-
 #define A3_WINDOW_CLASS_NAME "a3WindowClass"
 
 i32 a3Main()
@@ -781,7 +762,6 @@ i32 a3Main()
 		a3::InitializeGenerator(seeds);
 	}
 
-	Test();
 	a3::basic2d_renderer renderer = a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment);
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
@@ -887,16 +867,16 @@ i32 a3Main()
 		}
 		renderer.EndFrame();
 
-		v2 dim{ 100.0f, 25.0f };
-		ui.BeginFrame(v2{ 600.0f, 550.0f });
+		v2 dim{ 120.0f, 25.0f };
+		ui.BeginFrame(v2{ 1120.0f, 550.0f });
 
-		if (ui.Button(1, dim, "Button 1"))
+		if (ui.Button(1, dim, "Load Object"))
 		{
 		}
-		if (ui.Button(2, dim, "Button 2"))
+		if (ui.Button(2, dim, "Ray Trace"))
 		{
 		}
-		if (ui.Button(3, dim, "Button 3"))
+		if (ui.Button(3, dim, "Preview Image"))
 		{
 		}
 		if (ui.Button(4, dim, "Button 4"))

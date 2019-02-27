@@ -11,6 +11,7 @@ namespace a3 {
 	inline i32 WriteF32ToBuffer(utf8* buffer, u32 length, f32 number);
 
 	inline u32 ParseU32(s8 buffer, utf8 end = 0);
+	inline i32 ParseI32(s8 buffer, utf8 end = 0);
 	inline f32 ParseF32(s8 buffer, utf8 end = 0);
 
 	inline u64 GetStringLength(s8 s);
@@ -116,6 +117,13 @@ u32 a3::ParseU32(s8 buffer, utf8 end)
 		++s;
 	}
 	return result;
+}
+
+i32 a3::ParseI32(s8 buffer, utf8 end)
+{
+	i32 neg = 1;
+	if (buffer[0] == '-') neg *= -1;
+	return neg * (i32)ParseU32(buffer, end);
 }
 
 f32 a3::ParseF32(s8 buffer, utf8 end)
