@@ -131,6 +131,9 @@
     <ClInclude Include="Utility\Stream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Rasterizer3D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\BigSmile.png">

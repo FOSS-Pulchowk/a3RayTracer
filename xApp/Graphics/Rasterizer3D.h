@@ -3,8 +3,9 @@
 #include "Math/Math.h"
 #include "Platform/Platform.h"
 #include "Utility/Algorithm.h"
-#include <vector>
-#include<list>
+//#include <vector>
+//#include <list>
+#include "Utility/DArray.h"
 
 //
 // DECLARATIONS
@@ -34,9 +35,9 @@ namespace a3 {
 		}
 	};
 
-	std::vector<triangle> tris;
-	std::vector<triangle> trianglesToRaster;
-	std::list<triangle> listTriangles;
+	a3::darray<triangle> tris;
+	a3::darray<triangle> trianglesToRaster;
+	a3::darray<triangle> listTriangles;
 
 	struct swapchain
 	{
@@ -200,6 +201,8 @@ namespace a3 {
 
 			return 2; // Return two newly formed triangles which form a quad
 		}
+
+		return 0;
 	}
 
 
@@ -240,7 +243,7 @@ namespace a3 {
 	void swapchain::SetMesh(mesh * meshCube)
 	{
 		m_Meshes = meshCube;
-		tris.reserve(m_Meshes->NumOfTriangles);
+		tris.Resize(m_Meshes->NumOfTriangles);
 	}
 
 	inline void swapchain::SetTexture(image * tex)
@@ -264,7 +267,7 @@ namespace a3 {
 
 		v2* uv = m_Meshes->TextureCoords;
 		u32* uvIndices = m_Meshes->TextureCoordsIndices;
-		// if (uvIndices == A3NULL) {/*use directly*/ };
+
 
 
 		for (i32 n = 0; n < nTriangles; ++n) {
@@ -277,9 +280,9 @@ namespace a3 {
 
 			if (uvIndices == A3NULL) 
 			{
-				u0 = uv[n*3 + 0];
-				u1 = uv[n*3 + 1];
-				u2 = uv[n*3 + 2];
+				u0 = uv[n * 3 + 0];
+				u1 = uv[n * 3 + 1];
+				u2 = uv[n * 3 + 2];
 			}
 			else
 			{
@@ -290,7 +293,7 @@ namespace a3 {
 
 			//tris.push_back({ t0,t1,t2,1.0f }, { u0, u1,u2,1.0f });
 
-			tris.emplace_back(t0, t1, t2, u0, u1, u2);
+			tris.Emplace(t0, t1, t2, u0, u1, u2);
 
 			/*for (i32 i = 0; i < 3; ++i)
 			{
@@ -323,8 +326,10 @@ namespace a3 {
 		m4x4 matView = m4x4::Inverse(matCamera);
 
 		// Draw Triangles
-		for (auto tri : tris)
+		for (i32 i=0; i< tris.QuerySize(); ++i)
 		{
+
+			a3::triangle tri = tris.GetElement(i);
 			triangle triProjected, triTransformed, triViewed;
 
 			// World Matrix Transform
@@ -422,18 +427,19 @@ namespace a3 {
 					triProjected.p[2].x *= 0.5f * (float)m_Viewport.w;
 					triProjected.p[2].y *= 0.5f * (float)m_Viewport.h;
 
-					trianglesToRaster.push_back(triProjected);
+					trianglesToRaster.Push(triProjected);
 				}
 			}
 		}
 
-		for (auto &triToRaster : trianglesToRaster)
+		for (i32 i=0; i< trianglesToRaster.QuerySize(); ++i)
 		{
+			a3::triangle triToRaster = trianglesToRaster.GetElement(i);
 
 			triangle clipped[2];
 
 
-			listTriangles.push_back(triToRaster);
+			listTriangles.Push(triToRaster);
 			int nNewTriangles = 1;
 
 			for (int p = 0; p < 4; p++)
@@ -442,8 +448,8 @@ namespace a3 {
 				while (nNewTriangles > 0)
 				{
 					// Take triangle from front of queue
-					triangle test = listTriangles.front();
-					listTriangles.pop_front();
+					triangle test = *listTriangles.Begin();
+					listTriangles.PopFront();
 					nNewTriangles--;
 
 					switch (p)
@@ -456,12 +462,14 @@ namespace a3 {
 
 
 					for (int i = 0; i < nTrisToAdd; i++)
-						listTriangles.push_back(clipped[i]);
+						listTriangles.Push(clipped[i]);
 				}
-				nNewTriangles = listTriangles.size();
+				nNewTriangles = listTriangles.QuerySize();
 			}
 
-			for (auto &tri : listTriangles) {
+			for (i32 i = 0; i < listTriangles.QuerySize(); ++i) {
+
+				a3::triangle tri = listTriangles.GetElement(i);
 
 				a3::DrawTriangle(m_FrameBuffer, tri.p[0].xy, tri.p[1].xy, tri.p[2].xy, a3::color::White);
 

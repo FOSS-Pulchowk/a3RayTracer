@@ -265,6 +265,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Rasterizer2D.h" />
+    <ClInclude Include="Graphics\Rasterizer3D.h" />
     <ClInclude Include="Platform\HardwarePlatform.h" />
     <ClInclude Include="Utility\Algorithm.h" />
     <ClInclude Include="Utility\DArray.h" />

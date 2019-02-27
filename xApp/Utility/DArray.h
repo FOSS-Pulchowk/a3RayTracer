@@ -26,17 +26,18 @@ namespace a3 {
 		inline Type& GetElement(u64 index);
 		inline Type& operator[](u64 index);
 		inline Type* GetPointer(u64 index);
-		inline Type* GetData() const;
-		inline const Type& GetElement(u64 index) const;
-		inline const Type& operator[](u64 index) const;
-		inline const Type* GetPointer(u64 index) const;
-		inline const Type* GetData() const;
+		inline Type* GetData();
 		inline Type& Push(const Type& e);
-		
+		inline Type& PushFront(const Type& e);
+
 		template <typename ...Args>
 		inline Type& Emplace(Args&&... args);
 
+		template <typename ...Args>
+		inline Type& EmplaceFront(Args&&... args);
+
 		inline Type& Pop();
+		inline void PopFront();
 		inline u64 QuerySize() const;
 		inline u64 QueryCapacity() const;
 		inline u64 QueryEmpty() const;
@@ -56,7 +57,7 @@ namespace a3 {
 	}
 
 	template<typename Type>
-	inline darray<Type>::darray(u64 capacity): darray()
+	inline darray<Type>::darray(u64 capacity) : darray()
 	{
 		New(capacity);
 	}
@@ -94,13 +95,19 @@ namespace a3 {
 	{
 		Type * temp;
 		temp = a3Realloc(m_Base, capacity, Type);
-		if (temp) 
+		if (temp)
 		{
 			m_Base = temp;
 			m_Capacity = capacity;
 			return true;
 		}
 		return false;
+	}
+
+	template<typename Type>
+	inline Type * darray<Type>::GetData()
+	{
+		return m_Base;
 	}
 
 	template<typename Type>
@@ -123,40 +130,32 @@ namespace a3 {
 	}
 
 	template<typename Type>
-	inline Type * darray<Type>::GetData() const
-	{
-		return m_Base;
-	}
-
-	template<typename Type>
-	inline const Type & darray<Type>::GetElement(u64 index) const
-	{
-		return m_Base[index];
-	}
-
-	template<typename Type>
-	inline const Type & darray<Type>::operator[](u64 index) const
-	{
-		return GetElement(index);
-	}
-
-	template<typename Type>
-	inline const Type * darray<Type>::GetPointer(u64 index) const
-	{
-		return &GetElement(index);
-	}
-
-	template<typename Type>
 	inline Type & darray<Type>::Push(const Type & e)
 	{
 		if (m_Size == m_Capacity) {
-			if (!Resize(m_Capacity + 10)) 
+			if (!Resize(m_Capacity + 10))
 			{
 				a3TriggerBreakPoint();
 			}
 		}
 		m_Base[m_Size++] = e;
-		return m_Base[m_Size-1];
+		return m_Base[m_Size - 1];
+	}
+
+	template<typename Type>
+	inline Type & darray<Type>::PushFront(const Type & e)
+	{
+		if (m_Size == m_Capacity) 
+		{
+			if (!Resize(m_Capacity + 10))
+			{
+				a3TriggerBreakPoint();
+			}
+		}
+		for (i32 i = m_Size - 1; i >= 0; --i)
+			m_Base[i + 1] = m_Base[i];
+		m_Base[0] = e;
+		return m_Base[0];
 	}
 
 	template<typename Type>
@@ -174,9 +173,34 @@ namespace a3 {
 	}
 
 	template<typename Type>
+	template<typename ...Args>
+	inline Type & darray<Type>::EmplaceFront(Args && ...args)
+	{
+		if (m_Size == m_Capacity) 
+		{
+			if (!Resize(m_Capacity + 10))
+			{
+				a3TriggerBreakPoint();
+			}
+		}
+		for (i32 i = m_Size - 1; i >= 0; --i)
+			m_Base[i + 1] = m_Base[i];
+		a3Place(&m_Base[0]) Type(args...);
+		return m_Base[0];
+	}
+
+	template<typename Type>
 	inline Type & darray<Type>::Pop()
 	{
 		return m_Base[m_Size--];
+	}
+
+	template<typename Type>
+	inline void darray<Type>::PopFront()
+	{
+		for (i32 i = 0; i < m_Size - 1; ++i)
+			m_Base[i] = m_Base[i + 1];
+		m_Size--;
 	}
 
 	template<typename Type>
@@ -200,7 +224,7 @@ namespace a3 {
 	template<typename Type>
 	inline Type * darray<Type>::Begin() const
 	{
-		return &GetElement(0);
+		return m_Base;
 	}
 
 	template<typename Type>

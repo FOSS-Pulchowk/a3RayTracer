@@ -737,10 +737,10 @@ public:
 					tri.p[2].x, tri.p[2].y, tri.t[2].u, tri.t[2].v, tri.t[2].w,
 					sprTex1);
 
-				DrawTriangle(tri.p[0].x, tri.p[0].y,
+				/*DrawTriangle(tri.p[0].x, tri.p[0].y,
 					tri.p[1].x, tri.p[1].y,
 					tri.p[2].x, tri.p[2].y,
-					PIXEL_SOLID, FG_WHITE); 
+					PIXEL_SOLID, FG_WHITE); */
 
 
 			}
