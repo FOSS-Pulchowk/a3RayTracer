@@ -169,7 +169,7 @@ a3::mesh * a3_asset::LoadMeshFromBuffer(u64 id, void * buffer, u64 len)
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
 
-	a3::mesh_size ms = a3::QueryMeshSizeFromBuffer(buffer, len);
+	a3::mesh_info ms = a3::QueryMeshSizeFromBuffer(buffer, len);
 	
 	v3* vertices = 0;
 	v2* texCoords = 0;

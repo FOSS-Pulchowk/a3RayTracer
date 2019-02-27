@@ -49,6 +49,8 @@ namespace a3 {
 		i32 Count(u8 c, u8* end);
 		i32 CountInLine(u8 c, u8 end = 0);
 		i32 CountInLine(u8 c, u8* end);
+		i32 FindWordInLine(s8 word);
+		i32 FindWord(s8 word);
 	};
 
 }
@@ -313,6 +315,56 @@ namespace a3 {
 			scan++;
 		}
 		return count;
+	}
+
+	i32 stream::FindWordInLine(s8  word)
+	{
+		i32 pos = -1;
+		u8* scan = m_Current;
+		u32 index = 0;
+		u32 count = 0;
+		while ((*scan != '\n') && (scan != m_End + 1))
+		{
+			if (word[index] == 0) break;
+			if (*scan == (u8)word[index])
+			{
+				if (index == 0) pos = count;
+				index++;
+			}
+			else
+			{
+				pos = -1;
+				index = 0;
+			}
+			scan++;
+			count++;
+		}
+		return pos;
+	}
+
+	i32 stream::FindWord(s8  word)
+	{
+		i32 pos = -1;
+		u8* scan = m_Current;
+		u32 index = 0;
+		u32 count = 0;
+		while (scan != m_End + 1)
+		{
+			if (word[index] == 0) break;
+			if (*scan == (u8)word[index])
+			{
+				if (index == 0) pos = count;
+				index++;
+			}
+			else
+			{
+				pos = -1;
+				index = 0;
+			}
+			scan++;
+			count++;
+		}
+		return pos;
 	}
 
 }

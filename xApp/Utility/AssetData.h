@@ -8,6 +8,7 @@
 
 #define A3MAXLOADGLYPHX 16
 #define A3MAXLOADGLYPHY 16
+#define A3MAXMATERIALLENGTH 20
 
 namespace a3 {
 
@@ -64,7 +65,7 @@ namespace a3 {
 		u32 NumOfTriangles;
 	};
 
-	struct mesh_size
+	struct mesh_info
 	{
 		u64 VerticesSize;
 		u64 TextureCoordsSize;
@@ -73,6 +74,7 @@ namespace a3 {
 		u64 TextureCoordsIndicesSize;
 		u64 NormalIndicesSize;
 		u32 NumOfTriangles;
+		utf8 Material[A3MAXMATERIALLENGTH];
 	};
 
 	struct image_texture
@@ -119,8 +121,8 @@ namespace a3 {
 						   void(*fnNorms)(f32, f32, void*),
 						   void(*fnFaces)(u32, u32, u32, void*), void* ctx);*/
 
-	mesh_size QueryMeshSizeFromBuffer(void* buffer, u64 length);
-	mesh DecodeMeshFromBuffer(void* buffer, u64 length, mesh_size* pms, v3* pVertices, v2* pTexCoords, v3* pNormals, u32* pVertexIndices, u32* pTexCoordsIndices, u32* pNormalIndices);
+	mesh_info QueryMeshSizeFromBuffer(void* buffer, u64 length);
+	mesh DecodeMeshFromBuffer(void* buffer, u64 length, mesh_info* pms, v3* pVertices, v2* pTexCoords, v3* pNormals, u32* pVertexIndices, u32* pTexCoordsIndices, u32* pNormalIndices);
 
 }
 
@@ -419,8 +421,10 @@ f32 a3::QueryTTFontKernalAdvance(const stbtt_fontinfo & info, f32 scalingFactor,
 	return res * scalingFactor;
 }
 
-a3::mesh_size a3::QueryMeshSizeFromBuffer(void * buffer, u64 length)
+a3::mesh_info a3::QueryMeshSizeFromBuffer(void * buffer, u64 length)
 {
+	a3::mesh_info result = {};
+
 	u32 nVertices = 0;
 	u32 nTexCoords = 0;
 	u32 nNormals = 0;
@@ -513,6 +517,33 @@ a3::mesh_size a3::QueryMeshSizeFromBuffer(void * buffer, u64 length)
 
 		} break;
 
+		case 'm':
+		{
+			if (line.FindWordInLine("tllib") < 0) fail = true;
+		} break;
+
+		case 'u':
+		{
+			if (line.FindWordInLine("semtl") < 0)
+			{
+				fail = true;
+			}
+			else
+			{
+				line.MoveLineForwardPass(' ');
+				result.Material[A3MAXMATERIALLENGTH - 1] = 0;
+				for (i32 i = 0; i < A3MAXMATERIALLENGTH - 1; ++i)
+				{
+					if (line.GetCurrentPointerValue() == '\n' || line.GetCurrentPointerValue() == '\r')
+					{
+						result.Material[i] = 0;
+						break;
+					}
+					result.Material[i] = line.PopCurrentPointerValue();
+				}
+			}
+		} break;
+
 		default:
 		{
 			fail = true;
@@ -522,8 +553,11 @@ a3::mesh_size a3::QueryMeshSizeFromBuffer(void * buffer, u64 length)
 		s.MoveToNextLine();
 	}
 
-	a3::mesh_size result = {};
-	if (fail) return result;
+	if (fail)
+	{
+		result = {};
+		return result;
+	}
 	result.VerticesSize = sizeof(v3) * nVertices;
 	result.TextureCoordsSize = sizeof(v2) * nTexCoords;
 	result.NormalsSize = sizeof(v3) * nNormals;
@@ -535,7 +569,7 @@ a3::mesh_size a3::QueryMeshSizeFromBuffer(void * buffer, u64 length)
 	return result;
 }
 
-a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_size* pms, v3 * pVertices, v2 * pTexCoords, v3 * pNormals, u32 * pVertexIndices, u32 * pTexCoordsIndices, u32 * pNormalIndices)
+a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_info* pms, v3 * pVertices, v2 * pTexCoords, v3 * pNormals, u32 * pVertexIndices, u32 * pTexCoordsIndices, u32 * pNormalIndices)
 {
 	a3::mesh result;
 	result.Vertices = pVertices;
@@ -677,6 +711,16 @@ a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_size* pms, v3 
 
 			}
 
+		} break;
+
+		case 'm':
+		{
+			if (line.FindWordInLine("tllib") < 0) fail = true;
+		} break;
+
+		case 'u':
+		{
+			if (line.FindWordInLine("semtl") < 0) fail = true;
 		} break;
 
 		default:
