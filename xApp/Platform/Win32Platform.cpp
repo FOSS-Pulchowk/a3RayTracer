@@ -812,6 +812,7 @@ i32 a3Main()
 	win32_user_data* userData = Win32GetUserData();
 	HDC windowDeviceContext = GetDC(userData->windowHandle);
 
+	a3::mesh* m = a3::Asset.LoadMeshFromFile(15, "Resources/Axis.obj");
 
 	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::shaders::GLFontVertex, a3::shaders::GLFontFragment);
 	fontRenderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
