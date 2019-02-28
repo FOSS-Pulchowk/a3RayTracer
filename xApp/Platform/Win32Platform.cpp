@@ -792,13 +792,13 @@ i32 a3Main()
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
 	//a3::image* temp = a3::Asset.LoadImageFromFile(19, "Resources/BigSmile.png");
-	a3::image img = a3::CreateImageBuffer(400, 300);
+	a3::image img = a3::CreateImageBuffer(640, 480);
 	a3::FillImageBuffer(&img, a3::color::Black);
 
 	a3::swapchain sc;
 	sc.SetFrameBuffer(&img);
 	//sc.SetCamera(m4x4::LookR(v3{ 0.0f, 0.0f, 0.0f }, v3{ 0.0f, 0.0f, 1.0f }));
-	sc.SetViewport(0, 0, 400, 300);
+	sc.SetViewport(0, 0, 640, 480);
 	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Axis.obj"));
 
 	//a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
@@ -940,7 +940,7 @@ i32 a3Main()
 		renderer.BeginFrame();
 		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, bigsmile);
 		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, hugesmile);
-		renderer.Push(v3{ 100.0f, 100.0f, 0.0f }, 600.0f, a3::color::White, raw);
+		renderer.Push(v3{ 100.0f, 100.0f, 0.0f }, v2{640, 480}, a3::color::White, raw);
 		if (renderDebugInformation)
 		{
 #if defined(A3DEBUG) || defined(A3INTERNAL)
