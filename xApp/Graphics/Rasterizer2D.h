@@ -11,31 +11,32 @@
 namespace a3 {
 
 	a3::image CreateImageBuffer(i32 w, i32 h);
-	void FillImageBuffer(a3::image* img, rect r, v3 color, f32 alpha = 1.0f);
-	void FillImageBuffer(a3::image* img, v3 color, f32 alpha = 1.0f);
-	void FillImageBuffer(a3::image* img, rect r, v4 color);
-	void FillImageBuffer(a3::image* img, v4 color);
+	void FillImageBuffer(a3::image* img, const rect& r, const v3&  color, f32 alpha = 1.0f);
+	void FillImageBuffer(a3::image* img, const v3&  color, f32 alpha = 1.0f);
+	void FillImageBuffer(a3::image* img, const rect& r, const v4&  color);
+	void FillImageBuffer(a3::image* img, const v4&  color);
 	void ClearImageBuffer(a3::image* img);
 	// NOTE(Zero): Take alpha into consideration if `alpha` is true
 	void CopyImageBuffer(a3::image* dest, a3::image* src, const rect& destRect, const rect& srcRect, b32 alpha = false);
 	void CopyImageBuffer(a3::image* dest, a3::image* src, const rect& destRect, b32 alpha = false);
 
 	void SetPixel(a3::image* img, i32 x, i32 y, u32 color);
-	void SetPixelColor(a3::image* img, f32 x, f32 y, v4 color);
-	void SetPixelColor(a3::image* img, f32 x, f32 y, v3 color, f32 alpha = 1.0f);
+	void SetRangedPixel(a3::image* img, i32 x, i32 y, u32 color);
+	void SetPixelColor(a3::image* img, f32 x, f32 y, const v4&  color);
+	void SetPixelColor(a3::image* img, f32 x, f32 y, const v3&  color, f32 alpha = 1.0f);
 	u32 GetPixel(a3::image* img, i32 x, i32 y);
-	v4 GetPixelColorNormal(a3::image*, i32 x, i32 y);
+	v4  GetPixelColorNormal(a3::image*, i32 x, i32 y);
 	u32 SamplePixel(a3::image* img, f32 u, f32 v);
 	u32 SamplePixel(a3::image* img, v2 uv);
-	v4 SamplePixelColor(a3::image* img, f32 u, f32 v);
-	v4 SamplePixelColor(a3::image* img, v2 uv);
+	v4  SamplePixelColor(a3::image* img, f32 u, f32 v);
+	v4  SamplePixelColor(a3::image* img, v2 uv);
 
-	void DrawLine(a3::image* img, v2 start, v2 end, v3 color, f32 stroke = 1.0f);
-	void DrawLineStrip(a3::image* img, v2* lines, i32 n, v3 color, f32 stroke = 1.0f);
-	void DrawPolygon(a3::image* img, v2* points, i32 n, v3 color, f32 stroke = 1.0f);
-	void DrawTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, v3 color, f32 stroke = 1.0f);
+	void DrawLine(a3::image* img, v2 start, v2 end, const v3&  color);
+	void DrawLineStrip(a3::image* img, v2* lines, i32 n, const v3&  color);
+	void DrawPolygon(a3::image* img, v2* points, i32 n, const v3&  color);
+	void DrawTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, const v3&  color);
 	// NOTE(Zero): Anti-Clockwise order works better, I guess
-	void FillTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, v3 fillColor);
+	void FillTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, const v3&  fillColor);
 
 	typedef void(*RasterizeFontCallback)(void* userData, i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
 	void ResterizeFontsToBuffer(font_atlas_info* i, void* buffer, i32 length, f32 scale, void* drawBuffer, RasterizeFontCallback callback, void* userData);
@@ -66,7 +67,7 @@ namespace a3 {
 		return result;
 	}
 
-	void FillImageBuffer(a3::image * img, rect r, v3 color, f32 alpha)
+	void FillImageBuffer(a3::image * img, const rect& r, const v3& color, f32 alpha)
 	{
 		a3Assert(r.x >= 0 && r.y >= 0);
 		a3Assert(r.x + r.w <= img->Width && r.y + r.h <= img->Height);
@@ -81,17 +82,17 @@ namespace a3 {
 		}
 	}
 
-	void FillImageBuffer(a3::image* img, v3 color, f32 alpha)
+	void FillImageBuffer(a3::image* img, const v3& color, f32 alpha)
 	{
 		a3::FillImageBuffer(img, rect{ 0, 0, img->Width, img->Height }, color, alpha);
 	}
 
-	void FillImageBuffer(a3::image * img, rect r, v4 color)
+	void FillImageBuffer(a3::image * img, const rect& r, const v4&  color)
 	{
 		a3::FillImageBuffer(img, r, color.rgb, color.a);
 	}
 
-	void FillImageBuffer(a3::image * img, v4 color)
+	void FillImageBuffer(a3::image * img, const v4&  color)
 	{
 		a3::FillImageBuffer(img, color.rgb, color.a);
 	}
@@ -121,7 +122,7 @@ namespace a3 {
 				{
 					i32 sx = (i32)((f32)(x - destRect.x) / (f32)destRect.w * srcRect.w) + srcRect.x;
 					i32 sy = (i32)((f32)(y - destRect.y) / (f32)destRect.h * srcRect.h) + srcRect.y;
-					v4 srcColor = a3MakeRGBAv4(srcPixels[sx + sy * src->Width]);
+					const v4&  srcColor = a3MakeRGBAv4(srcPixels[sx + sy * src->Width]);
 					v4 destColor = a3MakeRGBAv4(destPixels[x + y * dest->Width]);
 					destColor = srcColor.a * srcColor + (1.0f - srcColor.a) * destColor;
 					destPixels[x + y * dest->Width] = a3Normalv4ToRGBA(destColor);
@@ -154,7 +155,14 @@ namespace a3 {
 		((u32*)img->Pixels)[x + y * img->Width] = color;
 	}
 
-	void SetPixelColor(a3::image * img, f32 x, f32 y, v4 color)
+	void SetRangedPixel(a3::image * img, i32 x, i32 y, u32 color)
+	{
+		i32 index = x + y * img->Width;
+		if(index < img->Width * img->Height)
+			((u32*)img->Pixels)[index] = color;
+	}
+
+	void SetPixelColor(a3::image * img, f32 x, f32 y, const v4& color)
 	{
 		i32 px = (i32)x;
 		i32 py = (i32)y;
@@ -168,7 +176,7 @@ namespace a3 {
 		a3::SetPixel(img, px, py, a3Normalv4ToRGBA(a3::BlendColor(color, a3MakeRGBAv4(hc), blend)));
 	}
 
-	void SetPixelColor(a3::image * img, f32 x, f32 y, v3 color, f32 alpha)
+	void SetPixelColor(a3::image * img, f32 x, f32 y, const v3& color, f32 alpha)
 	{
 		v4 c;
 		c.rgb = color;
@@ -210,8 +218,91 @@ namespace a3 {
 		return a3::SamplePixelColor(img, uv.u, uv.v);
 	}
 
-	void DrawLine(a3::image * img, v2 start, v2 end, v3 color, f32 stroke)
+	/*void DrawLine(a3::image * img, const v2& start, const v2& end, const v3& color)
 	{
+		f32 x1 = start.x;
+		f32 y1 = start.y;
+		f32 x2 = end.x;
+		f32 y2 = end.y;
+
+		f32 x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
+		dx = x2 - x1; dy = y2 - y1;
+		dx1 = FAbsf(dx); dy1 = FAbsf(dy);
+		px = 2 * dy1 - dx1;
+		py = 2 * dx1 - dy1;
+
+		u32 col = a3Normalv3ToRGBA(color, 0xffffffff);
+
+		if (dy1 <= dx1)
+		{
+			if (dx >= 0)
+			{
+				x = x1;
+				y = y1;
+				xe = x2;
+			}
+			else
+			{
+				x = x2;
+				y = y2;
+				xe = x1;
+			}
+
+			SetRangedPixel(img, x, y, col);
+
+			for (i = 0; x < xe; i++)
+			{
+				x = x + 1;
+				if (px < 0)
+				{
+					px = px + 2 * dy1;
+				}
+				else
+				{
+					if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) y = y + 1; else y = y - 1;
+					px = px + 2 * (dy1 - dx1);
+				}
+				SetRangedPixel(img, x, y, col);
+			}
+		}
+		else
+		{
+			if (dy >= 0)
+			{
+				x = x1;
+				y = y1;
+				ye = y2;
+			}
+			else
+			{
+				x = x2;
+				y = y2;
+				ye = y1;
+			}
+
+			SetRangedPixel(img, x, y, col);
+
+			for (i = 0; y < ye; i++)
+			{
+				y = y + 1;
+				if (py <= 0)
+				{
+					py = py + 2 * dx1;
+				}
+				else
+				{
+					if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) x = x + 1; else x = x - 1;
+					py = py + 2 * (dx1 - dy1);
+				}
+				SetRangedPixel(img, x, y, col);
+			}
+		}
+
+	}*/
+
+	void DrawLine(a3::image * img, v2 start, v2 end, const v3& color)
+	{
+
 		if (start.x < 0.0f) start.x = 0.0f;
 		if (start.y < 0.0f) start.y = 0.0f;
 		if (end.x < 0.0f) end.x = 0.0f;
@@ -232,46 +323,35 @@ namespace a3 {
 		v2 s = start;
 		for (i32 i = 1; i <= step; ++i)
 		{
-			f32 wx = 0.0f;
-			//while (FAbsf(wx) < stroke && d.y != 0.0f)
-			//{
-				a3::SetPixelColor(img, s.x + wx, s.y, color);
-				wx += d.y;
-			//}
-			f32 wy = 0.0f;
-			//while (FAbsf(wy) < stroke && d.x != 0.0f)
-			//{
-				a3::SetPixelColor(img, s.x, s.y + wy, color);
-				wy += d.x;
-			//}
+			a3::SetPixelColor(img, s.x, s.y, color);
 			s += d;
 		}
 	}
 
-	void DrawLineStrip(a3::image * img, v2 * lines, i32 n, v3 color, f32 stroke)
+	void DrawLineStrip(a3::image * img, v2 * lines, i32 n, const v3& color)
 	{
 		for (i32 i = 0; i < n - 1; ++i)
 		{
-			DrawLine(img, lines[i], lines[i + 1], color, stroke);
+			DrawLine(img, lines[i], lines[i + 1], color);
 		}
 	}
 
-	void DrawPolygon(a3::image * img, v2 * points, i32 n, v3 color, f32 stroke)
+	void DrawPolygon(a3::image * img, v2 * points, i32 n, const v3& color)
 	{
 		for (i32 i = 0; i < n; ++i)
 		{
-			DrawLine(img, points[i], points[(i + 1) % n], color, stroke);
+			DrawLine(img, points[i], points[(i + 1) % n], color);
 		}
 	}
 
-	void DrawTriangle(a3::image * img, v2 p0, v2 p1, v2 p2, v3 color, f32 stroke)
+	void DrawTriangle(a3::image * img, v2 p0, v2 p1, v2 p2, const v3&  color)
 	{
-		DrawLine(img, p0, p1, color, stroke);
-		DrawLine(img, p1, p2, color, stroke);
-		DrawLine(img, p2, p0, color, stroke);
+		DrawLine(img, p0, p1, color);
+		DrawLine(img, p1, p2, color);
+		DrawLine(img, p2, p0, color);
 	}
 
-	void FillTriangle(a3::image * img, v2 p0, v2 p1, v2 p2, v3 fillColor)
+	void FillTriangle(a3::image * img, v2 p0, v2 p1, v2 p2, const v3& fillColor)
 	{
 		auto processTopFlatPart = [&img, &fillColor](v2* p0, v2* p1, v2* p2)
 		{

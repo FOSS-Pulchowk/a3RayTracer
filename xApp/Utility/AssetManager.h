@@ -112,6 +112,7 @@ a3::image_texture* a3_asset::LoadTexture2DFromPixels(u64 id, void * pixels, i32 
 {
 	if (m_AssetsCount <= id) Resize(id + A3_ASSET_NUM_JUMP_ON_FULL);
 	a3IsBufferTooLarge(sizeof(a3::image_texture));
+	if (m_Assets[id]) a3::GPU.DeleteTexture((a3::image_texture*)m_Assets[id]);
 	m_Assets[id] = a3Reallocate(m_Assets[id], sizeof(a3::image_texture), void);
 	a3IsOutOfMemory(m_Assets[id]);
 	a3::image_texture* m = (a3::image_texture*)m_Assets[id];

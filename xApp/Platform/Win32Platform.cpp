@@ -651,6 +651,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
+	case WM_KEYDOWN:
+	{
+		if (wParam == VK_UP)
+			userData.inputSystem.Keys[a3::KeyUp] = a3::ButtonDown;
+		else if (wParam == VK_DOWN)
+			userData.inputSystem.Keys[a3::KeyDown] = a3::ButtonDown;
+		else if (wParam == VK_RIGHT)
+			userData.inputSystem.Keys[a3::KeyRight] = a3::ButtonDown;
+		else if (wParam == VK_LEFT)
+			userData.inputSystem.Keys[a3::KeyLeft] = a3::ButtonDown;
+	} break;
+
+	case WM_KEYUP:
+	{
+		if (wParam == VK_UP)
+			userData.inputSystem.Keys[a3::KeyUp] = a3::ButtonUp;
+		else if (wParam == VK_DOWN)
+			userData.inputSystem.Keys[a3::KeyDown] = a3::ButtonUp;
+		else if (wParam == VK_RIGHT)
+			userData.inputSystem.Keys[a3::KeyRight] = a3::ButtonUp;
+		else if (wParam == VK_LEFT)
+			userData.inputSystem.Keys[a3::KeyLeft] = a3::ButtonUp;
+	} break;
+
 	case WM_SIZE:
 	{
 		// TODO(Zero): This needs to handle more things then it is currently
@@ -768,15 +792,14 @@ i32 a3Main()
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
 	//a3::image* temp = a3::Asset.LoadImageFromFile(19, "Resources/BigSmile.png");
-	a3::image img = a3::CreateImageBuffer(40, 30);
+	a3::image img = a3::CreateImageBuffer(400, 300);
 	a3::FillImageBuffer(&img, a3::color::Black);
 
 	a3::swapchain sc;
 	sc.SetFrameBuffer(&img);
-	sc.SetViewport(0, 0, 40, 30);
-	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Hub.obj"));
-	m4x4 model = m4x4::TranslationR(v3{ 0,0,0.5f });
-	sc.Render(model);
+	//sc.SetCamera(m4x4::LookR(v3{ 0.0f, 0.0f, 0.0f }, v3{ 0.0f, 0.0f, 1.0f }));
+	sc.SetViewport(0, 0, 400, 300);
+	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Axis.obj"));
 
 	//a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
 	//a3::FillTriangle(&img, v2{ 50.0f, 50.0f }, v2{ 100.0f, 100.0f }, v2{ 30.0f, 100.0f }, a3::color::Green);
@@ -794,7 +817,6 @@ i32 a3Main()
 
 	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
-	a3::image_texture* raw = a3::Asset.LoadTexture2DFromPixels(13, img.Pixels, img.Width, img.Height, img.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* fontback = a3::Asset.LoadTexture2DFromPixels(14, fontbg.Pixels, fontbg.Width, fontbg.Height, fontbg.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 
 	a3Log("Window displayed.");
@@ -814,13 +836,17 @@ i32 a3Main()
 	win32_user_data* userData = Win32GetUserData();
 	HDC windowDeviceContext = GetDC(userData->windowHandle);
 
-	a3::mesh* m = a3::Asset.LoadMeshFromFile(15, "Resources/Axis.obj");
-
 	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::shaders::GLFontVertex, a3::shaders::GLFontFragment);
 	fontRenderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
 	a3::ui_context ui(1280.0f, 720.0f);
+
+	v3 cameraPosition = {};
+	v3 cameraForward = v3{ 0,0,-1 };
+	cameraForward = Normalize(cameraForward);
+
+	f32 angle = 10.0f;
 
 	b32 shouldRun = true;
 	while (shouldRun)
@@ -840,6 +866,51 @@ i32 a3Main()
 				DispatchMessageA(&sMsg);
 			}
 		}
+
+		f32 speed = 5.0f;
+
+		if (userData->inputSystem.Keys[a3::KeyUp] == a3::ButtonDown)
+		{
+			//cameraPosition += cameraForward * 50.0f;
+			cameraPosition.z += speed * deltaTime;
+		}
+
+		if (userData->inputSystem.Keys[a3::KeyDown] == a3::ButtonDown)
+		{
+			//cameraPosition -= cameraForward * 50.0f;
+			cameraPosition.z -= speed * deltaTime;
+		}
+
+		if (userData->inputSystem.Keys[a3::KeyRight] == a3::ButtonDown)
+		{
+			//cameraPosition -= cameraForward * 50.0f;
+			cameraPosition.y -= speed * deltaTime;
+		}
+
+		if (userData->inputSystem.Keys[a3::KeyLeft] == a3::ButtonDown)
+		{
+			//cameraPosition -= cameraForward * 50.0f;
+			cameraPosition.y += speed * deltaTime;
+		}
+
+		if (userData->inputSystem.Buttons[a3::ButtonLeft] == a3::ButtonDown)
+		{
+			//cameraPosition -= cameraForward * 50.0f;
+			cameraPosition.x += speed * deltaTime;
+		}
+
+		if (userData->inputSystem.Buttons[a3::ButtonRight] == a3::ButtonDown)
+		{
+			//cameraPosition -= cameraForward * 50.0f;
+			cameraPosition.x -= speed * deltaTime;
+		}
+
+		a3::FillImageBuffer(&img, a3::color::Black);
+		//sc.SetCamera(m4x4::LookR(cameraPosition, cameraForward));
+		m4x4 model = m4x4::RotationR(angle, v3{ 0, 1, 0 }) * m4x4::TranslationR(cameraPosition);
+		sc.Render(model);
+
+		//angle += 2.0f;
 
 		v3 cc = a3::color::NotQuiteBlack;
 		a3GL(glClearColor(cc.r, cc.g, cc.b, 1.0f));
@@ -863,6 +934,8 @@ i32 a3Main()
 		a3Assert(QueryPerformanceCounter(&currentPerformanceCounter));
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
+
+		a3::image_texture* raw = a3::Asset.LoadTexture2DFromPixels(13, img.Pixels, img.Width, img.Height, img.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 
 		renderer.BeginFrame();
 		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, bigsmile);

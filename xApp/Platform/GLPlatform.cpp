@@ -105,3 +105,8 @@ void a3_hardware_platform::DrawSubImageTexture2D(a3::image_texture * texture, i3
 	a3GL(glBindTexture(GL_TEXTURE_2D, texture->Id));
 	a3GL(glTexSubImage2D(GL_TEXTURE_2D, 0, xOffset, yOffset, w, h, format, GL_UNSIGNED_BYTE, pixels));
 }
+
+void a3_hardware_platform::DeleteTexture(a3::image_texture* texture) const
+{
+	a3GL(glDeleteTextures(1, &texture->Id));
+}

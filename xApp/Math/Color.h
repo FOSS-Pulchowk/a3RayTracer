@@ -229,7 +229,7 @@ inline v4 a3::MixColor(v4 c1, v4 c2)
 
 inline v4 a3::BlendColor(v4 c1, v4 c2, f32 blend)
 {
-	return (1.0f - blend) * c1 + blend * c2;
+	return Lerp(c1, c2, blend);
 }
 
 inline v3 a3::BlendColor(v3 c1, v3 c2, f32 blend)

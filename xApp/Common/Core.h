@@ -137,6 +137,7 @@ inline f32 Distance2(v2 lhs, v2 rhs);
 inline f32 Dot(v2 lhs, v2 rhs);
 inline v3 Cross(v2 lhs, v2 rhs);
 inline v2 Normalize(v2 vec);
+inline v2 Lerp(v2 p0, v2 p1, f32 alpha);
 inline v2& operator*=(v2& v, f32 scalar);
 inline v2& operator+=(v2& v, v2 vec);
 inline v2& operator-=(v2& v, v2 vec);
@@ -154,6 +155,7 @@ inline f32 Distance2(v3 lhs, v3 rhs);
 inline f32 Dot(v3 lhs, v3 rhs);
 inline v3 Cross(v3 lhs, v3 rhs);
 inline v3 Normalize(v3 vec);
+inline v3 Lerp(v3 p0, v3 p1, f32 alpha);
 inline v3& operator*=(v3& v, f32 scalar);
 inline v3& operator+=(v3& v, v3 vec);
 inline v3& operator-=(v3& v, v3 vec);
@@ -171,6 +173,7 @@ inline f32 Distance2(v4 lhs, v4 rhs);
 inline f32 Dot(v4 lhs, v4 rhs);
 inline v4 Cross(v4 lhs, v4 rhs);
 inline v4 Normalize(v4 vec);
+inline v4 Lerp(v4 p0, v4 p1, f32 alpha);
 inline v4& operator*=(v4& v, f32 scalar);
 inline v4& operator+=(v4& v, v4 vec);
 inline v4& operator-=(v4& v, v4 vec);
@@ -373,6 +376,11 @@ inline v2 Normalize(v2 vec)
 	return result;
 }
 
+inline v2 Lerp(v2 p0, v2 p1, f32 alpha)
+{
+	return (1.0f - alpha)*p0 + alpha * p1;
+}
+
 inline v2& operator*=(v2& v, f32 scalar)
 {
 	v.x *= scalar;
@@ -487,6 +495,11 @@ inline v3 Normalize(v3 vec)
 	result.y = vec.y * inverse_length;
 	result.z = vec.z * inverse_length;
 	return result;
+}
+
+inline v3 Lerp(v3 p0, v3 p1, f32 alpha)
+{
+	return (1.0f - alpha) * p0 + alpha * p1;
 }
 
 inline v3& operator*=(v3& v, f32 scalar)
@@ -619,6 +632,11 @@ inline v4 Normalize(v4 vec)
 	result.z = vec.z * inv_length;
 	result.w = vec.w * inv_length;
 	return result;
+}
+
+inline v4 Lerp(v4 p0, v4 p1, f32 alpha)
+{
+	return (1.0f - alpha)*p0 + alpha * p1;
 }
 
 inline v4& operator*=(v4& v, f32 scalar)

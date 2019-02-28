@@ -284,6 +284,19 @@ namespace a3 {
 		ButtonCount
 	};
 
+	enum key
+	{
+		KeyW,
+		KeyA,
+		KeyS,
+		KeyD,
+		KeyUp,
+		KeyDown,
+		KeyRight,
+		KeyLeft,
+		KeyCount
+	};
+
 	enum state
 	{
 		ButtonUp,
@@ -297,5 +310,6 @@ namespace a3 {
 		i32 WindowWidth;
 		i32 WindowHeight;
 		a3::state Buttons[a3::ButtonCount];
+		a3::state Keys[a3::KeyCount];
 	};
 }
