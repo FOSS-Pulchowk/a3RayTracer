@@ -768,15 +768,15 @@ i32 a3Main()
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
 	//a3::image* temp = a3::Asset.LoadImageFromFile(19, "Resources/BigSmile.png");
-	a3::image img = a3::CreateImageBuffer(800, 600);
+	a3::image img = a3::CreateImageBuffer(400, 300);
 	a3::FillImageBuffer(&img, a3::color::Black);
 
-	/*a3::swapchain sc;
+	a3::swapchain sc;
 	sc.SetFrameBuffer(&img);
-	sc.SetViewport(0, 0, 800, 600);
+	sc.SetViewport(0, 0, 400, 300);
 	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Hub.obj"));
 	m4x4 model = m4x4::TranslationR(v3{ 0,0,0.5f });
-	sc.Render(model);*/
+	sc.Render(model);
 
 	//a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
 	//a3::FillTriangle(&img, v2{ 50.0f, 50.0f }, v2{ 100.0f, 100.0f }, v2{ 30.0f, 100.0f }, a3::color::Green);

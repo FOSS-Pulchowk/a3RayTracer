@@ -16,7 +16,7 @@ namespace a3 {
 	{
 		v4 p[3];
 		v3 t[3];
-		triangle(){}
+		triangle() {}
 		triangle(v3 p0, v3 p1, v3 p2, v2 t0, v2 t1, v2 t2)
 		{
 			p[0].xyz = p0;
@@ -32,6 +32,26 @@ namespace a3 {
 			t[1].z = 1.0f;
 			t[2].xy = t2;
 			t[2].z = 1.0f;
+		}
+		triangle(const triangle& t)
+		{
+			p[0] = t.p[0];
+			p[1] = t.p[1];
+			p[2] = t.p[2];
+			this->t[0] = t.t[0];
+			this->t[1] = t.t[1];
+			this->t[2] = t.t[2];
+		}
+		triangle& operator=(const triangle& tt)
+		{
+			if (this == &tt) return *this;
+			p[0] = tt.p[0];
+			p[1] = tt.p[1];
+			p[2] = tt.p[2];
+			this->t[0] = tt.t[0];
+			this->t[1] = tt.t[1];
+			this->t[2] = tt.t[2];
+			return *this;
 		}
 	};
 
@@ -260,25 +280,23 @@ namespace a3 {
 	{
 		//m4x4 mvp = model * m4x4::Inverse(m_View) * m_Projection;
 
-
 		u32 nTriangles = m_Meshes->NumOfTriangles;
 		v3* vertices = m_Meshes->Vertices;
 		u32* indices = m_Meshes->VertexIndices;
 
 		v2* uv = m_Meshes->TextureCoords;
 		u32* uvIndices = m_Meshes->TextureCoordsIndices;
+		// if (uvIndices == A3NULL) {/*use directly*/ };
 
-
-
-		for (i32 n = 0; n < nTriangles; ++n) {
-
+		for (i32 n = 0; n < nTriangles; ++n)
+		{
 			v3 t0 = vertices[indices[n * 3 + 0]];
 			v3 t1 = vertices[indices[n * 3 + 1]];
 			v3 t2 = vertices[indices[n * 3 + 2]];
 
 			v2 u0, u1, u2;
 
-			if (uvIndices == A3NULL) 
+			if (uvIndices == A3NULL)
 			{
 				u0 = uv[n * 3 + 0];
 				u1 = uv[n * 3 + 1];
@@ -286,33 +304,13 @@ namespace a3 {
 			}
 			else
 			{
-				u0 = uv[uvIndices[n*3 + 0]];
-				u1 = uv[uvIndices[n*3 + 1]];
-				u2 = uv[uvIndices[n*3 + 2]];
+				u0 = uv[uvIndices[n * 3 + 0]];
+				u1 = uv[uvIndices[n * 3 + 1]];
+				u2 = uv[uvIndices[n * 3 + 2]];
 			}
-
-			//tris.push_back({ t0,t1,t2,1.0f }, { u0, u1,u2,1.0f });
-
 			tris.Emplace(t0, t1, t2, u0, u1, u2);
-
-			/*for (i32 i = 0; i < 3; ++i)
-			{
-				tris.push_back(vertices[indices[]]);
-				v3 v1 = vertices[indices[n * 3 + i]];
-				v4 v = { v1.x, v1.y, v1.z, 1 };
-				verts.push_back(v);
-				if (uvIndices == A3NULL) {
-					v3 tex = { uv[n].u, uv[n].v, 1 };
-					texs.push_back(tex);
-				}
-				else
-				{
-					v2 t = uv[uvIndices[n * 3 + i]];
-					v3 tex = { t.u, t.v, 1 };
-					texs.push_back(tex);
-				}
-			}*/
 		}
+
 		v4 vCamera = {};
 		vCamera.w = 1;
 
@@ -326,9 +324,8 @@ namespace a3 {
 		m4x4 matView = m4x4::Inverse(matCamera);
 
 		// Draw Triangles
-		for (i32 i=0; i< tris.QuerySize(); ++i)
+		for (i32 i = 0; i < tris.QuerySize(); ++i)
 		{
-
 			a3::triangle tri = tris.GetElement(i);
 			triangle triProjected, triTransformed, triViewed;
 
@@ -356,12 +353,6 @@ namespace a3 {
 				v4 light_direction = { 0.0f, 1.0f, -1.0f };
 				light_direction = Normalize(light_direction);
 
-				/*float dp = max(0.1f, Vector_DotProduct(light_direction, normal));
-
-				CHAR_INFO c = GetColour(dp);
-				triTransformed.col = c.Attributes;
-				triTransformed.sym = c.Char.UnicodeChar;*/
-
 				// Convert World Space --> View Space
 				triViewed.p[0] = triTransformed.p[0] * m_View;
 				triViewed.p[1] = triTransformed.p[1] * m_View;
@@ -369,8 +360,6 @@ namespace a3 {
 				triViewed.t[0] = triTransformed.t[0];
 				triViewed.t[1] = triTransformed.t[1];
 				triViewed.t[2] = triTransformed.t[2];
-				/* triViewed.sym = triTransformed.sym;
-				 triViewed.col = triTransformed.col;*/
 
 				int nClippedTriangles = 0;
 				triangle clipped[2];
@@ -432,12 +421,12 @@ namespace a3 {
 			}
 		}
 
-		for (i32 i=0; i< trianglesToRaster.QuerySize(); ++i)
+		for (u32 tt = 0; tt < trianglesToRaster.QuerySize(); ++tt)
 		{
-			a3::triangle triToRaster = trianglesToRaster.GetElement(i);
+			// infinite loop here!!!!!
+			a3::triangle triToRaster = trianglesToRaster.GetElement(tt);
 
 			triangle clipped[2];
-
 
 			listTriangles.Push(triToRaster);
 			int nNewTriangles = 1;
@@ -467,17 +456,14 @@ namespace a3 {
 				nNewTriangles = listTriangles.QuerySize();
 			}
 
-			for (i32 i = 0; i < listTriangles.QuerySize(); ++i) {
-
+			for (i32 i = 0; i < listTriangles.QuerySize(); ++i) 
+			{
 				a3::triangle tri = listTriangles.GetElement(i);
-
 				a3::DrawTriangle(m_FrameBuffer, tri.p[0].xy, tri.p[1].xy, tri.p[2].xy, a3::color::White);
-
 				/*TexturedTriangle(tri.p[0].x, tri.p[0].y, tri.t[0].u, tri.t[0].v, tri.t[0].w,
 					tri.p[1].x, tri.p[1].y, tri.t[1].u, tri.t[1].v, tri.t[1].w,
 					tri.p[2].x, tri.p[2].y, tri.t[2].u, tri.t[2].v, tri.t[2].w,
 					m_Texture);*/
-
 			}
 		}
 	}

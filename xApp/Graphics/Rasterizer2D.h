@@ -213,7 +213,7 @@ namespace a3 {
 	void DrawLine(a3::image * img, v2 start, v2 end, v3 color, f32 stroke)
 	{
 		if (start.x < 0.0f) start.x = 0.0f;
-		if (start.y < 0.0f) end.y = 0.0f;
+		if (start.y < 0.0f) start.y = 0.0f;
 		if (end.x < 0.0f) end.x = 0.0f;
 		if (end.y < 0.0f) end.y = 0.0f;
 
@@ -233,17 +233,17 @@ namespace a3 {
 		for (i32 i = 1; i <= step; ++i)
 		{
 			f32 wx = 0.0f;
-			while (FAbsf(wx) < stroke && d.y != 0.0f)
-			{
+			//while (FAbsf(wx) < stroke && d.y != 0.0f)
+			//{
 				a3::SetPixelColor(img, s.x + wx, s.y, color);
 				wx += d.y;
-			}
+			//}
 			f32 wy = 0.0f;
-			while (FAbsf(wy) < stroke && d.x != 0.0f)
-			{
+			//while (FAbsf(wy) < stroke && d.x != 0.0f)
+			//{
 				a3::SetPixelColor(img, s.x, s.y + wy, color);
 				wy += d.x;
-			}
+			//}
 			s += d;
 		}
 	}

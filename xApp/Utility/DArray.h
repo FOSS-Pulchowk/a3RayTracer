@@ -94,7 +94,7 @@ namespace a3 {
 	inline b32 darray<Type>::Resize(u64 capacity)
 	{
 		Type * temp;
-		temp = a3Realloc(m_Base, capacity, Type);
+		temp = a3Realloc(m_Base, capacity * sizeof(Type), Type);
 		if (temp)
 		{
 			m_Base = temp;
