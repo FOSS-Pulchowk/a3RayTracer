@@ -115,8 +115,8 @@ inline void a3::ui_context::UpdateIO(const input_info& input)
 {
 	m_Input.mouseX = input.MouseX * m_Width;
 	m_Input.mouseY = input.MouseY * m_Height;
-	m_Input.mouseUp = input.Buttons[a3::ButtonLeft] == a3::ButtonUp;
-	m_Input.mouseDown = input.Buttons[a3::ButtonLeft] == a3::ButtonDown;
+	m_Input.mouseUp = input.Buttons[a3::ButtonLeft].Up;
+	m_Input.mouseDown = input.Buttons[a3::ButtonLeft].Down;
 }
 
 inline void a3::ui_context::BeginFrame(v2 position)

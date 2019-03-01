@@ -573,6 +573,27 @@ memory_arena NewMemoryBlock(u32 size)
 	return arena;
 }
 
+a3::key Win32MapKey(WPARAM keyCode)
+{
+	switch (keyCode)
+	{
+	case VK_UP: return a3::KeyUp;
+	case VK_DOWN: return a3::KeyDown;
+	case VK_LEFT: return a3::KeyLeft;
+	case VK_RIGHT: return a3::KeyRight;
+	}
+	return a3::KeyUnknown;
+}
+
+void Win32ProcessKeyState(a3::key_state* state, LPARAM lParam)
+{
+	state->Repeats = a3ConsumeBits(lParam, 0, 15);
+	state->Extended = a3GetBit(lParam, a3Bit(24));
+	state->Down = (a3GetBit(lParam, a3Bit(31)) == 0);
+	state->Up = (a3GetBit(lParam, a3Bit(31)) == 1);
+	state->Pressed = ((a3GetBit(lParam, a3Bit(30)) == 0) && state->Up);
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	win32_user_data& userData = *(win32_user_data*)Win32GetUserData();
@@ -584,7 +605,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		i32 ww = userData.inputSystem.WindowWidth;
 		i32 wh = userData.inputSystem.WindowHeight;
 		userData.inputSystem.MouseX = (f32)mx / (f32)ww;
-		// TODO(Zero): Y coordinate for mouse position is inversed
+		// NOTE(Zero): Y coordinate for mouse position is inversed
 		userData.inputSystem.MouseY = (f32)(wh - my) / (f32)wh;
 	};
 
@@ -612,67 +633,55 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONDOWN:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonDown;
+		userData.inputSystem.Buttons[a3::ButtonLeft].Down = true;
+		userData.inputSystem.Buttons[a3::ButtonLeft].Up = false;
 		break;
 	}
 
 	case WM_LBUTTONUP:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonUp;
+		userData.inputSystem.Buttons[a3::ButtonLeft].Down = false;
+		userData.inputSystem.Buttons[a3::ButtonLeft].Up = true;
 		break;
 	}
 
 	case WM_RBUTTONDOWN:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonDown;
+		userData.inputSystem.Buttons[a3::ButtonRight].Down = true;
+		userData.inputSystem.Buttons[a3::ButtonRight].Up = false;
 		break;
 	}
 
 	case WM_RBUTTONUP:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonUp;
+		userData.inputSystem.Buttons[a3::ButtonRight].Down = false;
+		userData.inputSystem.Buttons[a3::ButtonRight].Up = true;
 		break;
 	}
 
 	case WM_MBUTTONDOWN:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonDown;
+		userData.inputSystem.Buttons[a3::ButtonMiddle].Down = true;
+		userData.inputSystem.Buttons[a3::ButtonMiddle].Up = false;
 		break;
 	}
 
 	case WM_MBUTTONUP:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonUp;
+		userData.inputSystem.Buttons[a3::ButtonMiddle].Down = false;
+		userData.inputSystem.Buttons[a3::ButtonMiddle].Up = true;
 		break;
 	}
 
+	case WM_KEYUP:
 	case WM_KEYDOWN:
 	{
-		if (wParam == VK_UP)
-			userData.inputSystem.Keys[a3::KeyUp] = a3::ButtonDown;
-		else if (wParam == VK_DOWN)
-			userData.inputSystem.Keys[a3::KeyDown] = a3::ButtonDown;
-		else if (wParam == VK_RIGHT)
-			userData.inputSystem.Keys[a3::KeyRight] = a3::ButtonDown;
-		else if (wParam == VK_LEFT)
-			userData.inputSystem.Keys[a3::KeyLeft] = a3::ButtonDown;
-	} break;
-
-	case WM_KEYUP:
-	{
-		if (wParam == VK_UP)
-			userData.inputSystem.Keys[a3::KeyUp] = a3::ButtonUp;
-		else if (wParam == VK_DOWN)
-			userData.inputSystem.Keys[a3::KeyDown] = a3::ButtonUp;
-		else if (wParam == VK_RIGHT)
-			userData.inputSystem.Keys[a3::KeyRight] = a3::ButtonUp;
-		else if (wParam == VK_LEFT)
-			userData.inputSystem.Keys[a3::KeyLeft] = a3::ButtonUp;
+		Win32ProcessKeyState(&userData.inputSystem.Keys[Win32MapKey(wParam)], lParam);
 	} break;
 
 	case WM_SIZE:
@@ -734,6 +743,164 @@ struct entity
 
 #define A3_WINDOW_CLASS_NAME "a3WindowClass"
 
+struct transform
+{
+	static const v3 WorldUp;
+	static const v3 WorldRight;
+	static const v3 WorldForward;
+
+	v3 position;
+	v3 scale;
+	quat orientation;
+
+	transform()
+	{
+		position = {};
+		scale = { 1.0f, 1.0f, 1.0f };
+		orientation = quat();
+	}
+
+	transform& SetPosition(f32 x, f32 y, f32 z)
+	{
+		position.x = x;
+		position.y = y;
+		position.z = z;
+		return *this;
+	}
+
+	transform& SetPosition(const v3& position)
+	{
+		this->position = position;
+		return *this;
+	}
+
+	transform& SetScale(f32 x, f32 y, f32 z)
+	{
+		scale.x = x;
+		scale.y = y;
+		scale.z = z;
+		return *this;
+	}
+
+	transform& SetScale(const v3& scale)
+	{
+		this->scale = scale;
+		return *this;
+	}
+
+	transform& FactorScale(f32 factor)
+	{
+		scale *= factor;
+		return *this;
+	}
+
+	transform& FactorScale(f32 xf, f32 yf, f32 zf)
+	{
+		scale.x *= xf;
+		scale.y *= yf;
+		scale.z *= zf;
+		return *this;
+	}
+
+	transform& FactorScale(const v3& factor)
+	{
+		scale = scale * factor;
+		return *this;
+	}
+
+	transform& SetOrientation(f32 yaw, f32 pitch, f32 roll)
+	{
+		orientation = EulerAnglesToQuat(v3{ yaw, pitch, roll });
+		return *this;
+	}
+
+	transform& SetOrientation(const v3& eulerAngles)
+	{
+		orientation = EulerAnglesToQuat(eulerAngles);
+		return *this;
+	}
+
+	v3 GetForward()
+	{
+		return GetAxisFromQuat(quat::Normalize(orientation));
+	}
+
+	v3 GetRight()
+	{
+		return Cross(Normalize(GetForward()), transform::WorldUp);
+	}
+
+	v3 GetUp()
+	{
+		return Cross(Normalize(GetForward()), transform::WorldRight);
+	}
+
+	transform& MoveTowards(f32 distance, v3 direction)
+	{
+		v3 udir = Normalize(direction);
+		position += udir * distance;
+		return *this;
+	}
+
+	transform& MoveForward(f32 distance)
+	{
+		return MoveTowards(distance, GetForward());
+	}
+
+	transform& MoveRight(f32 distance)
+	{
+		return MoveTowards(distance, GetRight());
+	}
+
+	transform& MoveUp(f32 distance)
+	{
+		return MoveTowards(distance, GetUp());
+	}
+
+	transform& LookAt(const v3& target)
+	{
+		v3 dir = Normalize(target - position);
+		f32 angle = ArcCosf(a3ToRadians(-dir.z));
+		orientation = AngleAxisToQuat(angle, dir);
+		return *this;
+	}
+
+	transform& LookAt(f32 x, f32 y, f32 z)
+	{
+		return LookAt(v3{ x,y,z });
+	}
+
+	transform& RotateOrientation(f32 angle, const v3& axis)
+	{
+		orientation *= AngleAxisToQuat(angle, Normalize(axis));
+		return *this;
+	}
+
+	transform& RotateOrientationUp(f32 angle)
+	{
+		return RotateOrientation(angle, GetUp());
+	}
+
+	transform& RotateOrientationRight(f32 angle)
+	{
+		return RotateOrientation(angle, GetRight());
+	}
+
+	transform& RotateOrientationForward(f32 angle)
+	{
+		return RotateOrientation(angle, GetForward());
+	}
+
+	m4x4 CalculateModelM4X4()
+	{
+		return m4x4::ScaleR(scale)*QuatToMat4x4R(orientation)*m4x4::TranslationR(position);
+	}
+};
+
+const v3 transform::WorldUp = v3{ 0,1,0 };
+const v3 transform::WorldRight = v3{ 1,0,0 };
+const v3 transform::WorldForward = v3{ 0,0,-1 };
+
 i32 a3Main()
 {
 	HMODULE hInstance = GetModuleHandleA(0);
@@ -792,13 +959,13 @@ i32 a3Main()
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
 	//a3::image* temp = a3::Asset.LoadImageFromFile(19, "Resources/BigSmile.png");
-	a3::image img = a3::CreateImageBuffer(400, 300);
+	a3::image img = a3::CreateImageBuffer(640, 480);
 	a3::FillImageBuffer(&img, a3::color::Black);
 
 	a3::swapchain sc;
 	sc.SetFrameBuffer(&img);
 	//sc.SetCamera(m4x4::LookR(v3{ 0.0f, 0.0f, 0.0f }, v3{ 0.0f, 0.0f, 1.0f }));
-	sc.SetViewport(0, 0, 400, 300);
+	sc.SetViewport(0, 0, 640, 480);
 	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Axis.obj"));
 
 	//a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
@@ -842,11 +1009,14 @@ i32 a3Main()
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
 	a3::ui_context ui(1280.0f, 720.0f);
 
-	v3 cameraPosition = {};
-	v3 cameraForward = v3{ 0,0,-1 };
-	cameraForward = Normalize(cameraForward);
+	//v3 cameraPosition = {};
+	//v3 cameraForward = v3{ 0,0,-1 };
+	//cameraForward = Normalize(cameraForward);
 
-	f32 angle = 10.0f;
+	transform camera;
+
+	f32 angle = a3ToRadians(5.0f);
+	f32 speed = 5.0f;
 
 	b32 shouldRun = true;
 	while (shouldRun)
@@ -867,47 +1037,39 @@ i32 a3Main()
 			}
 		}
 
-		f32 speed = 5.0f;
 
-		if (userData->inputSystem.Keys[a3::KeyUp] == a3::ButtonDown)
+		if (userData->inputSystem.Keys[a3::KeyUp].Down)
 		{
-			//cameraPosition += cameraForward * 50.0f;
-			cameraPosition.z += speed * deltaTime;
+			camera.MoveForward(speed * deltaTime);
 		}
 
-		if (userData->inputSystem.Keys[a3::KeyDown] == a3::ButtonDown)
+		if (userData->inputSystem.Keys[a3::KeyDown].Down)
 		{
-			//cameraPosition -= cameraForward * 50.0f;
-			cameraPosition.z -= speed * deltaTime;
+			camera.MoveForward(-speed * deltaTime);
 		}
 
-		if (userData->inputSystem.Keys[a3::KeyRight] == a3::ButtonDown)
+		if (userData->inputSystem.Keys[a3::KeyRight].Down)
 		{
-			//cameraPosition -= cameraForward * 50.0f;
-			cameraPosition.y -= speed * deltaTime;
+			camera.RotateOrientationRight(angle * deltaTime);
 		}
 
-		if (userData->inputSystem.Keys[a3::KeyLeft] == a3::ButtonDown)
+		if (userData->inputSystem.Keys[a3::KeyLeft].Down)
 		{
-			//cameraPosition -= cameraForward * 50.0f;
-			cameraPosition.y += speed * deltaTime;
+			camera.RotateOrientationRight(-angle * deltaTime);
 		}
 
-		if (userData->inputSystem.Buttons[a3::ButtonLeft] == a3::ButtonDown)
+		if (userData->inputSystem.Buttons[a3::ButtonLeft].Down)
 		{
-			//cameraPosition -= cameraForward * 50.0f;
-			cameraPosition.x += speed * deltaTime;
 		}
 
-		if (userData->inputSystem.Buttons[a3::ButtonRight] == a3::ButtonDown)
+		if (userData->inputSystem.Buttons[a3::ButtonRight].Down)
 		{
-			//cameraPosition -= cameraForward * 50.0f;
-			cameraPosition.x -= speed * deltaTime;
 		}
 
 		a3::FillImageBuffer(&img, a3::color::Black);
-		//sc.SetCamera(m4x4::LookR(cameraPosition, cameraForward));
-		m4x4 model = m4x4::RotationR(angle, v3{ 0, 1, 0 }) * m4x4::TranslationR(cameraPosition);
+		sc.SetCamera(camera.CalculateModelM4X4());
+		//sc.SetCamera(m4x4::Identity());
+		m4x4 model = m4x4::TranslationR(v3{ 0, 0, -5 });
 		sc.Render(model);
 		sc.SetCameraPosition(cameraPosition);
 
@@ -926,7 +1088,7 @@ i32 a3Main()
 		a3GL(glViewport(0, 0, userData->inputSystem.WindowWidth, userData->inputSystem.WindowHeight));
 
 		ui.UpdateIO(userData->inputSystem);
-		if (userData->inputSystem.Buttons[a3::ButtonRight] == a3::ButtonUp && oldInput.Buttons[a3::ButtonRight] == a3::ButtonDown)
+		if (userData->inputSystem.Buttons[a3::ButtonRight].Up && oldInput.Buttons[a3::ButtonRight].Down)
 			renderDebugInformation = !renderDebugInformation;
 
 		oldInput = userData->inputSystem;
@@ -941,7 +1103,7 @@ i32 a3Main()
 		renderer.BeginFrame();
 		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, bigsmile);
 		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, hugesmile);
-		renderer.Push(v3{ 100.0f, 100.0f, 0.0f }, 600.0f, a3::color::White, raw);
+		renderer.Push(v3{ 100.0f, 100.0f, 0.0f }, v2{ 640, 480 }, a3::color::White, raw);
 		if (renderDebugInformation)
 		{
 #if defined(A3DEBUG) || defined(A3INTERNAL)

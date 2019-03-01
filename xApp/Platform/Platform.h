@@ -277,6 +277,7 @@ void operator delete[](void*, void*);
 namespace a3 {
 	enum button
 	{
+		ButtonUnknown,
 		ButtonLeft,
 		ButtonRight,
 		ButtonMiddle,
@@ -286,6 +287,7 @@ namespace a3 {
 
 	enum key
 	{
+		KeyUnknown,
 		KeyW,
 		KeyA,
 		KeyS,
@@ -294,13 +296,23 @@ namespace a3 {
 		KeyDown,
 		KeyRight,
 		KeyLeft,
+
 		KeyCount
 	};
 
-	enum state
+	struct key_state
 	{
-		ButtonUp,
-		ButtonDown
+		b32 Down;
+		b32 Up;
+		b32 Pressed;
+		i32 Repeats;
+		b32 Extended;
+	};
+
+	struct button_state
+	{
+		b32 Down;
+		b32 Up;
 	};
 
 	struct input_info
@@ -309,7 +321,7 @@ namespace a3 {
 		f32 MouseY;
 		i32 WindowWidth;
 		i32 WindowHeight;
-		a3::state Buttons[a3::ButtonCount];
-		a3::state Keys[a3::KeyCount];
+		button_state Buttons[a3::ButtonCount];
+		key_state Keys[a3::KeyCount];
 	};
 }
