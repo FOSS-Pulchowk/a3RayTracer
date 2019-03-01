@@ -54,6 +54,18 @@ inline m4x4 QuatToMat4x4R(const quat &q);
 inline m4x4 QuatMat4x4C(const quat &q);
 
 /*
+	- Returns rows or column of the matrix transformation
+	- This is useful when we need forward, right or up vector
+	- Errors can occurs if the provided Quaternion is either null or not unit quaternion
+*/
+inline v3 GetAxis0R(const quat& q);
+inline v3 GetAxis1R(const quat& q);
+inline v3 GetAxis2R(const quat& q);
+inline v3 GetAxis0C(const quat& q);
+inline v3 GetAxis1C(const quat& q);
+inline v3 GetAxis2C(const quat& q);
+
+/*
 	- Constructs Quaternion from angle and axis
 	- Angle should be provided in radians
 	- Axis must be unit vector, this does not normalize the axis
@@ -180,16 +192,70 @@ inline v3 QuatToEulerAngles(const quat &q)
 
 inline m4x4 QuatToMat4x4R(const quat &q)
 {
-	return m4x4(
-		q.r * q.r + q.i * q.i - q.j * q.j - q.k * q.k, 2.0f * (q.i * q.j + q.k * q.r), 2.0f * (q.i * q.k - q.j * q.r), 0.0f,
-		2.0f * (q.i * q.j - q.k * q.r), q.r * q.r - q.i * q.i + q.j * q.j - q.k * q.k, 2.0f * (q.j * q.k + q.i * q.r), 0.0f,
-		2.0f * (q.i * q.k + q.j * q.r), 2.0f * (q.j * q.k - q.i * q.r), q.r * q.r - q.i * q.i - q.j * q.j + q.k * q.k, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f);
+	m4x4 res;
+	res.rows[0].xyz = GetAxis0R(q);
+	res.rows[1].xyz = GetAxis1R(q);
+	res.rows[2].xyz = GetAxis2R(q);
+	return res;
 }
 
 inline m4x4 QuatMat4x4C(const quat &q)
 {
 	return m4x4::Transpose(QuatToMat4x4R(q));
+}
+
+inline v3 GetAxis0R(const quat & q)
+{
+	v3 res;
+	res.x = q.r * q.r + q.i * q.i - q.j * q.j - q.k * q.k;
+	res.y = 2.0f * (q.i * q.j + q.k * q.r);
+	res.z = 2.0f * (q.i * q.k - q.j * q.r);
+	return res;
+}
+
+inline v3 GetAxis1R(const quat & q)
+{
+	v3 res;
+	res.x = 2.0f * (q.i * q.j - q.k * q.r);
+	res.y = q.r * q.r - q.i * q.i + q.j * q.j - q.k * q.k;
+	res.z = 2.0f * (q.j * q.k + q.i * q.r);
+	return res;
+}
+
+inline v3 GetAxis2R(const quat & q)
+{
+	v3 res;
+	res.x = 2.0f * (q.i * q.k + q.j * q.r);
+	res.y = 2.0f * (q.j * q.k - q.i * q.r);
+	res.z = q.r * q.r - q.i * q.i - q.j * q.j + q.k * q.k;
+	return res;
+}
+
+inline v3 GetAxis0C(const quat & q)
+{
+	v3 res;
+	res.x = q.r * q.r + q.i * q.i - q.j * q.j - q.k * q.k;
+	res.y = 2.0f * (q.i * q.j - q.k * q.r);
+	res.z = 2.0f * (q.i * q.k + q.j * q.r);
+	return res;
+}
+
+inline v3 GetAxis1C(const quat & q)
+{
+	v3 res;
+	res.x = 2.0f * (q.i * q.j + q.k * q.r);
+	res.y = q.r * q.r - q.i * q.i + q.j * q.j - q.k * q.k;
+	res.z = 2.0f * (q.j * q.k - q.i * q.r);
+	return res;
+}
+
+inline v3 GetAxis2C(const quat & q)
+{
+	v3 res;
+	res.x = 2.0f * (q.i * q.k - q.j * q.r);
+	res.y = 2.0f * (q.j * q.k + q.i * q.r);
+	res.z = q.r * q.r - q.i * q.i - q.j * q.j + q.k * q.k;
+	return res;
 }
 
 inline quat AngleAxisToQuat(f32 angle, v3 axis)

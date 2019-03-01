@@ -822,17 +822,17 @@ struct transform
 
 	v3 GetForward()
 	{
-		return GetAxisFromQuat(quat::Normalize(orientation));
+		return -GetAxis2R(orientation);
 	}
 
 	v3 GetRight()
 	{
-		return Cross(Normalize(GetForward()), transform::WorldUp);
+		return GetAxis0R(orientation);
 	}
 
 	v3 GetUp()
 	{
-		return Cross(Normalize(GetForward()), transform::WorldRight);
+		return GetAxis1R(orientation);
 	}
 
 	transform& MoveTowards(f32 distance, v3 direction)
@@ -964,7 +964,7 @@ i32 a3Main()
 
 	a3::swapchain sc;
 	sc.SetFrameBuffer(&img);
-	//sc.SetCamera(m4x4::LookR(v3{ 0.0f, 0.0f, 0.0f }, v3{ 0.0f, 0.0f, 1.0f }));
+	sc.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 	sc.SetViewport(0, 0, 640, 480);
 	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Axis.obj"));
 
@@ -1015,8 +1015,8 @@ i32 a3Main()
 
 	transform camera;
 
-	f32 angle = a3ToRadians(5.0f);
-	f32 speed = 5.0f;
+	f32 angle = a3ToRadians(30.0f);
+	f32 speed = 16.0f;
 
 	b32 shouldRun = true;
 	while (shouldRun)
@@ -1050,20 +1050,22 @@ i32 a3Main()
 
 		if (userData->inputSystem.Keys[a3::KeyRight].Down)
 		{
-			camera.RotateOrientationRight(angle * deltaTime);
+			camera.RotateOrientationUp(-angle * deltaTime);
 		}
 
 		if (userData->inputSystem.Keys[a3::KeyLeft].Down)
 		{
-			camera.RotateOrientationRight(-angle * deltaTime);
+			camera.RotateOrientationUp(angle * deltaTime);
 		}
 
 		if (userData->inputSystem.Buttons[a3::ButtonLeft].Down)
 		{
+			camera.RotateOrientationRight(angle * deltaTime);
 		}
 
 		if (userData->inputSystem.Buttons[a3::ButtonRight].Down)
 		{
+			camera.RotateOrientationRight(-angle * deltaTime);
 		}
 
 		a3::FillImageBuffer(&img, a3::color::Black);
