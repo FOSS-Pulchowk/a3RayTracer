@@ -287,7 +287,7 @@ namespace a3 {
 	{
 		a3Assert(m_FrameBuffer);
 
-		m4x4 mvp = model * m_Projection;
+		m4x4 mvp = model * m_View * m_Projection;
 
 		u32 nTriangles = m_Meshes->NumOfTriangles;
 		v3* vertices = m_Meshes->Vertices;

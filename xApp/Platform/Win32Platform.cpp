@@ -573,6 +573,27 @@ memory_arena NewMemoryBlock(u32 size)
 	return arena;
 }
 
+a3::key Win32MapKey(WPARAM keyCode)
+{
+	switch (keyCode)
+	{
+	case VK_UP: return a3::KeyUp;
+	case VK_DOWN: return a3::KeyDown;
+	case VK_LEFT: return a3::KeyLeft;
+	case VK_RIGHT: return a3::KeyRight;
+	}
+	return a3::KeyUnknown;
+}
+
+void Win32ProcessKeyState(a3::key_state* state, LPARAM lParam)
+{
+	state->Repeats = a3ConsumeBits(lParam, 0, 15);
+	state->Extended = a3GetBit(lParam, a3Bit(24));
+	state->Down = (a3GetBit(lParam, a3Bit(31)) == 0);
+	state->Up = (a3GetBit(lParam, a3Bit(31)) == 1);
+	state->Pressed = ((a3GetBit(lParam, a3Bit(30)) == 0) && state->Up);
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	win32_user_data& userData = *(win32_user_data*)Win32GetUserData();
@@ -584,7 +605,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		i32 ww = userData.inputSystem.WindowWidth;
 		i32 wh = userData.inputSystem.WindowHeight;
 		userData.inputSystem.MouseX = (f32)mx / (f32)ww;
-		// TODO(Zero): Y coordinate for mouse position is inversed
+		// NOTE(Zero): Y coordinate for mouse position is inversed
 		userData.inputSystem.MouseY = (f32)(wh - my) / (f32)wh;
 	};
 
@@ -612,67 +633,55 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONDOWN:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonDown;
+		userData.inputSystem.Buttons[a3::ButtonLeft].Down = true;
+		userData.inputSystem.Buttons[a3::ButtonLeft].Up = false;
 		break;
 	}
 
 	case WM_LBUTTONUP:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonLeft] = a3::ButtonUp;
+		userData.inputSystem.Buttons[a3::ButtonLeft].Down = false;
+		userData.inputSystem.Buttons[a3::ButtonLeft].Up = true;
 		break;
 	}
 
 	case WM_RBUTTONDOWN:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonDown;
+		userData.inputSystem.Buttons[a3::ButtonRight].Down = true;
+		userData.inputSystem.Buttons[a3::ButtonRight].Up = false;
 		break;
 	}
 
 	case WM_RBUTTONUP:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonRight] = a3::ButtonUp;
+		userData.inputSystem.Buttons[a3::ButtonRight].Down = false;
+		userData.inputSystem.Buttons[a3::ButtonRight].Up = true;
 		break;
 	}
 
 	case WM_MBUTTONDOWN:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonDown;
+		userData.inputSystem.Buttons[a3::ButtonMiddle].Down = true;
+		userData.inputSystem.Buttons[a3::ButtonMiddle].Up = false;
 		break;
 	}
 
 	case WM_MBUTTONUP:
 	{
 		l_StoreInputData(lParam);
-		userData.inputSystem.Buttons[a3::ButtonMiddle] = a3::ButtonUp;
+		userData.inputSystem.Buttons[a3::ButtonMiddle].Down = false;
+		userData.inputSystem.Buttons[a3::ButtonMiddle].Up = true;
 		break;
 	}
 
+	case WM_KEYUP:
 	case WM_KEYDOWN:
 	{
-		if (wParam == VK_UP)
-			userData.inputSystem.Keys[a3::KeyUp] = a3::ButtonDown;
-		else if (wParam == VK_DOWN)
-			userData.inputSystem.Keys[a3::KeyDown] = a3::ButtonDown;
-		else if (wParam == VK_RIGHT)
-			userData.inputSystem.Keys[a3::KeyRight] = a3::ButtonDown;
-		else if (wParam == VK_LEFT)
-			userData.inputSystem.Keys[a3::KeyLeft] = a3::ButtonDown;
-	} break;
-
-	case WM_KEYUP:
-	{
-		if (wParam == VK_UP)
-			userData.inputSystem.Keys[a3::KeyUp] = a3::ButtonUp;
-		else if (wParam == VK_DOWN)
-			userData.inputSystem.Keys[a3::KeyDown] = a3::ButtonUp;
-		else if (wParam == VK_RIGHT)
-			userData.inputSystem.Keys[a3::KeyRight] = a3::ButtonUp;
-		else if (wParam == VK_LEFT)
-			userData.inputSystem.Keys[a3::KeyLeft] = a3::ButtonUp;
+		Win32ProcessKeyState(&userData.inputSystem.Keys[Win32MapKey(wParam)], lParam);
 	} break;
 
 	case WM_SIZE:
@@ -869,45 +878,46 @@ i32 a3Main()
 
 		f32 speed = 5.0f;
 
-		if (userData->inputSystem.Keys[a3::KeyUp] == a3::ButtonDown)
+		if (userData->inputSystem.Keys[a3::KeyUp].Down)
 		{
-			//cameraPosition += cameraForward * 50.0f;
-			cameraPosition.z += speed * deltaTime;
+			cameraPosition += cameraForward * speed * deltaTime;
+			//cameraPosition.z += speed * deltaTime;
 		}
 
-		if (userData->inputSystem.Keys[a3::KeyDown] == a3::ButtonDown)
+		if (userData->inputSystem.Keys[a3::KeyDown].Down)
 		{
-			//cameraPosition -= cameraForward * 50.0f;
-			cameraPosition.z -= speed * deltaTime;
+			cameraPosition -= cameraForward * speed * deltaTime;
+			//cameraPosition.z -= speed * deltaTime;
 		}
 
-		if (userData->inputSystem.Keys[a3::KeyRight] == a3::ButtonDown)
+		if (userData->inputSystem.Keys[a3::KeyRight].Down)
 		{
-			//cameraPosition -= cameraForward * 50.0f;
-			cameraPosition.y -= speed * deltaTime;
+			cameraPosition += cameraForward * speed * deltaTime;
+			//cameraPosition.y -= speed * deltaTime;
 		}
 
-		if (userData->inputSystem.Keys[a3::KeyLeft] == a3::ButtonDown)
+		if (userData->inputSystem.Keys[a3::KeyLeft].Down)
 		{
-			//cameraPosition -= cameraForward * 50.0f;
-			cameraPosition.y += speed * deltaTime;
+			cameraPosition -= cameraForward * speed * deltaTime;
+			//cameraPosition.y += speed * deltaTime;
 		}
 
-		if (userData->inputSystem.Buttons[a3::ButtonLeft] == a3::ButtonDown)
+		if (userData->inputSystem.Buttons[a3::ButtonLeft].Down)
 		{
-			//cameraPosition -= cameraForward * 50.0f;
-			cameraPosition.x += speed * deltaTime;
+			cameraPosition += cameraForward * speed * deltaTime;
+			//cameraPosition.x += speed * deltaTime;
 		}
 
-		if (userData->inputSystem.Buttons[a3::ButtonRight] == a3::ButtonDown)
+		if (userData->inputSystem.Buttons[a3::ButtonRight].Down)
 		{
-			//cameraPosition -= cameraForward * 50.0f;
-			cameraPosition.x -= speed * deltaTime;
+			cameraPosition -= cameraForward * speed * deltaTime;
+			//cameraPosition.x -= speed * deltaTime;
 		}
 
 		a3::FillImageBuffer(&img, a3::color::Black);
-		//sc.SetCamera(m4x4::LookR(cameraPosition, cameraForward));
-		m4x4 model = m4x4::RotationR(angle, v3{ 0, 1, 0 }) * m4x4::TranslationR(cameraPosition);
+		sc.SetCamera(m4x4::LookR(cameraPosition, cameraForward));
+		//sc.SetCamera(m4x4::Identity());
+		m4x4 model = m4x4::TranslationR(v3{ 0, 0, -5 });
 		sc.Render(model);
 
 		//angle += 2.0f;
@@ -925,7 +935,7 @@ i32 a3Main()
 		a3GL(glViewport(0, 0, userData->inputSystem.WindowWidth, userData->inputSystem.WindowHeight));
 
 		ui.UpdateIO(userData->inputSystem);
-		if (userData->inputSystem.Buttons[a3::ButtonRight] == a3::ButtonUp && oldInput.Buttons[a3::ButtonRight] == a3::ButtonDown)
+		if (userData->inputSystem.Buttons[a3::ButtonRight].Up && oldInput.Buttons[a3::ButtonRight].Down)
 			renderDebugInformation = !renderDebugInformation;
 
 		oldInput = userData->inputSystem;

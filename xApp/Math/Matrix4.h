@@ -88,7 +88,7 @@ struct m4x4
 	static m4x4 ScaleR(v3 vec);
 	static m4x4 TranslationR(v3 vec);
 	static m4x4 RotationR(f32 angle, v3 axis);
-	static m4x4 LookR(v3 from, v3 to, v3 up = { 0.0f, 0.0f, 1.0f });
+	static m4x4 LookR(v3 from, v3 to, v3 up = { 0.0f, 1.0f, 0.0f });
 	// NOTE(Zero): Windows header file defines `far` and `near`, so not to use these as variables
 	static m4x4 OrthographicR(f32 left, f32 right, f32 bottom, f32 top, f32 cNear, f32 cFar);
 	static m4x4 PerspectiveR(f32 fov, f32 aspectRatio, f32 cNear, f32 cFar);
@@ -96,7 +96,7 @@ struct m4x4
 	static m4x4 ScaleC(v3 vec);
 	static m4x4 TranslationC(v3 vec);
 	static m4x4 RotationC(f32 angle, v3 axis);
-	static m4x4 LookC(v3 from, v3 to, v3 up = { 0.0f, 0.0f, 1.0f });
+	static m4x4 LookC(v3 from, v3 to, v3 up = { 0.0f, 1.0f, 0.0f });
 	// NOTE(Zero): Windows header file defines `far` and `near`, so not to use these as variables
 	static m4x4 OrthographicC(f32 left, f32 right, f32 bottom, f32 top, f32 cNear, f32 cFar);
 	static m4x4 PerspectiveC(f32 fov, f32 aspectRatio, f32 cNear, f32 cFar);

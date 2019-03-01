@@ -6,7 +6,7 @@
 #define a3Bit(pos)				(1 << (pos))
 #define a3SetBit(n, b)			((n) |= (b))
 #define a3GetBit(n, b)			((n) & (b))
-#define a3ClearBit(n, b)			((n) &= (~b))
+#define a3ClearBit(n, b)		((n) &= (~b))
 #define a3ToggleBit(n, b)		((n) ^= (b))
 
 #ifdef XBIGENDIAN
