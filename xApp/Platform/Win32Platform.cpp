@@ -822,7 +822,7 @@ struct transform
 
 	v3 GetForward()
 	{
-		return -GetAxis2R(orientation);
+		return GetAxis2R(orientation);
 	}
 
 	v3 GetRight()
@@ -844,17 +844,20 @@ struct transform
 
 	transform& MoveForward(f32 distance)
 	{
-		return MoveTowards(distance, GetForward());
+		position -= GetForward() * distance;
+		return *this;
 	}
 
 	transform& MoveRight(f32 distance)
 	{
-		return MoveTowards(distance, GetRight());
+		position += GetRight() * distance;
+		return *this;
 	}
 
 	transform& MoveUp(f32 distance)
 	{
-		return MoveTowards(distance, GetUp());
+		position += GetUp() * distance;
+		return *this;
 	}
 
 	transform& LookAt(const v3& target)
@@ -878,17 +881,20 @@ struct transform
 
 	transform& RotateOrientationUp(f32 angle)
 	{
-		return RotateOrientation(angle, GetUp());
+		orientation *= AngleAxisToQuat(angle, GetUp());
+		return *this;
 	}
 
 	transform& RotateOrientationRight(f32 angle)
 	{
-		return RotateOrientation(angle, GetRight());
+		orientation *= AngleAxisToQuat(angle, GetRight());
+		return *this;
 	}
 
 	transform& RotateOrientationForward(f32 angle)
 	{
-		return RotateOrientation(angle, GetForward());
+		orientation *= AngleAxisToQuat(angle, GetForward());
+		return *this;
 	}
 
 	m4x4 CalculateModelM4X4()
@@ -1039,12 +1045,12 @@ i32 a3Main()
 
 		if (userData->inputSystem.Keys[a3::KeyRight].Down)
 		{
-			camera.RotateOrientationUp(-angle * deltaTime);
+			camera.RotateOrientation(-angle * deltaTime, transform::WorldUp);
 		}
 
 		if (userData->inputSystem.Keys[a3::KeyLeft].Down)
 		{
-			camera.RotateOrientationUp(angle * deltaTime);
+			camera.RotateOrientation(angle * deltaTime, transform::WorldUp);
 		}
 
 		if (userData->inputSystem.Buttons[a3::ButtonLeft].Down)
