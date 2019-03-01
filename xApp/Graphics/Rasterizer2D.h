@@ -175,7 +175,8 @@ namespace a3 {
 		u32 hc = a3::GetPixel(img, px, py);
 		a3::SetPixel(img, px, py, a3Normalv4ToRGBA(a3::BlendColor(color, a3MakeRGBAv4(hc), blend)));
 	}
-
+	
+	
 	void SetPixelColor(a3::image * img, f32 x, f32 y, const v3& color, f32 alpha)
 	{
 		v4 c;
