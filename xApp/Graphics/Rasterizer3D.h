@@ -27,6 +27,7 @@ namespace a3 {
 		mesh* m_Meshes;
 		image* m_Texture;
 		image* m_FrameBuffer;
+		b32 m_DrawNormals;
 
 	public:
 		swapchain();
@@ -39,6 +40,7 @@ namespace a3 {
 		void SetMesh(mesh* meshCube);
 		void SetTexture(image* tex);
 		void SetFrameBuffer(image* tex);
+		void SetDrawNormals(b32 normals);
 		void Render(const m4x4& model, render_type type, const v3& shade = a3::color::White, const v3& outline = a3::color::Yellow);
 	};
 
@@ -56,6 +58,7 @@ namespace a3 {
 	{
 		m_FrameBuffer = A3NULL;
 		m_Texture = A3NULL;
+		m_DrawNormals = false;
 		m_Projection = m4x4::PerspectiveR(a3ToRadians(90.0f), a3AspectRatio(), 0.1f, 1000.0f);
 		m_Viewport = { 0,0,1280,720 };
 	}
@@ -106,6 +109,11 @@ namespace a3 {
 	void swapchain::SetFrameBuffer(image * tex)
 	{
 		m_FrameBuffer = tex;
+	}
+
+	inline void swapchain::SetDrawNormals(b32 normals)
+	{
+		m_DrawNormals = normals;
 	}
 
 	void swapchain::Render(const m4x4& model, render_type type, const v3& shade, const v3& outline)
@@ -242,7 +250,8 @@ namespace a3 {
 			// NOTE(Zero): 
 			// Since camera is at (0,0,0) and pointing towards z direction
 			// the z component from result of Cross product gives the dot product
-			f32 dot = Normalize(Cross(clippedVertices[1].xyz - clippedVertices[0].xyz, clippedVertices[2].xyz - clippedVertices[1].xyz)).z;
+			v3 normal = Normalize(Cross(clippedVertices[1].xyz - clippedVertices[0].xyz, clippedVertices[2].xyz - clippedVertices[1].xyz));
+			f32 dot = normal.z;
 
 			if (dot > 0.0f)
 			{
@@ -306,6 +315,11 @@ namespace a3 {
 						else
 						{
 							
+						}
+						if (m_DrawNormals)
+						{
+							v2 centroid{ (finalPoint0.x + finalPoint1.x + finalPoint2.x) / 3.0f, (finalPoint0.y + finalPoint1.y + finalPoint2.y) / 3.0f };
+							a3::DrawLine(m_FrameBuffer, centroid, centroid + 30.0f * normal.xy, a3::color::Red);
 						}
 					}
 				}

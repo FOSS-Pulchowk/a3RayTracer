@@ -1015,7 +1015,7 @@ i32 a3Main()
 	f32 speed = 16.0f;
 
 	v3 shadeColor = a3::color::White;
-
+	b32 showNormals = false;
 	a3::render_type rType = a3::render_type::RenderTriangle;
 
 	b32 shouldRun = true;
@@ -1080,6 +1080,7 @@ i32 a3Main()
 
 		a3::FillImageBuffer(&img, a3::color::Black);
 		sc.SetCamera(camera.CalculateModelM4X4());
+		sc.SetDrawNormals(showNormals);
 		m4x4 model = m4x4::TranslationR(v3{ 0, 0, -10 });
 		sc.Render(model, rType, shadeColor, a3::color::Yellow);
 
@@ -1141,6 +1142,10 @@ i32 a3Main()
 		if (ui.Button(4, dim, "Texture"))
 		{
 			rType = a3::render_type::RenderMapTexture;
+		}
+		if (ui.Button(11, dim, "Show Normals"))
+		{
+			showNormals = !showNormals;
 		}
 
 		ui.SetVertical(false);

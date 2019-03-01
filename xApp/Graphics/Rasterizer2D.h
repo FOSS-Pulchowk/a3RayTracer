@@ -230,17 +230,17 @@ namespace a3 {
 		if (start.x > (f32)img->Width) start.x = (f32)img->Width;
 		if (start.y > (f32)img->Height) start.y = (f32)img->Height;
 		if (end.x > (f32)img->Width) end.x = (f32)img->Width;
-		if (end.y > (f32)img->Height) end.x = (f32)img->Height;
+		if (end.y > (f32)img->Height) end.y = (f32)img->Height;
 
 		v2 d = end - start;
 		i32 step;
-		if (FAbsf(d.x) >= FAbsf(d.y))
+		if (FAbsf(d.x) > FAbsf(d.y))
 			step = (i32)FAbsf(d.x);
 		else
 			step = (i32)FAbsf(d.y);
 		d *= (1.0f / (f32)step);
 		v2 s = start;
-		for (i32 i = 1; i <= step; ++i)
+		for (i32 i = 1; i < step; ++i)
 		{
 			a3::SetPixelColor(img, s.x, s.y, color);
 			s += d;
