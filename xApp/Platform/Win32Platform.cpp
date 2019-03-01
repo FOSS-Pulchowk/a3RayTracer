@@ -581,6 +581,10 @@ a3::key Win32MapKey(WPARAM keyCode)
 	case VK_DOWN: return a3::KeyDown;
 	case VK_LEFT: return a3::KeyLeft;
 	case VK_RIGHT: return a3::KeyRight;
+	case 'W': return a3::KeyW;
+	case 'A': return a3::KeyA;
+	case 'S': return a3::KeyS;
+	case 'D': return a3::KeyD;
 	}
 	return a3::KeyUnknown;
 }
@@ -678,6 +682,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
+	case WM_SYSKEYUP:
+	case WM_SYSKEYDOWN:
 	case WM_KEYUP:
 	case WM_KEYDOWN:
 	{
@@ -822,7 +828,7 @@ struct transform
 
 	v3 GetForward()
 	{
-		return GetAxis2R(orientation);
+		return -GetAxis2R(orientation);
 	}
 
 	v3 GetRight()
@@ -844,7 +850,7 @@ struct transform
 
 	transform& MoveForward(f32 distance)
 	{
-		position -= GetForward() * distance;
+		position += GetForward() * distance;
 		return *this;
 	}
 
@@ -964,7 +970,6 @@ i32 a3Main()
 	a3::basic2d_renderer renderer = a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment);
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
-	//a3::image* temp = a3::Asset.LoadImageFromFile(19, "Resources/BigSmile.png");
 	a3::image img = a3::CreateImageBuffer(640, 480);
 	a3::FillImageBuffer(&img, a3::color::Black);
 
@@ -1004,14 +1009,14 @@ i32 a3Main()
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
 	a3::ui_context ui(1280.0f, 720.0f);
 
-	//v3 cameraPosition = {};
-	//v3 cameraForward = v3{ 0,0,-1 };
-	//cameraForward = Normalize(cameraForward);
-
 	transform camera;
 
 	f32 angle = a3ToRadians(30.0f);
 	f32 speed = 16.0f;
+
+	v3 shadeColor = a3::color::White;
+
+	a3::render_type rType = a3::render_type::RenderTriangle;
 
 	b32 shouldRun = true;
 	while (shouldRun)
@@ -1033,41 +1038,50 @@ i32 a3Main()
 		}
 
 
-		if (userData->inputSystem.Keys[a3::KeyUp].Down)
+		if (userData->inputSystem.Keys[a3::KeyW].Down)
 		{
 			camera.MoveForward(speed * deltaTime);
 		}
 
-		if (userData->inputSystem.Keys[a3::KeyDown].Down)
+		if (userData->inputSystem.Keys[a3::KeyS].Down)
 		{
 			camera.MoveForward(-speed * deltaTime);
 		}
 
+		if (userData->inputSystem.Keys[a3::KeyA].Down)
+		{
+			camera.MoveRight(-speed * deltaTime);
+		}
+
+		if (userData->inputSystem.Keys[a3::KeyD].Down)
+		{
+			camera.MoveRight(speed * deltaTime);
+		}
+
 		if (userData->inputSystem.Keys[a3::KeyRight].Down)
 		{
-			camera.RotateOrientationUp(-angle * deltaTime);
+			camera.RotateOrientation(-angle * deltaTime, transform::WorldUp);
 		}
 
 		if (userData->inputSystem.Keys[a3::KeyLeft].Down)
 		{
-			camera.RotateOrientationUp(angle * deltaTime);
+			camera.RotateOrientation(angle * deltaTime, transform::WorldUp);
 		}
 
-		if (userData->inputSystem.Buttons[a3::ButtonLeft].Down)
+		if (userData->inputSystem.Keys[a3::KeyUp].Down)
 		{
-			camera.RotateOrientationRight(angle * deltaTime);
+			camera.RotateOrientation(angle * deltaTime, transform::WorldRight);
 		}
 
-		if (userData->inputSystem.Buttons[a3::ButtonRight].Down)
+		if (userData->inputSystem.Keys[a3::KeyDown].Down)
 		{
-			camera.RotateOrientationRight(-angle * deltaTime);
+			camera.RotateOrientation(-angle * deltaTime, transform::WorldRight);
 		}
 
 		a3::FillImageBuffer(&img, a3::color::Black);
 		sc.SetCamera(camera.CalculateModelM4X4());
-		//sc.SetCamera(m4x4::Identity());
-		m4x4 model = m4x4::TranslationR(v3{ 0, 0, -5 });
-		sc.Render(model);
+		m4x4 model = m4x4::TranslationR(v3{ 0, 0, -10 });
+		sc.Render(model, rType, shadeColor, a3::color::Yellow);
 
 		//angle += 2.0f;
 
@@ -1108,25 +1122,59 @@ i32 a3Main()
 		}
 		renderer.EndFrame();
 
-		v2 dim{ 120.0f, 25.0f };
-		ui.BeginFrame(v2{ 1120.0f, 550.0f });
+		v2 dim{ 200.0f, 25.0f };
+		v2 colButDim{ 100.0f, 25.0f };
+		ui.BeginFrame(v2{ 800.0f, 550.0f });
+		ui.SetVertical(true);
+		if (ui.Button(1, dim, "Shade"))
+		{
+			rType = a3::render_type::RenderShade;
+		}
+		if (ui.Button(2, dim, "Polygon"))
+		{
+			rType = a3::render_type::RenderTriangle;
+		}
+		if (ui.Button(3, dim, "Shade with outline"))
+		{
+			rType = a3::render_type::RenderShadeWithOutline;
+		}
+		if (ui.Button(4, dim, "Texture"))
+		{
+			rType = a3::render_type::RenderMapTexture;
+		}
 
-		if (ui.Button(1, dim, "Load Object"))
+		ui.SetVertical(false);
+		ui.SetCursor(v2{ 800.0f - dim.x/2, ui.GetCursor().y - dim.y - 5.0f });
+		if (ui.Button(5, colButDim, "White"))
 		{
+			shadeColor = a3::color::White;
 		}
-		if (ui.Button(2, dim, "Ray Trace"))
+		if (ui.Button(6, colButDim, "Blue"))
 		{
+			shadeColor = a3::color::Blue;
 		}
-		if (ui.Button(3, dim, "Preview Image"))
+
+		ui.SetVertical(true);
+		if (ui.Button(7, colButDim, "Green"))
 		{
+			shadeColor = a3::color::Green;
 		}
-		if (ui.Button(4, dim, "Button 4"))
+		ui.SetVertical(false);
+		ui.SetCursor(v2{ 800.0f - dim.x/2, ui.GetCursor().y });
+		if (ui.Button(8, colButDim, "Aqua"))
 		{
+			shadeColor = a3::color::Aqua;
 		}
-		static b32 checked = false;
-		if (ui.Checkbox(5, dim, checked, "Checkbox"))
+
+		ui.SetVertical(true);
+		if (ui.Button(9, colButDim, "Blurple"))
 		{
-			checked = !checked;
+			shadeColor = a3::color::Blurple;
+		}
+		ui.SetVertical(false);
+		if (ui.Button(10, colButDim, "Purple"))
+		{
+			shadeColor = a3::color::Purple;
 		}
 		ui.EndFrame();
 

@@ -10,6 +10,14 @@
 
 namespace a3 {
 
+	enum render_type
+	{
+		RenderTriangle,
+		RenderShade,
+		RenderShadeWithOutline,
+		RenderMapTexture
+	};
+
 	struct swapchain
 	{
 	private:
@@ -31,7 +39,7 @@ namespace a3 {
 		void SetMesh(mesh* meshCube);
 		void SetTexture(image* tex);
 		void SetFrameBuffer(image* tex);
-		void Render(const m4x4& model, const v3& color = a3::color::White, b32 poly = false);
+		void Render(const m4x4& model, render_type type, const v3& shade = a3::color::White, const v3& outline = a3::color::Yellow);
 	};
 
 }
@@ -100,7 +108,7 @@ namespace a3 {
 		m_FrameBuffer = tex;
 	}
 
-	void swapchain::Render(const m4x4& model, const v3& color, b32 poly)
+	void swapchain::Render(const m4x4& model, render_type type, const v3& shade, const v3& outline)
 	{
 		a3Assert(m_FrameBuffer);
 
@@ -112,6 +120,10 @@ namespace a3 {
 		v2* textures = m_Meshes->TextureCoords;
 		u32* tindices = m_Meshes->TextureCoordsIndices;
 
+		if (!textures)
+		{
+			if (type == a3::RenderMapTexture) type = a3::RenderShade;
+		}
 
 		for (u32 nTri = 0; nTri < nTriangles; ++nTri)
 		{
@@ -119,32 +131,45 @@ namespace a3 {
 			const v3& p1 = vertices[indices[nTri * 3 + 1]];
 			const v3& p2 = vertices[indices[nTri * 3 + 2]];
 
-			/*const v2& t0 = textures[tindices[nTri * 2] + 0];
-			const v2& t1 = textures[tindices[nTri * 2] + 1];
-			const v2& t2 = textures[tindices[nTri * 2] + 2];*/
+			v2 t0 = {}, t1 = {}, t2 = {};
 
+			if (textures)
+			{
+				if (tindices)
+				{
+					t0 = textures[tindices[nTri * 3] + 0];
+					t1 = textures[tindices[nTri * 3] + 1];
+					t2 = textures[tindices[nTri * 3] + 2];
+				}
+				else
+				{
+					t0 = textures[nTri * 3 + 0];
+					t1 = textures[nTri * 3 + 1];
+					t2 = textures[nTri * 3 + 2];
+				}
+			}
 
-
-			v4 clippedVertices[18];
+			v4 clippedVertices[6 * 3];
 			i32 nVertices = 3;
-			v3 clippedTextureCoords[18];
-			i32 nTextureCoords = 3;
 
-			/*clippedTextureCoords[0] = v3{ t0.u, t0.v, 1.0f };
-			clippedTextureCoords[1] = v3{ t1.u, t1.v, 1.0f };
-			clippedTextureCoords[2] = v3{ t2.u, t2.v, 1.0f };*/
+			v2 clippedTextureCoords[6 * 3];
+			i32 nTextureCoords = 3;
 
 			clippedVertices[0] = v4{ p0.x, p0.y, p0.z, 1.0f } *mvp;
 			clippedVertices[1] = v4{ p1.x, p1.y, p1.z, 1.0f } *mvp;
 			clippedVertices[2] = v4{ p2.x, p2.y, p2.z, 1.0f } *mvp;
 
-			v3 auxTextureCoords[18];
-			i32 nAuxTextureCoords = 0;
+			clippedTextureCoords[0] = v2{ t0.u, t0.v };
+			clippedTextureCoords[1] = v2{ t1.u, t1.v };
+			clippedTextureCoords[2] = v2{ t2.u, t2.v };
 
-			v4 auxVertices[18];
+			v4 auxVertices[6 * 3];
 			i32 nAuxVertices = 0;
 
-			auto clipComponent = [](i32 comp, v4* vertices, i32* nVertices, v4* resVertices, i32* nResVertices, f32 sign)
+			v2 auxTextureCoords[6 * 3];
+			i32 nAuxTextureCoords = 0;
+
+			auto clipComponentVertices = [](i32 comp, v4* vertices, i32* nVertices, v4* resVertices, i32* nResVertices, f32 sign)
 			{
 				for (i32 cnt = 0; cnt < *nVertices; ++cnt)
 				{
@@ -172,18 +197,19 @@ namespace a3 {
 				*nVertices = 0;
 			};
 
-			/*auto clipComponent = [](i32 comp, v4* vertices, v3* TextureCoords, 
-											  i32* nVertices, i32* nTextureCoords,
-											  v4* resVertices, v3* resTextureCoords, 
-												i32* nResVertices, i32* nResTextureCoords,
-												f32 sign)
+			auto clipComponentVerticesWithUV = [](
+				i32 comp, 
+				v4* vertices, v2* textureCoords,  i32* nVertices, i32* nTextureCoords,
+				v4* resVertices, v2* resTextureCoords,  i32* nResVertices, i32* nResTextureCoords,
+				f32 sign)
 			{
 				for (i32 cnt = 0; cnt < *nVertices; ++cnt)
 				{
 					const v4& ver0 = vertices[cnt];
 					const v4& ver1 = vertices[(cnt + 1) % *nVertices];
-					const v3& tex0 = TextureCoords[cnt];
-					const v3& tex1 = TextureCoords[(cnt + 1) % *nTextureCoords];
+
+					const v2& tex0 = textureCoords[cnt];
+					const v2& tex1 = textureCoords[(cnt + 1) % *nTextureCoords];
 
 					const f32& comp0 = sign * ver0.values[comp];
 					const f32& comp1 = sign * ver1.values[comp];
@@ -209,40 +235,35 @@ namespace a3 {
 					}
 				}
 				*nVertices = 0;
-			};*/
+				*nTextureCoords = 0;
+			};
 
 			
 			// NOTE(Zero): 
 			// Since camera is at (0,0,0) and pointing towards z direction
 			// the z component from result of Cross product gives the dot product
-			//f32 dot = Cross(clippedVertices[1].xyz - clippedVertices[0].xyz, clippedVertices[2].xyz - clippedVertices[1].xyz).z;
-			
-			// NOTE(Zero):
-			// Faster dot calculation because we don't need x and y component of the Cross product
-			f32 lhsx = clippedVertices[1].x - clippedVertices[0].x;
-			f32 lhsy = clippedVertices[1].y - clippedVertices[0].y;
-			f32 rhsx = clippedVertices[2].x - clippedVertices[1].x;
-			f32 rhsy = clippedVertices[2].y - clippedVertices[1].y;
-			f32 dot = lhsx * rhsy - lhsy * rhsx;
+			f32 dot = Normalize(Cross(clippedVertices[1].xyz - clippedVertices[0].xyz, clippedVertices[2].xyz - clippedVertices[1].xyz)).z;
 
-			if (dot >= 0.0f)
+			if (dot > 0.0f)
 			{
-				//clipComponent(0, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, 1.0f);	// x <= w
-				//clipComponent(0, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, -1.0f);	// x <= w
-
-				//clipComponent(1, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, 1.0f);	// x <= w
-				//clipComponent(1, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, -1.0f);	// x <= w
-
-				//clipComponent(2, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, 1.0f);	// x <= w
-				//clipComponent(2, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, -1.0f);	// x <= w
-
-				clipComponent(0, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// x <= w
-				clipComponent(0, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= x
-
-				clipComponent(1, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// y <= w
-				clipComponent(1, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= y
-				clipComponent(2, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// z <= w
-				clipComponent(2, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= z
+				if (textures && type == a3::RenderMapTexture)
+				{
+					clipComponentVerticesWithUV(0, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, 1.0f);	// x <= w
+					clipComponentVerticesWithUV(0, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, -1.0f);	// x <= w
+					clipComponentVerticesWithUV(1, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, 1.0f);	// x <= w
+					clipComponentVerticesWithUV(1, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, -1.0f);	// x <= w
+					clipComponentVerticesWithUV(2, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, 1.0f);	// x <= w
+					clipComponentVerticesWithUV(2, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, -1.0f);	// x <= w
+				}
+				else
+				{
+					clipComponentVertices(0, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// x <= w
+					clipComponentVertices(0, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= x
+					clipComponentVertices(1, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// y <= w
+					clipComponentVertices(1, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= y
+					clipComponentVertices(2, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// z <= w
+					clipComponentVertices(2, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= z
+				}
 
 				if (nVertices > 0)
 				{
@@ -269,17 +290,22 @@ namespace a3 {
 
 						finalPoint2.x = 0.5f * (finalPoint2.x + 1.0f) * (m_FrameBuffer->Width - 1);
 						finalPoint2.y = ((finalPoint2.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
-						if (poly)
+						if (type == a3::RenderTriangle)
 						{
-							a3::DrawTriangle(m_FrameBuffer, finalPoint0, finalPoint1, finalPoint2, color);
+							a3::DrawTriangle(m_FrameBuffer, finalPoint0, finalPoint1, finalPoint2, outline);
 						}
-						else if (m_Texture)
+						else if (type == a3::RenderShade)
 						{
-							
+							a3::FillTriangle(m_FrameBuffer, finalPoint0, finalPoint1, finalPoint2, shade * dot);
+						}
+						else if (type == a3::RenderShadeWithOutline)
+						{
+							a3::FillTriangle(m_FrameBuffer, finalPoint0, finalPoint1, finalPoint2, shade * dot);
+							a3::DrawTriangle(m_FrameBuffer, finalPoint0, finalPoint1, finalPoint2, outline);
 						}
 						else
 						{
-							a3::FillTriangle(m_FrameBuffer, finalPoint0, finalPoint1, finalPoint2, color);
+							
 						}
 					}
 				}
