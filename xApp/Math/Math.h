@@ -67,6 +67,8 @@ inline quat AngleAxisToQuat(f32 angle, v3 axis);
 	- Pointer for `f32` and `v3` is used for returning
 	- Angle returned will be in radians
 */
+inline f32 GetAngleFromQuat(const quat& q);
+inline v3 GetAxisFromQuat(const quat& q);
 inline void QuatToAngleAxis(const quat &q, f32 *angle, v3 *axis);
 
 /*
@@ -201,14 +203,27 @@ inline quat AngleAxisToQuat(f32 angle, v3 axis)
 	return q;
 }
 
-inline void QuatToAngleAxis(const quat &q, f32 *angle, v3 *axis)
+inline f32 GetAngleFromQuat(const quat & q)
 {
 	f32 len = q.i * q.i + q.j * q.j + q.k * q.k;
-	*angle = 2.0f * ArcTan2f(len, q.r);
+	return (2.0f * ArcTan2f(len, q.r));
+}
+
+inline v3 GetAxisFromQuat(const quat & q)
+{
+	v3 axis;
+	f32 len = q.i * q.i + q.j * q.j + q.k * q.k;
 	len = 1.0f / len;
-	axis->x = q.i * len;
-	axis->y = q.j * len;
-	axis->z = q.k * len;
+	axis.x = q.i * len;
+	axis.y = q.j * len;
+	axis.z = q.k * len;
+	return axis;
+}
+
+inline void QuatToAngleAxis(const quat &q, f32 *angle, v3 *axis)
+{
+	*angle = GetAngleFromQuat(q);
+	*axis = GetAxisFromQuat(q);
 }
 
 inline v3 operator*(const quat &lhs, v3 vec)
