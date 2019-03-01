@@ -1045,12 +1045,12 @@ i32 a3Main()
 
 		if (userData->inputSystem.Keys[a3::KeyRight].Down)
 		{
-			camera.RotateOrientation(-angle * deltaTime, transform::WorldUp);
+			camera.RotateOrientationUp(-angle * deltaTime);
 		}
 
 		if (userData->inputSystem.Keys[a3::KeyLeft].Down)
 		{
-			camera.RotateOrientation(angle * deltaTime, transform::WorldUp);
+			camera.RotateOrientationUp(angle * deltaTime);
 		}
 
 		if (userData->inputSystem.Buttons[a3::ButtonLeft].Down)

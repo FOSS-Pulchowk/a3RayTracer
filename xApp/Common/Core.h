@@ -66,6 +66,9 @@ typedef unsigned char uutf8;
 #define max_u32 UINT32_MAX
 #define max_u64 UINT64_MAX
 
+#define epsilon_f32 1.192092896e-07f
+#define max_f32 3.402823466e+38f
+
 typedef const char* s8;
 typedef const wchar_t* s16;
 
