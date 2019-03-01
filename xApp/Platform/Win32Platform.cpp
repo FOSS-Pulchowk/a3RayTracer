@@ -966,18 +966,7 @@ i32 a3Main()
 	sc.SetFrameBuffer(&img);
 	sc.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 	sc.SetViewport(0, 0, 640, 480);
-	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Axis.obj"));
-
-	//a3::DrawLine(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 720.0f }, a3::color::Blue);
-	//a3::FillTriangle(&img, v2{ 50.0f, 50.0f }, v2{ 100.0f, 100.0f }, v2{ 30.0f, 100.0f }, a3::color::Green);
-	//a3::FillTriangle(&img, v2{ 100.0f, 200.0f }, v2{ 200.0f, 300.0f }, v2{ 20.0f, 350.0f }, a3::color::White);
-	//a3::FillTriangle(&img, v2{ 50.0f, 100.0f }, v2{ 200.0f, 100.0f }, v2{ 100.0f, 300.0f }, a3::color::Blue);
-	//a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1280.0f, 500.0f }, v2{ 500.0f, 700.0f }, a3::color::White);
-	//a3::FillTriangle(&img, v2{ 0.0f, 0.0f }, v2{ 1300.0f, 500.0f }, v2{ 800.0f, 900.0f }, a3::color::White);
-	//a3::FillTriangle(&img, v2{ 1235.0f, 492.0f }, v2{ 1280.0f, 492.0f }, v2{ 1280.0f, 510.0f }, a3::color::Red);
-	//a3::FillTriangle(&img, v2{ 1000.0f, 100.0f }, v2{ 1500.0f, 200.0f }, v2{ 1600.0f, 500.0f }, a3::color::Red);
-	//a3::FillTriangle(&img, v2{ 500.0f, 500.0f }, v2{ 600.0f, 600.0f }, v2{ 400.0f, 600.0f }, a3::color::White);
-	//a3::FillTriangle(&img, v2{ -100.0f, 150.0f }, v2{ 150.0f, 50.0f }, v2{ 150.0f, 300.0f }, a3::color::White);
+	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Mountains.obj"));
 
 	a3::image fontbg = a3::CreateImageBuffer(500, 500);
 	a3::FillImageBuffer(&fontbg, a3::color::Black, 0.5f);
@@ -1073,7 +1062,6 @@ i32 a3Main()
 		//sc.SetCamera(m4x4::Identity());
 		m4x4 model = m4x4::TranslationR(v3{ 0, 0, -5 });
 		sc.Render(model);
-		sc.SetCameraPosition(cameraPosition);
 
 		//angle += 2.0f;
 
