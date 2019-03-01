@@ -68,6 +68,7 @@ namespace a3 {/*
 		mesh* m_Meshes;
 		image* m_Texture;
 		image* m_FrameBuffer;
+		v3 m_camera;
 
 	public:
 		swapchain();
@@ -80,6 +81,7 @@ namespace a3 {/*
 		void SetMesh(mesh* meshCube);
 		void SetTexture(image* tex);
 		void SetFrameBuffer(image* tex);
+		void SetCameraPosition(v3 cameraPosition);
 		void Render(const m4x4& model);
 		//u32 Triangle_ClipAgainstPlane(v4 plane_p, v4 plane_n, triangle &in_tri, triangle &out_tri1, triangle &out_tri2);//Necessary function for
 		//v4  Vector_IntersectPlane(v4 &plane_p, v4 &plane_n, v4 &lineStart, v4 &lineEnd, float& t);//clipping
@@ -283,6 +285,11 @@ namespace a3 {
 		m_FrameBuffer = tex;
 	}
 
+	void swapchain::SetCameraPosition(v3 cameraPosition)
+	{
+		m_camera = cameraPosition;
+	}
+
 	void swapchain::Render(const m4x4& model)
 	{
 		a3Assert(m_FrameBuffer);
@@ -300,7 +307,12 @@ namespace a3 {
 			const v3& p2 = vertices[indices[nTri * 3 + 2]];
 
 			v4 clippedVertices[18];
+			v3 cullingCheck[3];
 			i32 nVertices = 3;
+			cullingCheck[0] = p0 *model;
+			cullingCheck[1] = p1 *model;
+			cullingCheck[2] = p2 *model;
+
 			clippedVertices[0] = v4{ p0.x, p0.y, p0.z, 1.0f } *mvp;
 			clippedVertices[1] = v4{ p1.x, p1.y, p1.z, 1.0f } *mvp;
 			clippedVertices[2] = v4{ p2.x, p2.y, p2.z, 1.0f } *mvp;
@@ -335,45 +347,53 @@ namespace a3 {
 				}
 				*nVertices = 0;
 			};
+			v3 normal;
 
-			clipComponent(0, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// x <= w
-			clipComponent(0, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= x
-
-			clipComponent(1, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// y <= w
-			clipComponent(1, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= y
-
-			clipComponent(2, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// z <= w
-			clipComponent(2, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= z
-
-
-			if (nVertices > 0)
+			normal = Cross(cullingCheck[2] - cullingCheck[0], cullingCheck[1] - cullingCheck[0]);
+		
+			if (Dot(cullingCheck[0], Normalize(normal)) > 0.0f)
 			{
-				v2 finalPoint0;
-				finalPoint0.x = clippedVertices[0].x / clippedVertices[0].w;
-				finalPoint0.y = clippedVertices[0].y / clippedVertices[0].w;
 
-				finalPoint0.x = 0.5f * (finalPoint0.x + 1.0f) * (m_FrameBuffer->Width - 1);
-				finalPoint0.y = ((finalPoint0.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
+				clipComponent(0, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// x <= w
+				clipComponent(0, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= x
 
-				for (i32 n = 1; n < nVertices - 1; ++n)
+				clipComponent(1, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// y <= w
+				clipComponent(1, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= y
+
+				clipComponent(2, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// z <= w
+				clipComponent(2, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= z
+
+
+				if (nVertices > 0)
 				{
-					v2 finalPoint1;
-					v2 finalPoint2;
+					v2 finalPoint0;
+					finalPoint0.x = clippedVertices[0].x / clippedVertices[0].w;
+					finalPoint0.y = clippedVertices[0].y / clippedVertices[0].w;
 
-					finalPoint1.x = clippedVertices[n].x / clippedVertices[n].w;
-					finalPoint1.y = clippedVertices[n].y / clippedVertices[n].w;
-					
-					finalPoint2.x = clippedVertices[n + 1].x / clippedVertices[n + 1].w;
-					finalPoint2.y = clippedVertices[n + 1].y / clippedVertices[n + 1].w;
+					finalPoint0.x = 0.5f * (finalPoint0.x + 1.0f) * (m_FrameBuffer->Width - 1);
+					finalPoint0.y = ((finalPoint0.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
 
-					finalPoint1.x = 0.5f * (finalPoint1.x + 1.0f) * (m_FrameBuffer->Width - 1);
-					finalPoint1.y = ((finalPoint1.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
-					
-					finalPoint2.x = 0.5f * (finalPoint2.x + 1.0f) * (m_FrameBuffer->Width - 1);
-					finalPoint2.y = ((finalPoint2.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
+					for (i32 n = 1; n < nVertices - 1; ++n)
+					{
+						v2 finalPoint1;
+						v2 finalPoint2;
 
-					a3::DrawTriangle(m_FrameBuffer, finalPoint0, finalPoint1, finalPoint2, a3::color::White);
+						finalPoint1.x = clippedVertices[n].x / clippedVertices[n].w;
+						finalPoint1.y = clippedVertices[n].y / clippedVertices[n].w;
+
+						finalPoint2.x = clippedVertices[n + 1].x / clippedVertices[n + 1].w;
+						finalPoint2.y = clippedVertices[n + 1].y / clippedVertices[n + 1].w;
+
+						finalPoint1.x = 0.5f * (finalPoint1.x + 1.0f) * (m_FrameBuffer->Width - 1);
+						finalPoint1.y = ((finalPoint1.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
+
+						finalPoint2.x = 0.5f * (finalPoint2.x + 1.0f) * (m_FrameBuffer->Width - 1);
+						finalPoint2.y = ((finalPoint2.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
+
+						a3::DrawTriangle(m_FrameBuffer, finalPoint0, finalPoint1, finalPoint2, a3::color::White);
+					}
 				}
+
 			}
 		}
 	}
