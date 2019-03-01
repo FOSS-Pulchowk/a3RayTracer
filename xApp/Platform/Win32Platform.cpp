@@ -909,6 +909,7 @@ i32 a3Main()
 		//sc.SetCamera(m4x4::LookR(cameraPosition, cameraForward));
 		m4x4 model = m4x4::RotationR(angle, v3{ 0, 1, 0 }) * m4x4::TranslationR(cameraPosition);
 		sc.Render(model);
+		sc.SetCameraPosition(cameraPosition);
 
 		//angle += 2.0f;
 
