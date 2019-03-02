@@ -163,7 +163,7 @@ namespace a3 {
 		return hitHexColor;
 	}
 
-	void RayTrace(image* frameBuffer, mesh* meshObj, const m4x4& view, a3::image* texture = A3NULL)
+	void RayTrace(image* frameBuffer, mesh* meshObj, const m4x4& view, a3::image* texture, i32* major, i32* minor)
 	{
 		f32 aspectRatio = (f32)frameBuffer->Width / (f32)frameBuffer->Height;
 		v3 origin = v3{ 0,0,0 } *view;
@@ -174,10 +174,13 @@ namespace a3 {
 			{
 				f32 x = (2.0f * ((f32)i + 0.5f) / (f32)frameBuffer->Width - 1.0f) * aspectRatio;
 				f32 y = (1.0f - 2.0f * ((f32)j + 0.5f) / (f32)frameBuffer->Height);
-				v3 dir = v3{ x,y,-1.0f } *view;
+				v3 dir = v3{ x,y,1.0f } *view;
 				dir = Normalize(dir);
 				u32 hColor = CastRay(origin, dir, meshObj, frameBuffer, texture);
 				a3::SetPixel(frameBuffer, i, j, hColor);
+				f32 percentComplete = (f32)x*(f32)y / ((f32)(frameBuffer->Width*frameBuffer->Height));
+				*major = (i32)percentComplete;
+				*minor = (i32)((f32)(percentComplete - *major)*100.0f);
 			}
 		}
 	}

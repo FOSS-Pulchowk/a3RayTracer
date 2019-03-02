@@ -914,22 +914,32 @@ const v3 transform::WorldUp = v3{ 0,1,0 };
 const v3 transform::WorldRight = v3{ 1,0,0 };
 const v3 transform::WorldForward = v3{ 0,0,-1 };
 
+struct percent
+{
+	i32 major;
+	i32 minor;
+};
+
 struct thread_shared
 {
 	a3::image* frameBuffer;
 	a3::mesh* meshObj;
 	a3::image* texture;
 	m4x4 view;
+	percent completePercent;
 };
 
 static b32 s_RayThreadRunning;
+static b32 s_ShouldRenderToTexture;
 
 DWORD WINAPI RayTracingThreadFunction(LPVOID userPtr)
 {
 	s_RayThreadRunning = true;
 	thread_shared* data = (thread_shared*)userPtr;
-	a3::RayTrace(data->frameBuffer, data->meshObj, data->view, data->texture);
+	a3::RayTrace(data->frameBuffer, data->meshObj, data->view, data->texture, &data->completePercent.major, &data->completePercent.minor);
 	s_RayThreadRunning = false;
+	s_ShouldRenderToTexture = true;
+	ExitThread(0);
 	return 0;
 }
 
@@ -990,16 +1000,17 @@ i32 a3Main()
 	a3::basic2d_renderer renderer = a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment);
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
-	a3::image frameBuffer3D = a3::CreateImageBuffer(640, 480);
+	a3::image frameBuffer3D = a3::CreateImageBuffer(800, 600);
 	a3::swapchain swapChain;
 	swapChain.SetFrameBuffer(&frameBuffer3D);
-	swapChain.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
+	swapChain.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.01f, 1000.0f);
 	swapChain.SetViewport(0, 0, 640, 480);
-	swapChain.SetMesh(a3::Asset.LoadMeshFromFile(a3::Mesh, "Resources/monkey.obj"));
+	swapChain.SetMesh(a3::Asset.LoadMeshFromFile(a3::Mesh, "Resources/mountains.obj"));
 
 	a3::image rayTraceBuffer = a3::CreateImageBuffer(200, 200);
-	a3::FillImageBuffer(&rayTraceBuffer, a3::color::Black);
+	a3::FillImageBuffer(&rayTraceBuffer, a3::color::LightYellow);
 	a3::Asset.LoadTexture2DFromPixels(a3::RayTraceBuffer, rayTraceBuffer.Pixels, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, a3::FilterLinear, a3::WrapClampToEdge);
+	thread_shared* rayTracingData = a3Allocate(sizeof(thread_shared), thread_shared);
 
 	a3::image fontBack = a3::CreateImageBuffer(500, 500);
 	a3::FillImageBuffer(&fontBack, a3::color::Black, 0.5f);
@@ -1036,7 +1047,7 @@ i32 a3Main()
 	f32 angle = a3ToRadians(80.0f);
 	f32 speed = 50.0f;
 
-	v3 shadeColor = a3::color::White;
+	v3 shadeColor = a3::color::Blurple;
 	b32 showNormals = false;
 	a3::render_type rType = a3::render_type::RenderShade;
 
@@ -1102,28 +1113,26 @@ i32 a3Main()
 
 		m4x4 model;
 
-		if (userData->inputSystem.Keys[a3::KeyRaytrace].Down)
+		if (userData->inputSystem.Keys[a3::KeyRaytrace].Down && !s_RayThreadRunning)
 		{
 			a3::FillImageBuffer(&rayTraceBuffer, a3::color::White);
-			a3::RayTrace(&rayTraceBuffer, a3::Asset.Get<a3::mesh>(a3::Mesh), model * camera.CalculateModelM4X4() * m4x4::PerspectiveR(a3ToDegrees(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f));
-			a3::Asset.LoadTexture2DFromPixels(a3::RayTraceBuffer, rayTraceBuffer.Pixels, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, a3::FilterLinear, a3::WrapClampToEdge);
-			u64 size = a3::QueryEncodedImageSize(rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, 4, rayTraceBuffer.Pixels);
-			a3::file_content fc;
-			fc.Size = size;
-			fc.Buffer = a3New u8[size];
-			a3Assert(a3::EncodeImageToBuffer(fc.Buffer, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, 4, rayTraceBuffer.Pixels));
-			utf8 buffer[100];
-			a3::WriteU32ToBuffer(buffer, 100, randomGen.Get(), 16);
-			a3::dstring filename("Raytraced/ray_trace_");
-			filename += buffer;
-			filename += ".png";
-			a3Assert(a3::Platform.ReplaceFileContent(filename.Utf8Array(), fc));
-			a3Delete[] fc.Buffer;
+
+			rayTracingData->frameBuffer = &rayTraceBuffer;
+			rayTracingData->meshObj = a3::Asset.Get<a3::mesh>(a3::Mesh);
+			rayTracingData->texture = 0;
+			rayTracingData->view = camera.CalculateModelM4X4() * m4x4::PerspectiveR(a3ToDegrees(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
+
+			CreateThread(0, 0, RayTracingThreadFunction, rayTracingData, 0, 0);
 		}
 
+		if (s_ShouldRenderToTexture)
+		{
+			s_ShouldRenderToTexture = false;
+			a3::Asset.LoadTexture2DFromPixels(a3::RayTraceBuffer, rayTraceBuffer.Pixels, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, a3::FilterLinear, a3::WrapClampToEdge);
+		}
 		swapChain.SetCamera(camera.CalculateModelM4X4());
 		swapChain.SetDrawNormals(showNormals);
-		swapChain.Clear(a3::color::DarkNotBlack);
+		swapChain.Clear(a3::color::LightSlateGray);
 		swapChain.Render(model, rType, shadeColor, a3::color::Red);
 
 		v3 cc = a3::color::NotQuiteBlack;
@@ -1219,6 +1228,30 @@ i32 a3Main()
 			}
 			uiContext.EndFrame();
 		}
+
+		uiContext.SetVertical(true);
+		uiContext.BeginFrame(v2{ 880.0f, 650.0f });
+		v2 opdim = v2{ 340.0f, 50.0f };
+		if (uiContext.Button(a3::Hash("loadmesh"), opdim, "Load Mesh"))
+		{
+
+		}
+		if (uiContext.Button(a3::Hash("loadpng"), opdim, "Load Texture"))
+		{
+		}
+		if (uiContext.Button(a3::Hash("ray"), opdim, "Ray Trace"))
+		{
+		}
+		if (uiContext.Button(a3::Hash("save"), opdim, "Save Frame"))
+		{
+		}
+		if (uiContext.Button(a3::Hash("saveray"), opdim, "Save Ray Traced"))
+		{
+		}
+		uiContext.EndFrame();
+
+		fontRenderer.Render("a3 Rasterizer & Ray Tracer", v2{ 880.0f, 690.0f }, 25.0f, a3::color::White);
+		fontRenderer.Render("Properties", v2{ 10.0f, 75.0f }, 20.0f, a3::color::White);
 
 		if (renderDebugInformation)
 		{

@@ -103,7 +103,7 @@ a3::ui_context::ui_context(f32 width, f32 height) :
 	m_RenderPositionOffset = { 10.0f, 10.0f };
 
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::UIFont, "Resources/HackRegular.ttf", 30.0f);
-	a3::Asset.LoadTexture2DFromFile(a3::UITexture, "Resources/A3UI.png", a3::FilterLinear, a3::WrapClampToEdge);
+	a3::Asset.LoadTexture2DFromFile(a3::UITexture, "Resources/thea3uiblue.png", a3::FilterLinear, a3::WrapClampToEdge);
 
 	m_FontRenderer.SetRegion(0.0f, m_Width, 0.0f, m_Height);
 	m_FontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::UIFont));
@@ -150,7 +150,7 @@ inline b32 a3::ui_context::Button(i32 uid, v2 dimension, s8 desc)
 	v2 position = m_RenderPosition;
 
 	b32 result = IsInteracted(uid, position, dimension);
-	v4 texDimension = { 0.0f, 0.7f, 1.0f, 1.0f };
+	v4 texDimension = { 0.0f, 0.65f, 1.0f, 1.0f };
 	RenderUI(uid, position, dimension, texDimension);
 	position += 0.25f * dimension;
 	v2 fontRegionDim = dimension;
@@ -175,9 +175,9 @@ inline b32 a3::ui_context::Checkbox(i32 uid, v2 dimension, b32 checked, s8 desc)
 	b32 result = IsInteracted(uid, position, dimension);
 	v4 texDimension;
 	if (checked)
-		texDimension = { 0.0f, 0.0f, 1.0f, 0.3f };
+		texDimension = { 0.0f, 0.33f, 1.0f, 0.67f };
 	else
-		texDimension = { 0.0f, 0.34f, 1.0f, 0.64f };
+		texDimension = { 0.0f, 0.02f, 1.0f, 0.36f };
 	RenderUI(uid, position, dimension, texDimension);
 	position += (0.25f * dimension + v2{ 0.1f * dimension.x, 0.0f });
 	v2 fontRegionDim = dimension;
