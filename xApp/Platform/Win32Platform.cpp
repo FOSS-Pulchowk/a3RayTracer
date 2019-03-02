@@ -353,6 +353,15 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 			pOpenDialog->SetFileTypes(1, &filterTypes);
 			pOpenDialog->SetFileTypeIndex(1);
 		}
+		else if (type == a3::FileTypeOBJ)
+		{
+			COMDLG_FILTERSPEC filterTypes = {
+				L"Wave Front File",
+				L"*.obj"
+			};
+			pOpenDialog->SetFileTypes(1, &filterTypes);
+			pOpenDialog->SetFileTypeIndex(1);
+		}
 
 		hr = pOpenDialog->Show(Win32GetUserData()->windowHandle);
 		utf8* resultPath = A3NULL;
@@ -1005,7 +1014,7 @@ i32 a3Main()
 	swapChain.SetFrameBuffer(&frameBuffer3D);
 	swapChain.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.01f, 1000.0f);
 	swapChain.SetViewport(0, 0, 640, 480);
-	swapChain.SetMesh(a3::Asset.LoadMeshFromFile(a3::Mesh, "Resources/mountains.obj"));
+	swapChain.SetMesh(0);
 
 	a3::image rayTraceBuffer = a3::CreateImageBuffer(200, 200);
 	a3::FillImageBuffer(&rayTraceBuffer, a3::color::LightYellow);
@@ -1230,11 +1239,13 @@ i32 a3Main()
 		}
 
 		uiContext.SetVertical(true);
-		uiContext.BeginFrame(v2{ 880.0f, 650.0f });
-		v2 opdim = v2{ 340.0f, 50.0f };
+		uiContext.BeginFrame(v2{ 880.0f, 680.0f });
+		v2 opdim = v2{ 340.0f, 45.0f };
 		if (uiContext.Button(a3::Hash("loadmesh"), opdim, "Load Mesh"))
 		{
-
+			utf8* file = a3::Platform.LoadFromDialogue("Load OBJ File", a3::file_type::FileTypeOBJ);
+			swapChain.SetMesh(a3::Asset.LoadMeshFromFile(a3::Mesh, file));
+			a3::Platform.FreeDialogueData(file);
 		}
 		if (uiContext.Button(a3::Hash("loadpng"), opdim, "Load Texture"))
 		{

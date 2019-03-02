@@ -358,7 +358,6 @@ namespace a3 {
 
 	void swapchain::SetMesh(mesh * meshObj)
 	{
-		a3Assert(meshObj);
 		m_Meshes = meshObj;
 	}
 
@@ -388,6 +387,8 @@ namespace a3 {
 	void swapchain::Render(const m4x4& model, render_type type, const v3& shade, const v3& outline)
 	{
 		a3Assert(m_FrameBuffer);
+
+		if (!m_Meshes) return;
 
 		m4x4 mvp = model * m_View * m_Projection;
 
