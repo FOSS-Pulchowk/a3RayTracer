@@ -1100,10 +1100,12 @@ i32 a3Main()
 			camera.RotateOrientation(-angle * deltaTime, transform::WorldRight);
 		}
 
+		m4x4 model;
+
 		if (userData->inputSystem.Keys[a3::KeyRaytrace].Down)
 		{
 			a3::FillImageBuffer(&rayTraceBuffer, a3::color::White);
-			a3::RayTrace(&rayTraceBuffer, a3::Asset.Get<a3::mesh>(a3::Mesh), m4x4::Inverse(camera.CalculateModelM4X4()) * m4x4::PerspectiveR(a3ToDegrees(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f));
+			a3::RayTrace(&rayTraceBuffer, a3::Asset.Get<a3::mesh>(a3::Mesh), model * camera.CalculateModelM4X4() * m4x4::PerspectiveR(a3ToDegrees(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f));
 			a3::Asset.LoadTexture2DFromPixels(a3::RayTraceBuffer, rayTraceBuffer.Pixels, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 			u64 size = a3::QueryEncodedImageSize(rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, 4, rayTraceBuffer.Pixels);
 			a3::file_content fc;
@@ -1122,7 +1124,6 @@ i32 a3Main()
 		swapChain.SetCamera(camera.CalculateModelM4X4());
 		swapChain.SetDrawNormals(showNormals);
 		swapChain.Clear(a3::color::DarkNotBlack);
-		m4x4 model;
 		swapChain.Render(model, rType, shadeColor, a3::color::Red);
 
 		v3 cc = a3::color::NotQuiteBlack;
