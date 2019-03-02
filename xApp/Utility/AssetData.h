@@ -63,6 +63,9 @@ namespace a3 {
 		u32* TextureCoordsIndices;
 		u32* NormalIndices;
 		u32 NumOfTriangles;
+		u32 NumOfVertices;
+		u32 NumOfNormals;
+		u32 NumOfTexCoords;
 	};
 
 	struct mesh_info
@@ -558,6 +561,10 @@ a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_info* pms, v3 
 	u32 nTexCoordIndices = (u32)(pms->TextureCoordsIndicesSize / sizeof(v2));
 	u32 nNormalIndices = (u32)(pms->NormalIndicesSize / sizeof(v3));
 
+	u32 cntVertices = 0;
+	u32 cntTexCoords = 0;
+	u32 cntNormals = 0;
+
 	a3::stream s;
 	s.SetWorkingBuffer((u8*)buffer, length);
 	a3::stream line;
@@ -599,6 +606,7 @@ a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_info* pms, v3 
 				line.MoveForwardPass(' ');
 				f32 z = a3::ParseF32((utf8*)line.GetWorkingBufferPointer());
 				*pVertices++ = v3{ x, y, z };
+				cntVertices++;
 			}
 			else if (id == 't')
 			{
@@ -606,6 +614,7 @@ a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_info* pms, v3 
 				line.MoveForwardPass(' ');
 				f32 v = a3::ParseF32((utf8*)line.GetWorkingBufferPointer());
 				*pTexCoords++ = v2{ u, v };
+				cntTexCoords++;
 			}
 			else if (id == 'n')
 			{
@@ -615,6 +624,7 @@ a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_info* pms, v3 
 				line.MoveForwardPass(' ');
 				f32 z = a3::ParseF32((utf8*)line.GetWorkingBufferPointer());
 				*pNormals++ = v3{ x, y, z };
+				cntNormals++;
 			}
 			else
 			{
@@ -727,6 +737,10 @@ a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_info* pms, v3 
 	}
 
 	result.NumOfTriangles = pms->NumOfTriangles;
+	result.NumOfVertices = cntVertices;
+	result.NumOfTexCoords = cntTexCoords;
+	result.NumOfNormals = cntNormals;
+
 	return result;
 }
 

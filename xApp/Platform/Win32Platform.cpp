@@ -21,11 +21,7 @@
 #include <objbase.h>
 #include <shobjidl_core.h>
 
-// Needed only for Debug and internal build
-#if defined(A3DEBUG) || defined(A3INTERNAL)
-// TODO(Zero): Implement our own and remove this
 #include <stdio.h> // For _snprintf_s
-#endif
 
 // undefining annoying windows macros
 // NOTE(Zero): Add every window macros that fucks up our code
@@ -1014,7 +1010,8 @@ i32 a3Main()
 	swapChain.SetFrameBuffer(&frameBuffer3D);
 	swapChain.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.01f, 1000.0f);
 	swapChain.SetViewport(0, 0, 640, 480);
-	swapChain.SetMesh(0);
+	a3::mesh* sceneMesh = A3NULL;
+	swapChain.SetMesh(sceneMesh);
 
 	a3::image rayTraceBuffer = a3::CreateImageBuffer(200, 200);
 	a3::FillImageBuffer(&rayTraceBuffer, a3::color::LightYellow);
@@ -1250,7 +1247,8 @@ i32 a3Main()
 		if (uiContext.Button(a3::Hash("loadmesh"), opdim, "Load Mesh"))
 		{
 			utf8* file = a3::Platform.LoadFromDialogue("Load OBJ File", a3::file_type::FileTypeOBJ);
-			swapChain.SetMesh(a3::Asset.LoadMeshFromFile(a3::Mesh, file));
+			sceneMesh = a3::Asset.LoadMeshFromFile(a3::Mesh, file);
+			swapChain.SetMesh(sceneMesh);
 			a3::Platform.FreeDialogueData(file);
 		}
 		if (uiContext.Button(a3::Hash("loadpng"), opdim, "Load Texture"))
@@ -1277,7 +1275,47 @@ i32 a3Main()
 		uiContext.EndFrame();
 
 		fontRenderer.Render("a3 Rasterizer & Ray Tracer", v2{ 880.0f, 690.0f }, 25.0f, a3::color::White);
+		fontRenderer.Render("Loaded Texture", v2{ 1000.0f, 300.0f }, 20.0f, a3::color::White);
 		fontRenderer.Render("Properties", v2{ 10.0f, 75.0f }, 20.0f, a3::color::White);
+
+		if (sceneMesh)
+		{
+			v3 col = a3::color::Black;
+
+			v2 position = v2{ 10.0f, 690.0f };
+
+			fontRenderer.Render("Mesh Info:", position, 20.0f, col);
+			position.y -= 20.0f;
+
+			utf8 buffer[256];
+			_snprintf_s(buffer, 256, 256, "Traingles: %u", sceneMesh->NumOfTriangles);
+			fontRenderer.Render(buffer, v2{ 10.0f, 670.0f }, 20.0f, col);
+			position.y -= 20.0f;
+
+			if (sceneMesh->NumOfVertices)
+			{
+				_snprintf_s(buffer, 256, 256, "Vertices Count: %u", sceneMesh->NumOfVertices);
+				fontRenderer.Render(buffer, v2{ 10.0f, 650.0f }, 20.0f, col);
+				position.y -= 20.0f;
+			}
+
+			if (sceneMesh->NumOfTexCoords)
+			{
+				_snprintf_s(buffer, 256, 256, "Texture Coordinates Count: %u", sceneMesh->NumOfTexCoords);
+				fontRenderer.Render(buffer, v2{ 10.0f, 630.0f }, 20.0f, col);
+				position.y -= 20.0f;
+			}
+
+			if (sceneMesh->NumOfNormals)
+			{
+				_snprintf_s(buffer, 256, 256, "Normals Count: %u", sceneMesh->NumOfNormals);
+				fontRenderer.Render(buffer, v2{ 10.0f, 610.0f }, 20.0f, col);
+			}
+		}
+		else
+		{
+			fontRenderer.Render("Mesh Info: Mesh Not Loaded", v2{ 10.0f, 690.0f }, 20.0f, a3::color::Red);
+		}
 
 		if (renderDebugInformation)
 		{
