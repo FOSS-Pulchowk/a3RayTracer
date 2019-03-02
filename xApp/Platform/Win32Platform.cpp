@@ -1026,7 +1026,7 @@ i32 a3Main()
 	fontRenderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::DebugFont, "Resources/HackRegular.ttf", 50.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::DebugFont));
-	a3::ui_context renderTypeUI(1280.0f, 720.0f);
+	a3::ui_context uiContext(1280.0f, 720.0f);
 
 	a3::random_generator<u32> randomGen(100, 10000);
 
@@ -1103,7 +1103,7 @@ i32 a3Main()
 		if (userData->inputSystem.Keys[a3::KeyRaytrace].Down)
 		{
 			a3::FillImageBuffer(&rayTraceBuffer, a3::color::White);
-			a3::RayTrace(&rayTraceBuffer, a3::Asset.Get<a3::mesh>(a3::Mesh), m4x4::Inverse(camera.CalculateModelM4X4()));
+			a3::RayTrace(&rayTraceBuffer, a3::Asset.Get<a3::mesh>(a3::Mesh), m4x4::Inverse(camera.CalculateModelM4X4()) * m4x4::PerspectiveR(a3ToDegrees(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f));
 			a3::Asset.LoadTexture2DFromPixels(a3::RayTraceBuffer, rayTraceBuffer.Pixels, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 			u64 size = a3::QueryEncodedImageSize(rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, 4, rayTraceBuffer.Pixels);
 			a3::file_content fc;
@@ -1137,7 +1137,7 @@ i32 a3Main()
 		// Should we setup callbacks for window resizing?
 		a3GL(glViewport(0, 0, userData->inputSystem.WindowWidth, userData->inputSystem.WindowHeight));
 
-		renderTypeUI.UpdateIO(userData->inputSystem);
+		uiContext.UpdateIO(userData->inputSystem);
 		if (userData->inputSystem.Buttons[a3::ButtonRight].Up && oldInput.Buttons[a3::ButtonRight].Down)
 			renderDebugInformation = !renderDebugInformation;
 
@@ -1161,66 +1161,63 @@ i32 a3Main()
 		}
 		renderer.EndFrame();
 
-		v2 dim{ 200.0f, 25.0f };
-		v2 colButDim{ 100.0f, 25.0f };
+		v2 dim;
+		dim = v2{ 100.0f, 25.0f };
 
-		renderTypeUI.SetVertical(true);
-		renderTypeUI.BeginFrame(v2{ 800.0f, 550.0f });
-		if (renderTypeUI.Button(1, dim, "Shade"))
+		uiContext.SetVertical(false);
+		uiContext.BeginFrame(v2{ 10.0f, 80.0f });
+		if (uiContext.Checkbox(a3::Hash("outlint"), dim, rType == a3::render_type::RenderShade, "Material"))
 		{
 			rType = a3::render_type::RenderShade;
 		}
-		if (renderTypeUI.Button(2, dim, "Polygon"))
-		{
-			rType = a3::render_type::RenderTriangle;
-		}
-		if (renderTypeUI.Button(3, dim, "Shade with outline"))
+		if (uiContext.Checkbox(a3::Hash("shade"), dim, rType == a3::render_type::RenderShadeWithOutline, "Shade"))
 		{
 			rType = a3::render_type::RenderShadeWithOutline;
 		}
-		if (renderTypeUI.Button(4, dim, "Texture"))
+		if (uiContext.Checkbox(a3::Hash("poly"), dim, rType == a3::render_type::RenderTriangle, "Polygon"))
 		{
-			rType = a3::render_type::RenderMapTexture;
+			rType = a3::render_type::RenderTriangle;
 		}
-		if (renderTypeUI.Button(11, dim, "Show Normals"))
+		if (uiContext.Button(a3::Hash("texture"), dim, "Texture"))
+		{
+			a3::Platform.MessageBox("Error!", "Texture loading not yet supported!", a3::MessageBoxTypeOk, a3::MessageBoxIconError);
+			//rType = a3::render_type::RenderMapTexture;
+		}
+		if (uiContext.Checkbox(a3::Hash("normals"), dim, showNormals, "Normals"))
 		{
 			showNormals = !showNormals;
 		}
+		uiContext.EndFrame();
 
-		renderTypeUI.SetVertical(false);
-		renderTypeUI.SetCursor(v2{ 800.0f - dim.x / 2, renderTypeUI.GetCursor().y - dim.y - 5.0f });
-		if (renderTypeUI.Button(5, colButDim, "White"))
+		if (rType == a3::RenderShade || rType == a3::RenderShadeWithOutline)
 		{
-			shadeColor = a3::color::White;
+			uiContext.BeginFrame(v2{ 10.0f, 50.0f });
+			if (uiContext.Button(a3::Hash("white"), dim, "White"))
+			{
+				shadeColor = a3::color::White;
+			}
+			if (uiContext.Button(a3::Hash("blue"), dim, "Blue"))
+			{
+				shadeColor = a3::color::Blue;
+			}
+			if (uiContext.Button(a3::Hash("green"), dim, "Green"))
+			{
+				shadeColor = a3::color::Green;
+			}
+			if (uiContext.Button(a3::Hash("aqua"), dim, "Aqua"))
+			{
+				shadeColor = a3::color::Aqua;
+			}
+			if (uiContext.Button(a3::Hash("blurple"), dim, "Blurple"))
+			{
+				shadeColor = a3::color::Blurple;
+			}
+			if (uiContext.Button(a3::Hash("purple"), dim, "Purple"))
+			{
+				shadeColor = a3::color::Purple;
+			}
+			uiContext.EndFrame();
 		}
-		if (renderTypeUI.Button(6, colButDim, "Blue"))
-		{
-			shadeColor = a3::color::Blue;
-		}
-
-		renderTypeUI.SetVertical(true);
-		if (renderTypeUI.Button(7, colButDim, "Green"))
-		{
-			shadeColor = a3::color::Green;
-		}
-		renderTypeUI.SetVertical(false);
-		renderTypeUI.SetCursor(v2{ 800.0f - dim.x / 2, renderTypeUI.GetCursor().y });
-		if (renderTypeUI.Button(8, colButDim, "Aqua"))
-		{
-			shadeColor = a3::color::Aqua;
-		}
-
-		renderTypeUI.SetVertical(true);
-		if (renderTypeUI.Button(9, colButDim, "Blurple"))
-		{
-			shadeColor = a3::color::Blurple;
-		}
-		renderTypeUI.SetVertical(false);
-		if (renderTypeUI.Button(10, colButDim, "Purple"))
-		{
-			shadeColor = a3::color::Purple;
-		}
-		renderTypeUI.EndFrame();
 
 		if (renderDebugInformation)
 		{

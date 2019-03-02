@@ -16,6 +16,8 @@ namespace a3 {
 
 	inline u64 GetStringLength(s8 s);
 
+	inline u32 Hash(s8 s);
+
 }
 
 
@@ -169,4 +171,13 @@ inline u64 a3::GetStringLength(s8 s)
 	for (utf8* c = (utf8*)s; *c != 0; ++c)
 		len++;
 	return (len + 1);
+}
+
+inline u32 a3::Hash(s8 s)
+{
+	u32 hash = 0;
+	i32 c;
+	while (c = *s++)
+		hash = c + (hash << 6) + (hash << 16) - hash;
+	return hash;
 }

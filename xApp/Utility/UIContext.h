@@ -26,8 +26,8 @@ namespace a3 {
 		};
 		user_input m_Input;
 
-		i32 m_Active;
-		i32 m_Hot;
+		u32 m_Active;
+		u32 m_Hot;
 		f32 m_Width;
 		f32 m_Height;
 
