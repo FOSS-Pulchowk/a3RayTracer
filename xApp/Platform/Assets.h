@@ -11,7 +11,10 @@ namespace a3 {
 		FontBG, 
 		DebugFont,
 		RayTraceBuffer,
-		FrameBuffer3D
+		FrameBuffer3D,
+		LoadedTexture,
+		LoadedImageForTexture,
+		BrandLogo
 	};
 
 }

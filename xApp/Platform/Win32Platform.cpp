@@ -1020,6 +1020,7 @@ i32 a3Main()
 	a3::FillImageBuffer(&rayTraceBuffer, a3::color::LightYellow);
 	a3::Asset.LoadTexture2DFromPixels(a3::RayTraceBuffer, rayTraceBuffer.Pixels, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 	thread_shared* rayTracingData = a3Allocate(sizeof(thread_shared), thread_shared);
+	a3::image* loadedTexture = A3NULL;
 
 	a3::image fontBack = a3::CreateImageBuffer(500, 500);
 	a3::FillImageBuffer(&fontBack, a3::color::Black, 0.5f);
@@ -1047,6 +1048,9 @@ i32 a3Main()
 	a3::Asset.LoadFontTextureAtlasFromFile(a3::DebugFont, "Resources/HackRegular.ttf", 50.0f);
 	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::DebugFont));
 	a3::ui_context uiContext(1280.0f, 720.0f);
+
+	a3::Asset.LoadTexture2DFromFile(a3::BrandLogo, "Resources/logo.png", a3::FilterLinear, a3::WrapClampToEdge);
+	a3::Asset.LoadTexture2DFromFile(a3::LoadedTexture, "Resources/notavailable.png", a3::FilterLinear, a3::WrapClampToEdge);
 
 	a3::random_generator<u32> randomGen(100, 10000);
 
@@ -1170,8 +1174,10 @@ i32 a3Main()
 		a3::image_texture* frameBuffer3DTex = a3::Asset.LoadTexture2DFromPixels(a3::FrameBuffer3D, frameBuffer3D.Pixels, frameBuffer3D.Width, frameBuffer3D.Height, frameBuffer3D.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 
 		renderer.BeginFrame();
+		renderer.Push(v3{ 960.0f, 85.0f, 0.0f }, 200, a3::color::White, a3::Asset.Get<a3::image_texture>(a3::LoadedTexture));
 		renderer.Push(v3{ 10.0f, 110.0f, 0.0f }, 600, a3::color::White, frameBuffer3DTex);
 		renderer.Push(v3{ 10.0f, 110.0f, 0.0f }, 200, a3::color::White, a3::Asset.Get<a3::image_texture>(a3::RayTraceBuffer));
+		renderer.Push(v3{ 820.0f, 660.0f, 0.0f }, 50, a3::color::Red, a3::Asset.Get<a3::image_texture>(a3::BrandLogo));
 		if (renderDebugInformation)
 		{
 #if defined(A3DEBUG) || defined(A3INTERNAL)
@@ -1249,6 +1255,10 @@ i32 a3Main()
 		}
 		if (uiContext.Button(a3::Hash("loadpng"), opdim, "Load Texture"))
 		{
+			utf8* file = a3::Platform.LoadFromDialogue("Load Texture", a3::file_type::FileTypePNG);
+			loadedTexture = a3::Asset.LoadImageFromFile(a3::LoadedImageForTexture, file);
+			a3::Platform.FreeDialogueData(file);
+			a3::Asset.LoadTexture2DFromPixels(a3::LoadedTexture, loadedTexture->Pixels, loadedTexture->Width, loadedTexture->Height, loadedTexture->Channels, a3::FilterLinear, a3::WrapClampToEdge);
 		}
 		if (uiContext.Button(a3::Hash("ray"), opdim, "Ray Trace"))
 		{
@@ -1258,6 +1268,11 @@ i32 a3Main()
 		}
 		if (uiContext.Button(a3::Hash("saveray"), opdim, "Save Ray Traced"))
 		{
+		}
+		if (uiContext.Button(a3::Hash("camera"), opdim, "Recenter Camera"))
+		{
+			camera.SetOrientation(0.0f, 0.0f, 0.0f);
+			camera.SetPosition(0.0f, 5.0f, 20.0f);
 		}
 		uiContext.EndFrame();
 
