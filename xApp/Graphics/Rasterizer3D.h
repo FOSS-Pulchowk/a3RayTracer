@@ -33,11 +33,12 @@ namespace a3 {
 		struct polygon
 		{
 			v4 vertices[10];
+			v2 textureCoords[10];
 			i32 numVertices;
 		};
-		void ClipPolygonOnWAxis(polygon* face);
-		void ClipPolygonForAxis(polygon* face, i32 comp);
-		void ClipPolygon(polygon* face);
+		void ClipPolygonOnWAxis(polygon* face, b32 textures);
+		void ClipPolygonForAxis(polygon* face, i32 comp, b32 textures);
+		void ClipPolygon(polygon* face, b32 textures = false);
 
 	public:
 		swapchain();
@@ -68,15 +69,20 @@ namespace a3 {
 
 namespace a3 {
 
-	void swapchain::ClipPolygonOnWAxis(polygon* face)
+	void swapchain::ClipPolygonOnWAxis(polygon* face, b32 textures)
 	{
 		f32 wPlane = 0.00001f;
 
 		v4* currentVertice;
 		v4* previousVertice;
 
+		v2* currentUV;
+		v2* previousUV;
+
 		i32 insideNumVertices = 0;
 		v4 insideVertices[10];
+
+		v2 insideTexCoords[10];
 
 		i32 previousDot;
 		i32 currentDot;
@@ -88,6 +94,10 @@ namespace a3 {
 		previousVertice = &face->vertices[face->numVertices - 1];
 		previousDot = (previousVertice->w < wPlane) ? -1 : 1;
 		currentVertice = &face->vertices[0];
+
+		previousUV = &face->textureCoords[face->numVertices - 1];
+		currentUV = &face->textureCoords[0];
+
 		while (currentVertice != &face->vertices[face->numVertices])
 		{
 			currentDot = (currentVertice->w < wPlane) ? -1 : 1;
@@ -101,12 +111,26 @@ namespace a3 {
 				intersectionPoint *= intersectionFactor;
 				intersectionPoint += *previousVertice;
 
+				if (textures)
+				{
+					v2 intTex = *currentUV;
+					intTex -= *previousUV;
+					intTex *= intersectionFactor;
+					intTex += *previousUV;
+
+					insideTexCoords[insideNumVertices] = intTex;
+				}
+
 				insideVertices[insideNumVertices] = intersectionPoint;
 				insideNumVertices++;
 			}
 
 			if (currentDot > 0)
 			{
+				if (textures)
+				{
+					insideTexCoords[insideNumVertices] = *currentUV;
+				}
 				insideVertices[insideNumVertices] = *currentVertice;
 				insideNumVertices++;
 			}
@@ -114,21 +138,35 @@ namespace a3 {
 			previousDot = currentDot;
 			previousVertice = currentVertice;
 			currentVertice++;
+
+			previousUV = currentUV;
+			currentUV++;
 		}
 
 		for (i32 i = 0; i < insideNumVertices; ++i)
+		{
 			face->vertices[i] = insideVertices[i];
+			if (textures)
+			{
+				face->textureCoords[i] = insideTexCoords[i];
+			}
+		}
 		face->numVertices = insideNumVertices;
 		insideNumVertices = 0;
 	}
 
-	void swapchain::ClipPolygonForAxis(polygon* face, i32 comp)
+	void swapchain::ClipPolygonForAxis(polygon* face, i32 comp, b32 textures)
 	{
 		v4* currentVertice;
 		v4* previousVertice;
 
+		v2* currentUV;
+		v2* previousUV;
+
 		i32 insideNumVertices = 0;
 		v4 insideVertices[10];
+
+		v2 insideTexCoords[10];
 
 		i32 previousDot;
 		i32 currentDot;
@@ -139,6 +177,10 @@ namespace a3 {
 		previousVertice = &face->vertices[face->numVertices - 1];
 		previousDot = (previousVertice->values[comp] <= previousVertice->w) ? 1 : -1;
 		currentVertice = &face->vertices[0];
+
+		previousUV = &face->textureCoords[face->numVertices - 1];
+		currentUV = &face->textureCoords[0];
+
 		while (currentVertice != &face->vertices[face->numVertices])
 		{
 			currentDot = (currentVertice->values[comp] <= currentVertice->w) ? 1 : -1;
@@ -154,12 +196,26 @@ namespace a3 {
 				intersectionPoint *= intersectionFactor;
 				intersectionPoint += *previousVertice;
 
+				if (textures)
+				{
+					v2 intTex = *currentUV;
+					intTex -= *previousUV;
+					intTex *= intersectionFactor;
+					intTex += *previousUV;
+
+					insideTexCoords[insideNumVertices] = intTex;
+				}
+
 				insideVertices[insideNumVertices] = intersectionPoint;
 				insideNumVertices++;
 			}
 
 			if (currentDot > 0)
 			{
+				if (textures)
+				{
+					insideTexCoords[insideNumVertices] = *currentUV;
+				}
 				insideVertices[insideNumVertices] = *currentVertice;
 				insideNumVertices++;
 			}
@@ -167,16 +223,29 @@ namespace a3 {
 			previousDot = currentDot;
 			previousVertice = currentVertice;
 			currentVertice++;
+
+			previousUV = currentUV;
+			currentUV++;
 		}
 
 		for (i32 i = 0; i < insideNumVertices; ++i)
+		{
 			face->vertices[i] = insideVertices[i];
+			if (textures)
+			{
+				face->textureCoords[i] = insideTexCoords[i];
+			}
+		}
 		face->numVertices = insideNumVertices;
 		insideNumVertices = 0;
 
 		previousVertice = &face->vertices[face->numVertices - 1];
 		previousDot = ((-previousVertice->values[comp]) <= previousVertice->w) ? 1 : -1;
 		currentVertice = &face->vertices[0];
+
+		previousUV = &face->textureCoords[face->numVertices - 1];
+		currentUV = &face->textureCoords[0];
+
 		while (currentVertice != &face->vertices[face->numVertices])
 		{
 			currentDot = (-(currentVertice->values[comp]) <= currentVertice->w) ? 1 : -1;
@@ -192,34 +261,56 @@ namespace a3 {
 				intersectionPoint *= intersectionFactor;
 				intersectionPoint += *previousVertice;
 
+				if (textures)
+				{
+					v2 intTex = *currentUV;
+					intTex -= *previousUV;
+					intTex *= intersectionFactor;
+					intTex += *previousUV;
+
+					insideTexCoords[insideNumVertices] = intTex;
+				}
+
 				insideVertices[insideNumVertices] = intersectionPoint;
 				insideNumVertices++;
 			}
 
 			if (currentDot > 0)
 			{
+				if (textures)
+				{
+					insideTexCoords[insideNumVertices] = *currentUV;
+				}
 				insideVertices[insideNumVertices] = *currentVertice;
 				insideNumVertices++;
 			}
 
 			previousDot = currentDot;
-
 			previousVertice = currentVertice;
 			currentVertice++;
+
+			previousUV = currentUV;
+			currentUV++;
 		}
 
 		for (i32 i = 0; i < insideNumVertices; ++i)
+		{
 			face->vertices[i] = insideVertices[i];
+			if (textures)
+			{
+				face->textureCoords[i] = insideTexCoords[i];
+			}
+		}
 		face->numVertices = insideNumVertices;
 		insideNumVertices = 0;
 	}
 
-	void swapchain::ClipPolygon(polygon* face)
+	void swapchain::ClipPolygon(polygon* face, b32 textures)
 	{
-		ClipPolygonOnWAxis(face);		// w
-		ClipPolygonForAxis(face, 0);	// x
-		ClipPolygonForAxis(face, 1);	// y
-		ClipPolygonForAxis(face, 2);	// z
+		ClipPolygonOnWAxis(face, textures);		// w
+		ClipPolygonForAxis(face, 0, textures);	// x
+		ClipPolygonForAxis(face, 1, textures);	// y
+		ClipPolygonForAxis(face, 2, textures);	// z
 	}
 
 	swapchain::swapchain()
@@ -317,29 +408,27 @@ namespace a3 {
 			const v3& p1 = vertices[indices[nTri * 3 + 1]];
 			const v3& p2 = vertices[indices[nTri * 3 + 2]];
 
-			v2 t0 = {}, t1 = {}, t2 = {};
-
-			if (textures)
-			{
-				if (tindices)
-				{
-					t0 = textures[tindices[nTri * 3] + 0];
-					t1 = textures[tindices[nTri * 3] + 1];
-					t2 = textures[tindices[nTri * 3] + 2];
-				}
-				else
-				{
-					t0 = textures[nTri * 3 + 0];
-					t1 = textures[nTri * 3 + 1];
-					t2 = textures[nTri * 3 + 2];
-				}
-			}
-
 			polygon triangle;
 			triangle.numVertices = 3;
 			triangle.vertices[0] = v4{ p0.x, p0.y, p0.z, 1.0f } *mvp;
 			triangle.vertices[1] = v4{ p1.x, p1.y, p1.z, 1.0f } *mvp;
 			triangle.vertices[2] = v4{ p2.x, p2.y, p2.z, 1.0f } *mvp;
+
+			if (textures)
+			{
+				if (tindices)
+				{
+					triangle.textureCoords[0] = textures[tindices[nTri * 3] + 0];
+					triangle.textureCoords[1] = textures[tindices[nTri * 3] + 1];
+					triangle.textureCoords[2] = textures[tindices[nTri * 3] + 2];
+				}
+				else
+				{
+					triangle.textureCoords[0] = textures[nTri * 3 + 0];
+					triangle.textureCoords[1] = textures[nTri * 3 + 1];
+					triangle.textureCoords[2] = textures[nTri * 3 + 2];
+				}
+			}
 
 			// NOTE(Zero): 
 			// Since camera is at (0,0,0) and poi32ing towards z direction
@@ -347,10 +436,11 @@ namespace a3 {
 			v3 normal = Normalize(Cross(triangle.vertices[1].xyz - triangle.vertices[0].xyz, triangle.vertices[2].xyz - triangle.vertices[1].xyz));
 			f32 dot = normal.z;
 
-			if (dot > 0.0f)
+			if (dot >= 0.0f)
 			{
 				if (textures && type == a3::RenderMapTexture)
 				{
+					ClipPolygon(&triangle, true);
 				}
 				else
 				{
@@ -368,10 +458,11 @@ namespace a3 {
 
 					f32 w0 = 1.0f / triangle.vertices[0].w;
 
-					//v2 finalUV0;
+					v2 finalUV0;
 
 					if (textures && type == a3::RenderMapTexture)
 					{
+						finalUV0 = triangle.textureCoords[0] * (1.0f / triangle.vertices[0].w);
 					}
 
 					for (i32 n = 1; n < triangle.numVertices - 1; ++n)
@@ -409,14 +500,17 @@ namespace a3 {
 						}
 						else
 						{
-
-							//v2 finalUV1;
-							//v2 finalUV2;
-							//finalUV1.u = clippedTextureCoords[n].u / clippedVertices[n].w;
-							//finalUV2.u = clippedTextureCoords[n + 1].u / clippedVertices[n + 1].w;
-							//finalUV1.v = clippedTextureCoords[n].v / clippedVertices[n].w;
-							//finalUV2.v = clippedTextureCoords[n + 1].v / clippedVertices[n + 1].w;
-							//TextureTriangle((i32)finalPoint0.x, (i32)finalPoint0.y, finalUV0, w0, (i32)finalPoint1.x, (i32)finalPoint1.y, finalUV1, w1, (i32)finalPoint2.x, (i32)finalPoint2.y, finalUV2, w2);
+							v2 finalUV1;
+							v2 finalUV2;
+							finalUV1 = triangle.textureCoords[1] * (1.0f / triangle.vertices[1].w);
+							finalUV2 = triangle.textureCoords[2] * (1.0f / triangle.vertices[2].w);
+							a3Assert(finalUV0.x >= 0.0f && finalUV0.x <= 1.0f);
+							a3Assert(finalUV0.y >= 0.0f && finalUV0.y <= 1.0f);
+							a3Assert(finalUV1.x >= 0.0f && finalUV1.x <= 1.0f);
+							a3Assert(finalUV1.y >= 0.0f && finalUV1.y <= 1.0f);
+							a3Assert(finalUV2.x >= 0.0f && finalUV2.x <= 1.0f);
+							a3Assert(finalUV2.y >= 0.0f && finalUV2.y <= 1.0f);
+							TextureTriangle((i32)finalPoint0.x, (i32)finalPoint0.y, finalUV0, w0, (i32)finalPoint1.x, (i32)finalPoint1.y, finalUV1, w1, (i32)finalPoint2.x, (i32)finalPoint2.y, finalUV2, w2);
 						}
 
 						if (m_DrawNormals)
@@ -437,7 +531,6 @@ namespace a3 {
 		{
 			a3::Swap(&y1, &y2);
 			a3::Swap(&x1, &x2);
-			a3::Swap(&t1, &t2);
 			a3::Swap(&w1, &w2);
 		}
 
@@ -445,7 +538,6 @@ namespace a3 {
 		{
 			a3::Swap(&y1, &y3);
 			a3::Swap(&x1, &x3);
-			a3::Swap(&t1, &t3);
 			a3::Swap(&w1, &w3);
 		}
 
@@ -453,21 +545,17 @@ namespace a3 {
 		{
 			a3::Swap(&y2, &y3);
 			a3::Swap(&x2, &x3);
-			a3::Swap(&t2, &t3);
 			a3::Swap(&w2, &w3);
 		}
 
 		i32 dy1 = y2 - y1;
 		i32 dx1 = x2 - x1;
-		v2 dt1 = t2 - t1;
 		f32 dw1 = w2 - w1;
 
 		i32 dy2 = y3 - y1;
 		i32 dx2 = x3 - x1;
-		v2 dt2 = t3 - t1;
 		f32 dw2 = w3 - w1;
 
-		v2 tex_uv;
 		f32 tex_w;
 
 		f32 dax_step = 0.0f, dbx_step = 0.0f;
@@ -478,10 +566,8 @@ namespace a3 {
 		if (dy1) dax_step = dx1 / (f32)Abs(dy1);
 		if (dy2) dbx_step = dx2 / (f32)Abs(dy2);
 
-		if (dy1) dt1_step = dt1 * (1.0f / (f32)Abs(dy1));
 		if (dy1) dw1_step = dw1 / (f32)Abs(dy1);
 
-		if (dy2) dt2_step = dt2 * (1.0f / (f32)Abs(dy2));
 		if (dy2) dw2_step = dw2 / (f32)Abs(dy2);
 
 		if (dy1)
@@ -491,20 +577,16 @@ namespace a3 {
 				i32 ax = (i32)(x1 + (f32)(i - y1) * dax_step);
 				i32 bx = (i32)(x1 + (f32)(i - y1) * dbx_step);
 
-				v2 tex_suv = t1 + (f32)(i - y1) * dt1_step;
 				f32 tex_sw = w1 + (f32)(i - y1) * dw1_step;
 
-				v2 tex_euv = t1 + (f32)(i - y1) * dt2_step;
 				f32 tex_ew = w1 + (f32)(i - y1) * dw2_step;
 
 				if (ax > bx)
 				{
 					a3::Swap(&ax, &bx);
-					a3::Swap(&tex_suv, &tex_euv);
 					a3::Swap(&tex_sw, &tex_ew);
 				}
 
-				tex_uv = tex_suv;
 				tex_w = tex_sw;
 
 				f32 tstep = 1.0f / ((f32)(bx - ax));
@@ -512,12 +594,10 @@ namespace a3 {
 
 				for (i32 j = ax; j < bx; j++)
 				{
-					tex_uv = (1.0f - t) * tex_suv + t * tex_euv;
 					tex_w = (1.0f - t) * tex_sw + t * tex_ew;
 					if (tex_w > m_DepthBuffer[i*m_FrameBuffer->Width + j])
 					{
-						v2 fuv = tex_uv * (1.0f / tex_w);
-						a3::SetPixelColor(m_FrameBuffer, (f32)j + 0.5f, (f32)i + 0.5f, a3::SamplePixelColor(m_Texture, fuv));
+						a3::SetPixelColor(m_FrameBuffer, (f32)j + 0.5f, (f32)i + 0.5f, a3::color::White);
 						m_DepthBuffer[i*m_FrameBuffer->Width + j] = tex_w;
 					}
 					t += tstep;
@@ -528,14 +608,12 @@ namespace a3 {
 
 		dy1 = y3 - y2;
 		dx1 = x3 - x2;
-		dt1 = t3 - t2;
 		dw1 = w3 - w2;
 
 		if (dy1) dax_step = dx1 / (f32)Abs(dy1);
 		if (dy2) dbx_step = dx2 / (f32)Abs(dy2);
 
 		v2 dut_step = {};
-		if (dy1) dut_step = dt1 * (1.0f / (f32)Abs(dy1));
 		if (dy1) dw1_step = dw1 / (f32)Abs(dy1);
 
 		if (dy1)
@@ -545,20 +623,16 @@ namespace a3 {
 				i32 ax = (i32)(x2 + (f32)(i - y2) * dax_step);
 				i32 bx = (i32)(x1 + (f32)(i - y1) * dbx_step);
 
-				v2 tex_suv = t2 + (f32)(i - y2) * dt1_step;
 				f32 tex_sw = w2 + (f32)(i - y2) * dw1_step;
 
-				v2 tex_euv = t1 + (f32)(i - y1) * dt2_step;
 				f32 tex_ew = w1 + (f32)(i - y1) * dw2_step;
 
 				if (ax > bx)
 				{
 					a3::Swap(&ax, &bx);
-					a3::Swap(&tex_suv, &tex_euv);
 					a3::Swap(&tex_sw, &tex_ew);
 				}
 
-				tex_uv = tex_suv;
 				tex_w = tex_sw;
 
 				f32 tstep = 1.0f / ((f32)(bx - ax));
@@ -566,14 +640,11 @@ namespace a3 {
 
 				for (i32 j = ax; j < bx; j++)
 				{
-					tex_uv = (1.0f - t) * tex_suv + t * tex_euv;
 					tex_w = (1.0f - t) * tex_sw + t * tex_ew;
 
 					if (tex_w > m_DepthBuffer[i*m_FrameBuffer->Width + j])
 					{
-						v2 fuv = tex_uv * (1.0f / tex_w);
-						a3Assert(fuv.u >= 0.0f && fuv.y >= 0.0f);
-						a3::SetPixelColor(m_FrameBuffer, (f32)j + 0.5f, (f32)i + 0.5f, a3::SamplePixelColor(m_Texture, fuv));
+						a3::SetPixelColor(m_FrameBuffer, (f32)j + 0.5f, (f32)i + 0.5f, a3::color::White);
 						m_DepthBuffer[i*m_FrameBuffer->Width + j] = tex_w;
 					}
 					t += tstep;

@@ -977,8 +977,8 @@ i32 a3Main()
 	sc.SetFrameBuffer(&img);
 	sc.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 	sc.SetViewport(0, 0, 640, 480);
-	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Mountains.obj"));
-	//sc.SetTexture(a3::Asset.LoadImageFromFile(22, "Resources/worlda.png"));
+	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/level.obj"));
+	sc.SetTexture(a3::Asset.LoadImageFromFile(22, "Resources/worlda.png"));
 
 	a3::image fontbg = a3::CreateImageBuffer(500, 500);
 	a3::FillImageBuffer(&fontbg, a3::color::Black, 0.5f);
@@ -1085,6 +1085,7 @@ i32 a3Main()
 		sc.SetDrawNormals(showNormals);
 		//m4x4 model = m4x4::ScaleR(v3{1.0f/25.0f, 1.0f / 25.0f, 1.0f / 25.0f }) * m4x4::TranslationR(v3{ 0, 0, -500 });
 		m4x4 model = /*m4x4::ScaleR(v3{ 5.0f, 5.0f, 5.0f }) **/ m4x4::TranslationR(v3{ 0, 0, -50 });
+		//m4x4 model;
 		sc.Clear();
 		sc.Render(model, rType, shadeColor, a3::color::Red);
 
