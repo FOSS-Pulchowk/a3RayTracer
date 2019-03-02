@@ -156,7 +156,10 @@ namespace a3 {
 		u8* dp = (u8*)dst;
 		u8* sp = (u8*)src;
 		for (u64 i = 0; i < size; ++i)
-			*dp++ = *sp++;
+		{
+			*dp = *sp;
+			dp++; sp++;
+		}
 	}
 
 	inline void ReverseMemoryCopy(void* dst, const void* src, u64 size)
@@ -164,7 +167,10 @@ namespace a3 {
 		u8* dp = (u8*)dst;
 		u8* sp = (u8*)src + size - 1;
 		for (u64 i = 0; i < size; ++i)
-			*dp++ = *sp--;
+		{
+			*dp = *sp;
+			dp++; sp--;
+		}
 	}
 
 	inline void ReverseRectCopy(void* dst, const void* src, i32 w, i32 h)
@@ -176,7 +182,8 @@ namespace a3 {
 			u8* dp = rowDP;
 			for (i32 x = 0; x < w; ++x)
 			{
-				*dp++ = *sp++;
+				*dp = *sp;
+				dp++; sp++;
 			}
 			rowDP -= w;
 		}
@@ -187,7 +194,10 @@ namespace a3 {
 		u8* pd = (u8*)dst;
 		u8* sp = (u8*)src;
 		for (u64 i = 0; i < size; ++i)
-			*pd++ = *sp++;
+		{
+			*pd = *sp;
+			pd++; sp++;
+		}
 		return dst;
 	}
 
@@ -195,7 +205,10 @@ namespace a3 {
 	{
 		u8* p = (u8*)dst;
 		for (u64 i = 0; i < size; ++i)
-			*p++ = val;
+		{
+			*p = val;
+			p++;
+		}
 		return dst;
 	}
 

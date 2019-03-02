@@ -11,6 +11,7 @@
 namespace a3 {
 
 	a3::image CreateImageBuffer(i32 w, i32 h);
+	void FreeImgeBuffer(a3::image* img);
 	void FillImageBuffer(a3::image* img, const rect& r, const v3&  color, f32 alpha = 1.0f);
 	void FillImageBuffer(a3::image* img, const v3&  color, f32 alpha = 1.0f);
 	void FillImageBuffer(a3::image* img, const rect& r, const v4&  color);
@@ -65,6 +66,14 @@ namespace a3 {
 		result.Height = h;
 		result.Channels = 4;
 		return result;
+	}
+
+	void FreeImgeBuffer(a3::image * img)
+	{
+		a3Delete img->Pixels;
+		img->Width = 0;
+		img->Height = 0;
+		img->Channels = 0;
 	}
 
 	void FillImageBuffer(a3::image * img, const rect& r, const v3& color, f32 alpha)

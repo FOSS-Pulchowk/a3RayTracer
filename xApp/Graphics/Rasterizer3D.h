@@ -52,7 +52,7 @@ namespace a3 {
 		void SetTexture(image* tex);
 		void SetFrameBuffer(image* tex);
 		void SetDrawNormals(b32 normals);
-		void Clear();
+		void Clear(v3 color = a3::color::Black);
 		void Render(const m4x4& model, render_type type, const v3& shade = a3::color::White, const v3& outline = a3::color::Yellow);
 	private:
 		void TextureTriangle(i32 x, i32 y, v2 t1, f32 w1, i32 x2, i32 y2, v2 t2, f32 w2, i32 x3, i32 y3, v2 t3, f32 w3);
@@ -378,9 +378,9 @@ namespace a3 {
 		m_DrawNormals = normals;
 	}
 
-	void swapchain::Clear()
+	void swapchain::Clear(v3 color)
 	{
-		a3::FillImageBuffer(m_FrameBuffer, a3::color::Black);
+		a3::FillImageBuffer(m_FrameBuffer, color);
 		for (i32 i = 0; i < m_FrameBuffer->Width*m_FrameBuffer->Height; ++i)
 			m_DepthBuffer[i] = 0.0f;
 	}

@@ -108,18 +108,13 @@ namespace a3 {
 	u64 QueryDecodedImageSize(void* buffer, i32 length);
 	image DecodeImageFromBuffer(void* imgeBuffer, i32 length, void* destination);
 	u64 QueryEncodedImageSize(i32 w, i32 h, i32 channels, i32 bytesPerPixel, void* pixels);
-	u64 WriteImageToBuffer(void* buffer, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
+	u64 EncodeImageToBuffer(void* buffer, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
 
 	u64 QueryDecodedFontSize(void* buffer, i32 length, f32 scale);
 	void QueryMaxFontDimension(void * buffer, i32 length, f32 scale, i32* x, i32* y);
 	void QueryAtlasSizeForFontSize(i32 x, i32 y, i32* w, i32* h);
 	font DecodeFontFromBuffer(void* buffer, f32 scale, void* destination);
 	f32 QueryTTFontKernalAdvance(const stbtt_fontinfo & info, f32 scalingFactor, i32 glyph0, i32 glyph1);
-
-	// NOTE(Zero): Returns number of triangles
-	/*u32 ScanMeshFromBuffer(void* buffer, void(*fnVertex)(f32, f32, f32, void*), void(*fnTexCoords)(f32, f32, void*),
-						   void(*fnNorms)(f32, f32, void*),
-						   void(*fnFaces)(u32, u32, u32, void*), void* ctx);*/
 
 	mesh_info QueryMeshSizeFromBuffer(void* buffer, u64 length);
 	mesh DecodeMeshFromBuffer(void* buffer, u64 length, mesh_info* pms, v3* pVertices, v2* pTexCoords, v3* pNormals, u32* pVertexIndices, u32* pTexCoordsIndices, u32* pNormalIndices);
@@ -134,41 +129,16 @@ namespace a3 {
 
 #include "Utility/Stream.h"
 
-
 #define A3_MAX_LOAD_GLYPH (A3MAXLOADGLYPHX * A3MAXLOADGLYPHY)
-
-struct a3_buffer
-{
-	void* buffer;
-	u64 size;
-};
-
-static inline void a3_STBWriteCallback(void* context, void* data, i32 size)
-{
-	a3::file_content* fc = (a3::file_content*)context;
-	fc->Buffer = a3New u8[size];
-	if (fc->Buffer)
-	{
-		fc->Size = size;
-		a3::MemoryCopy(fc->Buffer, data, size);
-	}
-}
 
 static inline void a3_STBWriteBufferCallback(void* context, void* data, i32 size)
 {
-	a3_buffer* fc = (a3_buffer*)context;
-	fc->buffer = a3New u8[size];
-	if (fc->buffer)
-	{
-		fc->size = size;
-		a3::MemoryCopy(fc->buffer, data, size);
-	}
+	a3::MemoryCopy(context, data, size);
 }
 
 static inline void a3_STBQueryImageSizeCallback(void* context, void* data, i32 size)
 {
-	a3_buffer* fc = (a3_buffer*)context;
-	fc->size = size;
+	*(u64*)context = size;
 }
 
 u64 a3::QueryDecodedImageSize(void * buffer, i32 length)
@@ -210,15 +180,15 @@ u64 a3::QueryEncodedImageSize(i32 w, i32 h, i32 channels, i32 bytesPerPixel, voi
 	else
 		return false; // NOTE(Zero): Ouput only for 1, 3 and 4 channel images
 
-	a3_buffer buffer = {};
-	if (stbi_write_png_to_func(a3_STBQueryImageSizeCallback, &buffer, w, h, channels, pixels, stride))
+	u64 len = 0;
+	if (stbi_write_png_to_func(a3_STBQueryImageSizeCallback, &len, w, h, channels, pixels, stride))
 	{
-		return buffer.size;
+		return len;
 	}
 	return 0;
 }
 
-u64 a3::WriteImageToBuffer(void * destination, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void * pixels)
+u64 a3::EncodeImageToBuffer(void * destination, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void * pixels)
 {
 	stbi_flip_vertically_on_write(1);
 	// NOTE(Zero): Stride for images should align to multiple of 4 or 8
@@ -237,14 +207,7 @@ u64 a3::WriteImageToBuffer(void * destination, i32 width, i32 height, i32 channe
 	else
 		return false; // NOTE(Zero): Ouput only for 1, 3 and 4 channel images
 
-	a3_buffer buffer = {};
-	if (stbi_write_png_to_func(a3_STBWriteBufferCallback, &buffer, width, height, channels, pixels, stride))
-	{
-		a3::MemoryCopy(destination, buffer.buffer, buffer.size);
-		a3Delete[] buffer.buffer;
-		return buffer.size;
-	}
-	return 0;
+	return stbi_write_png_to_func(a3_STBWriteBufferCallback, destination, width, height, channels, pixels, stride);
 }
 
 static inline void a3_CalculateFontBitmapMaxDimension(stbtt_fontinfo& info, f32 scale, i32* w, i32* h)
@@ -481,6 +444,14 @@ a3::mesh_info a3::QueryMeshSizeFromBuffer(void * buffer, u64 length)
 		{
 		} break;
 
+		case '\n':
+		{
+		} break;
+
+		case '\r':
+		{
+		} break;
+
 		case 'f':
 		{
 			while (line.GetCurrentPointerValue() != '\n' && line.GetWorkingBufferPointer() != line.GetWorkingBufferEnd() - 1)
@@ -664,6 +635,14 @@ a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_info* pms, v3 
 		} break;
 
 		case 'g':
+		{
+		} break;
+
+		case '\n':
+		{
+		} break;
+
+		case '\r':
 		{
 		} break;
 

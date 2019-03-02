@@ -585,6 +585,7 @@ a3::key Win32MapKey(WPARAM keyCode)
 	case 'A': return a3::KeyA;
 	case 'S': return a3::KeyS;
 	case 'D': return a3::KeyD;
+	case 'R': return a3::KeyRaytrace;
 	}
 	return a3::KeyUnknown;
 }
@@ -913,6 +914,25 @@ const v3 transform::WorldUp = v3{ 0,1,0 };
 const v3 transform::WorldRight = v3{ 1,0,0 };
 const v3 transform::WorldForward = v3{ 0,0,-1 };
 
+struct thread_shared
+{
+	a3::image* frameBuffer;
+	a3::mesh* meshObj;
+	a3::image* texture;
+	m4x4 view;
+};
+
+static b32 s_RayThreadRunning;
+
+DWORD WINAPI RayTracingThreadFunction(LPVOID userPtr)
+{
+	s_RayThreadRunning = true;
+	thread_shared* data = (thread_shared*)userPtr;
+	a3::RayTrace(data->frameBuffer, data->meshObj, data->view, data->texture);
+	s_RayThreadRunning = false;
+	return 0;
+}
+
 i32 a3Main()
 {
 	HMODULE hInstance = GetModuleHandleA(0);
@@ -970,30 +990,21 @@ i32 a3Main()
 	a3::basic2d_renderer renderer = a3::Renderer.Create2DRenderer(a3::shaders::GLBasic2DVertex, a3::shaders::GLBasic2DFragment);
 	renderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
 
-	a3::image img = a3::CreateImageBuffer(640, 480);
-	a3::FillImageBuffer(&img, a3::color::Black);
+	a3::image frameBuffer3D = a3::CreateImageBuffer(640, 480);
+	a3::swapchain swapChain;
+	swapChain.SetFrameBuffer(&frameBuffer3D);
+	swapChain.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
+	swapChain.SetViewport(0, 0, 640, 480);
+	swapChain.SetMesh(a3::Asset.LoadMeshFromFile(a3::Mesh, "Resources/monkey.obj"));
 
-	a3::swapchain sc;
-	sc.SetFrameBuffer(&img);
-	sc.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
-	sc.SetViewport(0, 0, 640, 480);
-	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/monkey.obj"));
-	//sc.SetTexture(a3::Asset.LoadImageFromFile(22, "Resources/worlda.png"));
+	a3::image rayTraceBuffer = a3::CreateImageBuffer(200, 200);
+	a3::FillImageBuffer(&rayTraceBuffer, a3::color::Black);
+	a3::Asset.LoadTexture2DFromPixels(a3::RayTraceBuffer, rayTraceBuffer.Pixels, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 
-
-	a3::image rayTraced = a3::CreateImageBuffer(100, 100);
-	b32 onceOnly = true;
-
-	a3::image fontbg = a3::CreateImageBuffer(500, 500);
-	a3::FillImageBuffer(&fontbg, a3::color::Black, 0.5f);
-
-	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
-	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
-	a3::image_texture* fontback = a3::Asset.LoadTexture2DFromPixels(14, fontbg.Pixels, fontbg.Width, fontbg.Height, fontbg.Channels, a3::FilterLinear, a3::WrapClampToEdge);
-
-	//sc.SetTexture(a3::Asset.LoadImageFromFile(15, "Resources/BigSmile.png"));
-
-	a3Log("Window displayed.");
+	a3::image fontBack = a3::CreateImageBuffer(500, 500);
+	a3::FillImageBuffer(&fontBack, a3::color::Black, 0.5f);
+	a3::image_texture* fontBackTex = a3::Asset.LoadTexture2DFromPixels(a3::FontBG, fontBack.Pixels, fontBack.Width, fontBack.Height, fontBack.Channels, a3::FilterLinear, a3::WrapClampToEdge);
+	a3::FreeImgeBuffer(&fontBack);
 
 	a3::input_info oldInput = {};
 	LARGE_INTEGER performanceFrequency;
@@ -1005,6 +1016,7 @@ i32 a3Main()
 
 	ShowWindow(hWnd, SW_SHOWNORMAL);
 	UpdateWindow(hWnd);
+	a3Log("Window displayed.");
 
 	f32 deltaTime = 0.0f;
 	win32_user_data* userData = Win32GetUserData();
@@ -1012,18 +1024,21 @@ i32 a3Main()
 
 	a3::font_renderer fontRenderer = a3::Renderer.CreateFontRenderer(a3::shaders::GLFontVertex, a3::shaders::GLFontFragment);
 	fontRenderer.SetRegion(0.0f, 1280.0f, 0.0f, 720.0f);
-	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::DebugFont, "Resources/HackRegular.ttf", 50.0f);
-	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::DebugFont));
-	a3::ui_context ui(1280.0f, 720.0f);
+	a3::Asset.LoadFontTextureAtlasFromFile(a3::DebugFont, "Resources/HackRegular.ttf", 50.0f);
+	fontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::DebugFont));
+	a3::ui_context renderTypeUI(1280.0f, 720.0f);
+
+	a3::random_generator<u32> randomGen(100, 10000);
 
 	transform camera;
+	camera.SetPosition(0.0f, 0.0f, 50.0f);
 
 	f32 angle = a3ToRadians(80.0f);
 	f32 speed = 50.0f;
 
 	v3 shadeColor = a3::color::White;
 	b32 showNormals = false;
-	a3::render_type rType = a3::render_type::RenderTriangle;
+	a3::render_type rType = a3::render_type::RenderShade;
 
 	b32 shouldRun = true;
 	while (shouldRun)
@@ -1085,25 +1100,30 @@ i32 a3Main()
 			camera.RotateOrientation(-angle * deltaTime, transform::WorldRight);
 		}
 
-		if (userData->inputSystem.Keys[a3::KeyS].Down)
+		if (userData->inputSystem.Keys[a3::KeyRaytrace].Down)
 		{
-			if (onceOnly)
-			{
-				a3::RayTrace(&rayTraced, a3::Asset.Get<a3::mesh>(21), m4x4::Inverse(camera.CalculateModelM4X4()), 60.0f);
-				a3::Asset.LoadTexture2DFromPixels(24, rayTraced.Pixels, rayTraced.Width, rayTraced.Height, rayTraced.Channels, a3::FilterLinear, a3::WrapClampToEdge);
-				onceOnly = false;
-			}
+			a3::FillImageBuffer(&rayTraceBuffer, a3::color::White);
+			a3::RayTrace(&rayTraceBuffer, a3::Asset.Get<a3::mesh>(a3::Mesh), m4x4::Inverse(camera.CalculateModelM4X4()));
+			a3::Asset.LoadTexture2DFromPixels(a3::RayTraceBuffer, rayTraceBuffer.Pixels, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, a3::FilterLinear, a3::WrapClampToEdge);
+			u64 size = a3::QueryEncodedImageSize(rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, 4, rayTraceBuffer.Pixels);
+			a3::file_content fc;
+			fc.Size = size;
+			fc.Buffer = a3New u8[size];
+			a3Assert(a3::EncodeImageToBuffer(fc.Buffer, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, 4, rayTraceBuffer.Pixels));
+			utf8 buffer[100];
+			a3::WriteU32ToBuffer(buffer, 100, randomGen.Get(), 16);
+			a3::dstring filename("Raytraced/ray_trace_");
+			filename += buffer;
+			filename += ".png";
+			a3Assert(a3::Platform.ReplaceFileContent(filename.Utf8Array(), fc));
+			a3Delete[] fc.Buffer;
 		}
 
-		sc.SetCamera(camera.CalculateModelM4X4());
-		sc.SetDrawNormals(showNormals);
-		//m4x4 model = m4x4::ScaleR(v3{1.0f/25.0f, 1.0f / 25.0f, 1.0f / 25.0f }) * m4x4::TranslationR(v3{ 0, 0, -500 });
-		m4x4 model = /*m4x4::ScaleR(v3{ 5.0f, 5.0f, 5.0f }) **/ m4x4::TranslationR(v3{ 0, 0, -50 });
-		//m4x4 model;
-		sc.Clear();
-		sc.Render(model, rType, shadeColor, a3::color::Red);
-
-		//angle += 2.0f;
+		swapChain.SetCamera(camera.CalculateModelM4X4());
+		swapChain.SetDrawNormals(showNormals);
+		swapChain.Clear(a3::color::DarkNotBlack);
+		m4x4 model;
+		swapChain.Render(model, rType, shadeColor, a3::color::Red);
 
 		v3 cc = a3::color::NotQuiteBlack;
 		a3GL(glClearColor(cc.r, cc.g, cc.b, 1.0f));
@@ -1117,7 +1137,7 @@ i32 a3Main()
 		// Should we setup callbacks for window resizing?
 		a3GL(glViewport(0, 0, userData->inputSystem.WindowWidth, userData->inputSystem.WindowHeight));
 
-		ui.UpdateIO(userData->inputSystem);
+		renderTypeUI.UpdateIO(userData->inputSystem);
 		if (userData->inputSystem.Buttons[a3::ButtonRight].Up && oldInput.Buttons[a3::ButtonRight].Down)
 			renderDebugInformation = !renderDebugInformation;
 
@@ -1128,83 +1148,79 @@ i32 a3Main()
 		deltaTime = (f32)(currentPerformanceCounter.QuadPart - performanceCounter.QuadPart) / (f32)performanceFrequency.QuadPart;
 		performanceCounter = currentPerformanceCounter;
 
-		a3::image_texture* raw = a3::Asset.LoadTexture2DFromPixels(13, img.Pixels, img.Width, img.Height, img.Channels, a3::FilterLinear, a3::WrapClampToEdge);
+		a3::image_texture* frameBuffer3DTex = a3::Asset.LoadTexture2DFromPixels(a3::FrameBuffer3D, frameBuffer3D.Pixels, frameBuffer3D.Width, frameBuffer3D.Height, frameBuffer3D.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 
 		renderer.BeginFrame();
-		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, bigsmile);
-		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, hugesmile);
-		renderer.Push(v3{ 100.0f, 100.0f, 0.0f }, v2{ 640, 480 }, a3::color::White, raw);
-		if (!onceOnly)
-		{
-			renderer.Push(v3{ 100.0f, 100.0f, 0.0 }, v2{100, 100}, a3::color::White, a3::Asset.Get<a3::image_texture>(24));
-		}
+		renderer.Push(v3{ 10.0f, 110.0f, 0.0f }, 600, a3::color::White, frameBuffer3DTex);
+		renderer.Push(v3{ 10.0f, 110.0f, 0.0f }, 200, a3::color::White, a3::Asset.Get<a3::image_texture>(a3::RayTraceBuffer));
 		if (renderDebugInformation)
 		{
 #if defined(A3DEBUG) || defined(A3INTERNAL)
-			renderer.Push(v3{ 0.0f, 630.0f, 0.0f }, v2{ 270.0f, 100.0f }, a3::color::White, fontback);
+			renderer.Push(v3{ 0.0f, 630.0f, 0.0f }, v2{ 270.0f, 100.0f }, a3::color::White, fontBackTex);
 #endif
 		}
 		renderer.EndFrame();
 
 		v2 dim{ 200.0f, 25.0f };
 		v2 colButDim{ 100.0f, 25.0f };
-		ui.BeginFrame(v2{ 800.0f, 550.0f });
-		ui.SetVertical(true);
-		if (ui.Button(1, dim, "Shade"))
+
+		renderTypeUI.SetVertical(true);
+		renderTypeUI.BeginFrame(v2{ 800.0f, 550.0f });
+		if (renderTypeUI.Button(1, dim, "Shade"))
 		{
 			rType = a3::render_type::RenderShade;
 		}
-		if (ui.Button(2, dim, "Polygon"))
+		if (renderTypeUI.Button(2, dim, "Polygon"))
 		{
 			rType = a3::render_type::RenderTriangle;
 		}
-		if (ui.Button(3, dim, "Shade with outline"))
+		if (renderTypeUI.Button(3, dim, "Shade with outline"))
 		{
 			rType = a3::render_type::RenderShadeWithOutline;
 		}
-		if (ui.Button(4, dim, "Texture"))
+		if (renderTypeUI.Button(4, dim, "Texture"))
 		{
 			rType = a3::render_type::RenderMapTexture;
 		}
-		if (ui.Button(11, dim, "Show Normals"))
+		if (renderTypeUI.Button(11, dim, "Show Normals"))
 		{
 			showNormals = !showNormals;
 		}
 
-		ui.SetVertical(false);
-		ui.SetCursor(v2{ 800.0f - dim.x/2, ui.GetCursor().y - dim.y - 5.0f });
-		if (ui.Button(5, colButDim, "White"))
+		renderTypeUI.SetVertical(false);
+		renderTypeUI.SetCursor(v2{ 800.0f - dim.x / 2, renderTypeUI.GetCursor().y - dim.y - 5.0f });
+		if (renderTypeUI.Button(5, colButDim, "White"))
 		{
 			shadeColor = a3::color::White;
 		}
-		if (ui.Button(6, colButDim, "Blue"))
+		if (renderTypeUI.Button(6, colButDim, "Blue"))
 		{
 			shadeColor = a3::color::Blue;
 		}
 
-		ui.SetVertical(true);
-		if (ui.Button(7, colButDim, "Green"))
+		renderTypeUI.SetVertical(true);
+		if (renderTypeUI.Button(7, colButDim, "Green"))
 		{
 			shadeColor = a3::color::Green;
 		}
-		ui.SetVertical(false);
-		ui.SetCursor(v2{ 800.0f - dim.x/2, ui.GetCursor().y });
-		if (ui.Button(8, colButDim, "Aqua"))
+		renderTypeUI.SetVertical(false);
+		renderTypeUI.SetCursor(v2{ 800.0f - dim.x / 2, renderTypeUI.GetCursor().y });
+		if (renderTypeUI.Button(8, colButDim, "Aqua"))
 		{
 			shadeColor = a3::color::Aqua;
 		}
 
-		ui.SetVertical(true);
-		if (ui.Button(9, colButDim, "Blurple"))
+		renderTypeUI.SetVertical(true);
+		if (renderTypeUI.Button(9, colButDim, "Blurple"))
 		{
 			shadeColor = a3::color::Blurple;
 		}
-		ui.SetVertical(false);
-		if (ui.Button(10, colButDim, "Purple"))
+		renderTypeUI.SetVertical(false);
+		if (renderTypeUI.Button(10, colButDim, "Purple"))
 		{
 			shadeColor = a3::color::Purple;
 		}
-		ui.EndFrame();
+		renderTypeUI.EndFrame();
 
 		if (renderDebugInformation)
 		{

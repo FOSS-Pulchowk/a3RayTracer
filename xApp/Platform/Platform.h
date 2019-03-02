@@ -296,6 +296,7 @@ namespace a3 {
 		KeyDown,
 		KeyRight,
 		KeyLeft,
+		KeyRaytrace,
 
 		KeyCount
 	};

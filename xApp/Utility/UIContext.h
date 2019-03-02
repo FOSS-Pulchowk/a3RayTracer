@@ -102,14 +102,14 @@ a3::ui_context::ui_context(f32 width, f32 height) :
 	m_RenderPosition = { 0.0f, 0.0f };
 	m_RenderPositionOffset = { 10.0f, 10.0f };
 
-	a3::Asset.LoadFontTextureAtlasFromFile(a3::asset_id::UIFont, "Resources/HackRegular.ttf", 30.0f);
-	a3::Asset.LoadTexture2DFromFile(a3::asset_id::UITexture, "Resources/A3UI.png", a3::FilterLinear, a3::WrapClampToEdge);
+	a3::Asset.LoadFontTextureAtlasFromFile(a3::UIFont, "Resources/HackRegular.ttf", 30.0f);
+	a3::Asset.LoadTexture2DFromFile(a3::UITexture, "Resources/A3UI.png", a3::FilterLinear, a3::WrapClampToEdge);
 
 	m_FontRenderer.SetRegion(0.0f, m_Width, 0.0f, m_Height);
-	m_FontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::asset_id::UIFont));
+	m_FontRenderer.SetFont(a3::Asset.Get<a3::font_texture>(a3::UIFont));
 
 	m_Batch2DRenderer.SetRegion(0.0f, m_Width, 0.0f, m_Height);
-	m_Batch2DRenderer.SetTexture(a3::Asset.Get<a3::image_texture>(a3::asset_id::UITexture));
+	m_Batch2DRenderer.SetTexture(a3::Asset.Get<a3::image_texture>(a3::UITexture));
 	SetColor(a3::color::NotQuiteBlack, a3::color::Blurple, a3::color::Grey, a3::color::White);
 }
 

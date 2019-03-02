@@ -97,7 +97,7 @@ namespace a3 {
 		const u32 &triIndex,
 		const v2 &uv,
 		v3 *hitNormal,
-		v2 *hitTextureCoordinates)
+		v2 *hitTextureCoordinates, b32* texIsPresent)
 	{
 		v3* vertices = meshObj->Vertices;
 		u32* trisIndex = meshObj->VertexIndices;
@@ -110,52 +110,73 @@ namespace a3 {
 		*hitNormal = Normalize(*hitNormal);
 
 		// texture coordinates
-		const v2 &st0 = texCoordinates[triIndex * 3];
-		const v2 &st1 = texCoordinates[triIndex * 3 + 1];
-		const v2 &st2 = texCoordinates[triIndex * 3 + 2];
-		*hitTextureCoordinates = (1 - uv.x - uv.y) * st0 + uv.x * st1 + uv.y * st2;
+		if (texCoordinates)
+		{
+			const v2 &st0 = texCoordinates[triIndex * 3 + 0];
+			const v2 &st1 = texCoordinates[triIndex * 3 + 1];
+			const v2 &st2 = texCoordinates[triIndex * 3 + 2];
+			*hitTextureCoordinates = (1 - uv.x - uv.y) * st0 + uv.x * st1 + uv.y * st2;
+			*texIsPresent = true;
+		}
+		else
+		{
+			*texIsPresent = false;
+		}
 	}
 
 
-	u32 CastRay(v3 origin, v3 dir, mesh* meshObj, a3::image* frameBuffer)
+	u32 CastRay(v3 origin, v3 dir, mesh* meshObj, a3::image* frameBuffer, a3::image* texture)
 	{
-		v3 hitColor = a3::color::White;
+		v3 hitColor;
+		hitColor = a3::color::Black;
+
 		f32 tnear = max_f32;
 		v2 uv;
 		u32 index = 0;
-		if (Trace(meshObj, origin, dir, &tnear, &index, &uv)) 
+		if (Trace(meshObj, origin, dir, &tnear, &index, &uv))
 		{
-			v3 hitPoi32 = origin + dir * tnear;
+			v3 hitPoint = origin + dir * tnear;
 			v3 hitNormal;
 			v2 hitTexCoordinates;
-			GetSurfaceProperties(meshObj, hitPoi32, dir, index, uv, &hitNormal, &hitTexCoordinates);
-			f32 NdotView = Max(0.f, Dot(hitNormal, -dir));
-			const i32 M = 10;
-			//color here mannn
-			f32 checker = (fmod(hitTexCoordinates.x * M, 1.0) > 0.5) ^ (fmod(hitTexCoordinates.y * M, 1.0) < 0.5);
-			f32 c = 0.3 * (1 - checker) + 0.7 * checker;
-
-			hitColor = v3{ c * NdotView, c * NdotView, c * NdotView }; //v3(uv.x, uv.y, 0);
+			b32 texPresent;
+			GetSurfaceProperties(meshObj, hitPoint, dir, index, uv, &hitNormal, &hitTexCoordinates, &texPresent);
+			f32 normDotView = Max(0.f, Dot(hitNormal, -dir));
+			const f32 mat = 10.0f;
+			hitColor = a3::color::Blurple; // default color
+			if (texPresent)
+			{
+				if (texture)
+				{
+					hitColor = a3::SamplePixelColor(texture, hitTexCoordinates).rgb;
+				}
+				else
+				{
+					f32 checker = (f32)((FModf(hitTexCoordinates.x * mat, 1.0f) > 0.5f) ^ (FModf(hitTexCoordinates.y * mat, 1.0f) < 0.5f));
+					f32 cs = 0.3f * (1.0f - checker) + 0.7f * checker;
+					hitColor = v3{ cs,cs,cs };
+				}
+			}
+			hitColor *= normDotView;
 		}
-		u32 hitHexColor = a3Normalv3ToRGBA(hitColor, 0xffffffff);
+
+		u32 hitHexColor = a3Normalv3ToRGBA(hitColor, 0xffffff);
 		return hitHexColor;
 	}
 
-	void RayTrace(image* frameBuffer, mesh* meshObj, const m4x4& view, f32 fieldOfView)
+	void RayTrace(image* frameBuffer, mesh* meshObj, const m4x4& view, a3::image* texture = A3NULL)
 	{
 		f32 aspectRatio = (f32)frameBuffer->Width / (f32)frameBuffer->Height;
-		f32 scale = Tanf(a3ToRadians(fieldOfView * 0.5f));
 		v3 origin = v3{ 0,0,0 } *view;
 
-		for (u32 j = 0; j < frameBuffer->Height; j++)
+		for (i32 j = 0; j < frameBuffer->Height; j++)
 		{
-			for (u32 i = 0; i < frameBuffer->Width; i++)
+			for (i32 i = 0; i < frameBuffer->Width; i++)
 			{
-				f32 x = (2 * (i + 0.5) / (f32)frameBuffer->Width - 1) * aspectRatio * scale;
-				f32 y = (1 - 2 * (j + 0.5) / (f32)frameBuffer->Height) * scale;
-				v3 dir = v3{ x,y,-1 } *view;
+				f32 x = (2.0f * ((f32)i + 0.5f) / (f32)frameBuffer->Width - 1.0f) * aspectRatio;
+				f32 y = (1.0f - 2.0f * ((f32)j + 0.5f) / (f32)frameBuffer->Height);
+				v3 dir = v3{ x,y,-1.0f } *view;
 				dir = Normalize(dir);
-				u32 hColor = CastRay(origin, dir, meshObj, frameBuffer);
+				u32 hColor = CastRay(origin, dir, meshObj, frameBuffer, texture);
 				a3::SetPixel(frameBuffer, i, j, hColor);
 			}
 		}

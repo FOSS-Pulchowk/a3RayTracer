@@ -85,7 +85,7 @@ namespace a3
 	}
 
 	dstring::dstring(s8 cstr) :
-		m_Length(a3::GetStringLength(cstr) + 1),
+		m_Length(a3::GetStringLength(cstr)),
 		m_Data(a3Malloc(m_Length, utf8))
 	{
 		a3::MemoryCopy(m_Data, cstr, m_Length);
