@@ -12,7 +12,7 @@
 #include "Utility/Algorithm.h"
 
 #include "Graphics/Rasterizer3D.h"
-
+#include "Graphics/RayTracer.h"
 #include "HardwarePlatform.h"
 
 #include <Windows.h>
@@ -977,8 +977,11 @@ i32 a3Main()
 	sc.SetFrameBuffer(&img);
 	sc.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 	sc.SetViewport(0, 0, 640, 480);
-	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Mountains.obj"));
+	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/level.obj"));
 	//sc.SetTexture(a3::Asset.LoadImageFromFile(22, "Resources/worlda.png"));
+
+	a3::image rayTraced = a3::CreateImageBuffer(100, 100);
+	b32 onceOnly = true;
 
 	a3::image fontbg = a3::CreateImageBuffer(500, 500);
 	a3::FillImageBuffer(&fontbg, a3::color::Black, 0.5f);
@@ -1081,6 +1084,16 @@ i32 a3Main()
 			camera.RotateOrientation(-angle * deltaTime, transform::WorldRight);
 		}
 
+		if (userData->inputSystem.Keys[a3::KeyS].Down)
+		{
+			if (onceOnly)
+			{
+				a3::RayTrace(&rayTraced, a3::Asset.Get<a3::mesh>(21), m4x4::Inverse(camera.CalculateModelM4X4()), 60.0f);
+				a3::Asset.LoadTexture2DFromPixels(24, rayTraced.Pixels, rayTraced.Width, rayTraced.Height, rayTraced.Channels, a3::FilterLinear, a3::WrapClampToEdge);
+				onceOnly = false;
+			}
+		}
+
 		sc.SetCamera(camera.CalculateModelM4X4());
 		sc.SetDrawNormals(showNormals);
 		//m4x4 model = m4x4::ScaleR(v3{1.0f/25.0f, 1.0f / 25.0f, 1.0f / 25.0f }) * m4x4::TranslationR(v3{ 0, 0, -500 });
@@ -1119,6 +1132,10 @@ i32 a3Main()
 		renderer.Push(v3{ 300.0f, 200.0f, 0.0f }, 50.0f, a3::color::White, bigsmile);
 		renderer.Push(v3{ 300.0f, 300.0f, 0.0f }, 50.0f, a3::color::White, hugesmile);
 		renderer.Push(v3{ 100.0f, 100.0f, 0.0f }, v2{ 640, 480 }, a3::color::White, raw);
+		if (!onceOnly)
+		{
+			renderer.Push(v3{ 100.0f, 100.0f, 0.0 }, v2{100, 100}, a3::color::White, a3::Asset.Get<a3::image_texture>(24));
+		}
 		if (renderDebugInformation)
 		{
 #if defined(A3DEBUG) || defined(A3INTERNAL)
