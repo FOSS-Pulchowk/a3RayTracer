@@ -37,7 +37,7 @@ namespace a3 {
 	void DrawTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, const v3&  color);
 	// NOTE(Zero): Anti-Clockwise order works better, I guess
 	void FillTriangle(a3::image* img, v2 p0, v2 p1, v2 p2, const v3&  fillColor);
-
+	
 	typedef void(*RasterizeFontCallback)(void* userData, i32 w, i32 h, u8* buffer, i32 xOffset, i32 yOffset);
 	void ResterizeFontsToBuffer(font_atlas_info* i, void* buffer, i32 length, f32 scale, void* drawBuffer, RasterizeFontCallback callback, void* userData);
 
@@ -173,7 +173,7 @@ namespace a3 {
 		by = (by > 0.5f) ? (1.0f - by) : by;
 		f32 blend = 4.0f * bx * by;
 		u32 hc = a3::GetPixel(img, px, py);
-		a3::SetPixel(img, px, py, a3Normalv4ToRGBA(a3::BlendColor(color, a3MakeRGBAv4(hc), blend)));
+		a3::SetPixel(img, px, py, a3Normalv4ToRGBA(a3::BlendColor(a3MakeRGBAv4(hc), color, blend)));
 	}
 
 
@@ -199,8 +199,8 @@ namespace a3 {
 
 	u32 SamplePixel(a3::image* img, f32 u, f32 v)
 	{
-		i32 x = (i32)(u * (f32)img->Width + 0.5f);
-		i32 y = (i32)(v * (f32)img->Height + 0.5f);
+		i32 x = (i32)(u * (f32)(img->Width - 1));
+		i32 y = (i32)(v * (f32)(img->Height -1 ));
 		return a3::GetPixel(img, x, y);
 	}
 
@@ -221,16 +221,15 @@ namespace a3 {
 
 	void DrawLine(a3::image * img, v2 start, v2 end, const v3& color)
 	{
-
 		if (start.x < 0.0f) start.x = 0.0f;
 		if (start.y < 0.0f) start.y = 0.0f;
 		if (end.x < 0.0f) end.x = 0.0f;
 		if (end.y < 0.0f) end.y = 0.0f;
 
-		if (start.x > (f32)img->Width) start.x = (f32)img->Width;
-		if (start.y > (f32)img->Height) start.y = (f32)img->Height;
-		if (end.x > (f32)img->Width) end.x = (f32)img->Width;
-		if (end.y > (f32)img->Height) end.y = (f32)img->Height;
+		if (start.x >= (f32)img->Width) start.x = (f32)(img->Width - 1);
+		if (start.y >= (f32)img->Height) start.y = (f32)(img->Height - 1);
+		if (end.x >= (f32)img->Width) end.x = (f32)(img->Width - 1);
+		if (end.y >= (f32)img->Height) end.y = (f32)(img->Height - 1);
 
 		v2 d = end - start;
 		i32 step;
@@ -274,7 +273,7 @@ namespace a3 {
 	{
 		auto processTopFlatPart = [&img, &fillColor](v2* p0, v2* p1, v2* p2)
 		{
-			if (p2->x > p1->x) a3::Swap(&p2->x, &p1->x);
+			if (p2->x > p1->x) a3::Swap(&p2, &p1);
 
 			f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
 			f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
@@ -301,7 +300,7 @@ namespace a3 {
 
 		auto processBottomFlatPart = [&img, &fillColor](v2* p0, v2* p1, v2* p2)
 		{
-			if (p2->x > p1->x) a3::Swap(&p2->x, &p1->x);
+			if (p2->x > p1->x) a3::Swap(&p2, &p1);
 
 			f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
 			f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);

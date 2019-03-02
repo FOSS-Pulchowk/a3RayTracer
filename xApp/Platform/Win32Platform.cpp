@@ -977,7 +977,8 @@ i32 a3Main()
 	sc.SetFrameBuffer(&img);
 	sc.SetProjection(a3ToRadians(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 	sc.SetViewport(0, 0, 640, 480);
-	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/Mountains.obj"));
+	sc.SetMesh(a3::Asset.LoadMeshFromFile(21, "Resources/cube.obj"));
+	//sc.SetTexture(a3::Asset.LoadImageFromFile(22, "Resources/worlda.png"));
 
 	a3::image fontbg = a3::CreateImageBuffer(500, 500);
 	a3::FillImageBuffer(&fontbg, a3::color::Black, 0.5f);
@@ -985,6 +986,8 @@ i32 a3Main()
 	a3::image_texture* bigsmile = a3::Asset.LoadTexture2DFromFile(11, "Resources/BigSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* hugesmile = a3::Asset.LoadTexture2DFromFile(12, "Resources/HugeSmile.png", a3::FilterLinear, a3::WrapClampToEdge);
 	a3::image_texture* fontback = a3::Asset.LoadTexture2DFromPixels(14, fontbg.Pixels, fontbg.Width, fontbg.Height, fontbg.Channels, a3::FilterLinear, a3::WrapClampToEdge);
+
+	//sc.SetTexture(a3::Asset.LoadImageFromFile(15, "Resources/BigSmile.png"));
 
 	a3Log("Window displayed.");
 
@@ -1011,8 +1014,8 @@ i32 a3Main()
 
 	transform camera;
 
-	f32 angle = a3ToRadians(30.0f);
-	f32 speed = 16.0f;
+	f32 angle = a3ToRadians(80.0f);
+	f32 speed = 50.0f;
 
 	v3 shadeColor = a3::color::White;
 	b32 showNormals = false;
@@ -1078,11 +1081,12 @@ i32 a3Main()
 			camera.RotateOrientation(-angle * deltaTime, transform::WorldRight);
 		}
 
-		a3::FillImageBuffer(&img, a3::color::Black);
 		sc.SetCamera(camera.CalculateModelM4X4());
 		sc.SetDrawNormals(showNormals);
-		m4x4 model = m4x4::TranslationR(v3{ 0, 0, -10 });
-		sc.Render(model, rType, shadeColor, a3::color::Yellow);
+		//m4x4 model = m4x4::ScaleR(v3{1.0f/25.0f, 1.0f / 25.0f, 1.0f / 25.0f }) * m4x4::TranslationR(v3{ 0, 0, -500 });
+		m4x4 model = m4x4::ScaleR(v3{ 5.0f, 5.0f, 5.0f }) * m4x4::TranslationR(v3{ 0, 0, -5 });
+		sc.Clear();
+		sc.Render(model, rType, shadeColor, a3::color::Red);
 
 		//angle += 2.0f;
 

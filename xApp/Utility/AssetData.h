@@ -477,6 +477,10 @@ a3::mesh_info a3::QueryMeshSizeFromBuffer(void * buffer, u64 length)
 		{
 		} break;
 
+		case 'g':
+		{
+		} break;
+
 		case 'f':
 		{
 			while (line.GetCurrentPointerValue() != '\n' && line.GetWorkingBufferPointer() != line.GetWorkingBufferEnd() - 1)
@@ -659,6 +663,10 @@ a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_info* pms, v3 
 		{
 		} break;
 
+		case 'g':
+		{
+		} break;
+
 		case 'f':
 		{
 			while (line.GetCurrentPointerValue() != '\r' && line.GetCurrentPointerValue() != '\n' && line.GetWorkingBufferPointer() != line.GetWorkingBufferEnd() - 1)
@@ -695,6 +703,7 @@ a3::mesh a3::DecodeMeshFromBuffer(void * buffer, u64 length, mesh_info* pms, v3 
 				else if (nSlashes == 2)
 				{
 					*pVertexIndices++ = parseIndex(line.GetWorkingBufferPointer(), &fail, nVertexIndices);
+					line.MoveForwardPass('/');
 					line.MoveForwardPass('/');
 					*pNormalIndices++ = parseIndex(line.GetWorkingBufferPointer(), &fail, nNormalIndices);
 					line.MoveLineForwardTo(' ');

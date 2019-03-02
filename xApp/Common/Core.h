@@ -80,6 +80,7 @@ typedef const wchar_t* s16;
 // DECLARATIONS
 //
 
+inline i32 Abs(i32 n);
 inline f32 Sqrtf(f32 x);
 inline f32 Powf(f32 n, f32 p, f32 precision = 0.000001f);
 inline f32 Roundf(f32 f);
@@ -197,6 +198,11 @@ inline b32 operator!=(v4 lhs, v4 rhs);
 #include <xmmintrin.h>
 // TODO(Zero): Remove this, self implement
 #include <math.h>
+
+inline i32 Abs(i32 n)
+{
+	return abs(n);
+}
 
 inline f32 Sqrtf(f32 x)
 {
