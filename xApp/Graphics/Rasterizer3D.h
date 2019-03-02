@@ -30,6 +30,15 @@ namespace a3 {
 		f32* m_DepthBuffer;
 		b32 m_DrawNormals;
 
+		struct polygon
+		{
+			v4 vertices[10];
+			i32 numVertices;
+		};
+		void ClipPolygonOnWAxis(polygon* face);
+		void ClipPolygonForAxis(polygon* face, i32 comp);
+		void ClipPolygon(polygon* face);
+
 	public:
 		swapchain();
 		void SetProjection(const m4x4& proj);
@@ -58,6 +67,160 @@ namespace a3 {
 
 
 namespace a3 {
+
+	void swapchain::ClipPolygonOnWAxis(polygon* face)
+	{
+		f32 wPlane = 0.00001f;
+
+		v4* currentVertice;
+		v4* previousVertice;
+
+		i32 insideNumVertices = 0;
+		v4 insideVertices[10];
+
+		i32 previousDot;
+		i32 currentDot;
+
+		f32 intersectionFactor;
+		v4 intersectionPoint;
+
+
+		previousVertice = &face->vertices[face->numVertices - 1];
+		previousDot = (previousVertice->w < wPlane) ? -1 : 1;
+		currentVertice = &face->vertices[0];
+		while (currentVertice != &face->vertices[face->numVertices])
+		{
+			currentDot = (currentVertice->w < wPlane) ? -1 : 1;
+
+			if (previousDot * currentDot < 0)
+			{
+				intersectionFactor = (wPlane - previousVertice->w) / (previousVertice->w - currentVertice->w);
+
+				intersectionPoint = *currentVertice;
+				intersectionPoint -= *previousVertice;
+				intersectionPoint *= intersectionFactor;
+				intersectionPoint += *previousVertice;
+
+				insideVertices[insideNumVertices] = intersectionPoint;
+				insideNumVertices++;
+			}
+
+			if (currentDot > 0)
+			{
+				insideVertices[insideNumVertices] = *currentVertice;
+				insideNumVertices++;
+			}
+
+			previousDot = currentDot;
+			previousVertice = currentVertice;
+			currentVertice++;
+		}
+
+		for (i32 i = 0; i < insideNumVertices; ++i)
+			face->vertices[i] = insideVertices[i];
+		face->numVertices = insideNumVertices;
+		insideNumVertices = 0;
+	}
+
+	void swapchain::ClipPolygonForAxis(polygon* face, i32 comp)
+	{
+		v4* currentVertice;
+		v4* previousVertice;
+
+		i32 insideNumVertices = 0;
+		v4 insideVertices[10];
+
+		i32 previousDot;
+		i32 currentDot;
+
+		f32 intersectionFactor;
+		v4 intersectionPoint;
+
+		previousVertice = &face->vertices[face->numVertices - 1];
+		previousDot = (previousVertice->values[comp] <= previousVertice->w) ? 1 : -1;
+		currentVertice = &face->vertices[0];
+		while (currentVertice != &face->vertices[face->numVertices])
+		{
+			currentDot = (currentVertice->values[comp] <= currentVertice->w) ? 1 : -1;
+
+			if (previousDot * currentDot < 0)
+			{
+				intersectionFactor =
+					(previousVertice->w - previousVertice->values[comp]) /
+					((previousVertice->w - previousVertice->values[comp]) - (currentVertice->w - currentVertice->values[comp]));
+
+				intersectionPoint = *currentVertice;
+				intersectionPoint -= *previousVertice;
+				intersectionPoint *= intersectionFactor;
+				intersectionPoint += *previousVertice;
+
+				insideVertices[insideNumVertices] = intersectionPoint;
+				insideNumVertices++;
+			}
+
+			if (currentDot > 0)
+			{
+				insideVertices[insideNumVertices] = *currentVertice;
+				insideNumVertices++;
+			}
+
+			previousDot = currentDot;
+			previousVertice = currentVertice;
+			currentVertice++;
+		}
+
+		for (i32 i = 0; i < insideNumVertices; ++i)
+			face->vertices[i] = insideVertices[i];
+		face->numVertices = insideNumVertices;
+		insideNumVertices = 0;
+
+		previousVertice = &face->vertices[face->numVertices - 1];
+		previousDot = ((-previousVertice->values[comp]) <= previousVertice->w) ? 1 : -1;
+		currentVertice = &face->vertices[0];
+		while (currentVertice != &face->vertices[face->numVertices])
+		{
+			currentDot = (-(currentVertice->values[comp]) <= currentVertice->w) ? 1 : -1;
+
+			if (previousDot * currentDot < 0)
+			{
+				intersectionFactor =
+					(previousVertice->w + previousVertice->values[comp]) /
+					((previousVertice->w + previousVertice->values[comp]) - (currentVertice->w + currentVertice->values[comp]));
+
+				intersectionPoint = *currentVertice;
+				intersectionPoint -= *previousVertice;
+				intersectionPoint *= intersectionFactor;
+				intersectionPoint += *previousVertice;
+
+				insideVertices[insideNumVertices] = intersectionPoint;
+				insideNumVertices++;
+			}
+
+			if (currentDot > 0)
+			{
+				insideVertices[insideNumVertices] = *currentVertice;
+				insideNumVertices++;
+			}
+
+			previousDot = currentDot;
+
+			previousVertice = currentVertice;
+			currentVertice++;
+		}
+
+		for (i32 i = 0; i < insideNumVertices; ++i)
+			face->vertices[i] = insideVertices[i];
+		face->numVertices = insideNumVertices;
+		insideNumVertices = 0;
+	}
+
+	void swapchain::ClipPolygon(polygon* face)
+	{
+		ClipPolygonOnWAxis(face);		// w
+		ClipPolygonForAxis(face, 0);	// x
+		ClipPolygonForAxis(face, 1);	// y
+		ClipPolygonForAxis(face, 2);	// z
+	}
 
 	swapchain::swapchain()
 	{
@@ -102,9 +265,10 @@ namespace a3 {
 		m_Viewport.h = h;
 	}
 
-	void swapchain::SetMesh(mesh * meshCube)
+	void swapchain::SetMesh(mesh * meshObj)
 	{
-		m_Meshes = meshCube;
+		a3Assert(meshObj);
+		m_Meshes = meshObj;
 	}
 
 	inline void swapchain::SetTexture(image * tex)
@@ -171,196 +335,55 @@ namespace a3 {
 				}
 			}
 
-			v4 clippedVertices[6 * 3];
-			i32 nVertices = 3;
-
-			v2 clippedTextureCoords[6 * 3];
-			i32 nTextureCoords = 3;
-
-			clippedVertices[0] = v4{ p0.x, p0.y, p0.z, 1.0f } *mvp;
-			clippedVertices[1] = v4{ p1.x, p1.y, p1.z, 1.0f } *mvp;
-			clippedVertices[2] = v4{ p2.x, p2.y, p2.z, 1.0f } *mvp;
-
-			clippedTextureCoords[0] = v2{ t0.u, t0.v };
-			clippedTextureCoords[1] = v2{ t1.u, t1.v };
-			clippedTextureCoords[2] = v2{ t2.u, t2.v };
-
-			v4 auxVertices[6 * 3];
-			i32 nAuxVertices = 0;
-
-			v2 auxTextureCoords[6 * 3];
-			i32 nAuxTextureCoords = 0;
-
-			auto clipOnWAxis = [](v4* vertices, i32* nVertices, v4* resVertices, i32* nResVertices)
-			{
-				f32 wPlane = 0.0f;
-
-				for (i32 cnt = 0; cnt < *nVertices; ++cnt)
-				{
-					const v4& ver0 = vertices[cnt];
-					const v4& ver1 = vertices[(cnt + 1) % *nVertices];
-					const f32& comp0 = ver0.w;
-					const f32& comp1 = ver1.w;
-
-					b32 in0 = (comp0 > wPlane);
-					b32 in1 = (comp1 > wPlane);
-
-					if (in0 ^ in1)
-					{
-						f32 lerpAmt = (wPlane - comp1) / (comp0 - comp1);
-						resVertices[*nResVertices] = Lerp(ver1, ver0, lerpAmt);
-						*nResVertices = *nResVertices + 1;
-					}
-
-					if (in0)
-					{
-						resVertices[*nResVertices] = ver0;
-						*nResVertices = *nResVertices + 1;
-					}
-				}
-				*nVertices = 0;
-			};
-
-			auto clipComponentVertices = [](i32 comp, v4* vertices, i32* nVertices, v4* resVertices, i32* nResVertices, f32 sign)
-			{
-				for (i32 cnt = 0; cnt < *nVertices; ++cnt)
-				{
-					const v4& ver0 = vertices[cnt];
-					const v4& ver1 = vertices[(cnt + 1) % *nVertices];
-					const f32& comp0 = sign * ver0.values[comp];
-					const f32& comp1 = sign * ver1.values[comp];
-
-					b32 in0 = (comp0 <= ver0.w);
-					b32 in1 = (comp1 <= ver1.w);
-
-					if (in0 ^ in1)
-					{
-						f32 lerpAmt = (ver1.w - comp1) / ((ver1.w - comp1) - (ver0.w - comp0));
-						resVertices[*nResVertices] = Lerp(ver1, ver0, lerpAmt);
-						*nResVertices = *nResVertices + 1;
-					}
-
-					if (in0)
-					{
-						resVertices[*nResVertices] = ver0;
-						*nResVertices = *nResVertices + 1;
-					}
-				}
-				*nVertices = 0;
-			};
-
-			auto clipComponentVerticesWithUV = [](
-				i32 comp,
-				v4* vertices, v2* textureCoords, i32* nVertices, i32* nTextureCoords,
-				v4* resVertices, v2* resTextureCoords, i32* nResVertices, i32* nResTextureCoords,
-				f32 sign)
-			{
-				for (i32 cnt = 0; cnt < *nVertices; ++cnt)
-				{
-					const v4& ver0 = vertices[cnt];
-					const v4& ver1 = vertices[(cnt + 1) % *nVertices];
-
-					const v2& tex0 = textureCoords[cnt];
-					const v2& tex1 = textureCoords[(cnt + 1) % *nTextureCoords];
-
-					const f32& comp0 = sign * ver0.values[comp];
-					const f32& comp1 = sign * ver1.values[comp];
-
-					b32 in0 = (comp0 <= ver0.w);
-					b32 in1 = (comp1 <= ver1.w);
-
-					if (in0 ^ in1)
-					{
-						f32 lerpAmt = (ver1.w - comp1) / ((ver1.w - comp1) - (ver0.w - comp0));
-						resVertices[*nResVertices] = Lerp(ver1, ver0, lerpAmt);
-						resTextureCoords[*nResTextureCoords] = Lerp(tex1, tex0, lerpAmt);
-						*nResVertices = *nResVertices + 1;
-						*nResTextureCoords = *nResTextureCoords + 1;
-					}
-
-					if (in0)
-					{
-						resVertices[*nResVertices] = ver0;
-						resTextureCoords[*nResTextureCoords] = tex0;
-						*nResVertices = *nResVertices + 1;
-						*nResTextureCoords = *nResTextureCoords + 1;
-					}
-				}
-				*nVertices = 0;
-				*nTextureCoords = 0;
-			};
-
+			polygon triangle;
+			triangle.numVertices = 3;
+			triangle.vertices[0] = v4{ p0.x, p0.y, p0.z, 1.0f } *mvp;
+			triangle.vertices[1] = v4{ p1.x, p1.y, p1.z, 1.0f } *mvp;
+			triangle.vertices[2] = v4{ p2.x, p2.y, p2.z, 1.0f } *mvp;
 
 			// NOTE(Zero): 
 			// Since camera is at (0,0,0) and poi32ing towards z direction
 			// the z component from result of Cross product gives the dot product
-			v3 normal = Normalize(Cross(clippedVertices[1].xyz - clippedVertices[0].xyz, clippedVertices[2].xyz - clippedVertices[1].xyz));
+			v3 normal = Normalize(Cross(triangle.vertices[1].xyz - triangle.vertices[0].xyz, triangle.vertices[2].xyz - triangle.vertices[1].xyz));
 			f32 dot = normal.z;
 
 			if (dot > 0.0f)
 			{
-				//polygon poly;
-				//poly.numVertices = 3;
-				//poly.vertices[0] = clippedVertices[0];
-				//poly.vertices[1] = clippedVertices[1];
-				//poly.vertices[2] = clippedVertices[2];
-
 				if (textures && type == a3::RenderMapTexture)
 				{
-					clipComponentVerticesWithUV(0, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, 1.0f);	// x <= w
-					clipComponentVerticesWithUV(0, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, -1.0f);	// x <= w
-					clipComponentVerticesWithUV(1, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, 1.0f);	// x <= w
-					clipComponentVerticesWithUV(1, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, -1.0f);	// x <= w
-					clipComponentVerticesWithUV(2, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, 1.0f);	// x <= w
-					clipComponentVerticesWithUV(2, auxVertices, auxTextureCoords, &nAuxVertices, &nAuxTextureCoords, clippedVertices, clippedTextureCoords, &nVertices, &nTextureCoords, -1.0f);	// x <= w
 				}
 				else
 				{
-					//clipOnWAxis(clippedVertices, &nVertices, auxVertices, &nAuxVertices);
-					clipComponentVertices(0, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// x <= w
-					clipComponentVertices(0, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= x
-					clipComponentVertices(1, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// y <= w
-					clipComponentVertices(1, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= y
-					clipComponentVertices(2, clippedVertices, &nVertices, auxVertices, &nAuxVertices, 1.0f);	// z <= w
-					clipComponentVertices(2, auxVertices, &nAuxVertices, clippedVertices, &nVertices, -1.0f);	// -w <= z
-
-					/*for (i32 i = 0; i < nAuxVertices; ++i)
-					{
-						clippedVertices[i] = auxVertices[i];
-					}
-					nVertices = nAuxVertices;
-					nAuxVertices = 0;*/
+					ClipPolygon(&triangle);
 				}
 
-				if (nVertices > 0)
+				if (triangle.numVertices > 0)
 				{
 					v2 finalPoint0;
-					finalPoint0.x = clippedVertices[0].x / clippedVertices[0].w;
-					finalPoint0.y = clippedVertices[0].y / clippedVertices[0].w;
+					finalPoint0.x = triangle.vertices[0].x / triangle.vertices[0].w;
+					finalPoint0.y = triangle.vertices[0].y / triangle.vertices[0].w;
 
 					finalPoint0.x = 0.5f * (finalPoint0.x + 1.0f) * (m_FrameBuffer->Width - 1);
 					finalPoint0.y = ((finalPoint0.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
 
-					f32 w0 = 1.0f / clippedVertices[0].w;
+					f32 w0 = 1.0f / triangle.vertices[0].w;
 
-					v2 finalUV0;
+					//v2 finalUV0;
 
 					if (textures && type == a3::RenderMapTexture)
 					{
-						finalUV0.u = clippedTextureCoords[0].u / clippedVertices[0].w;
-						finalUV0.v = clippedTextureCoords[0].v / clippedVertices[0].w;
 					}
 
-					for (i32 n = 1; n < nVertices - 1; ++n)
+					for (i32 n = 1; n < triangle.numVertices - 1; ++n)
 					{
 						v2 finalPoint1;
 						v2 finalPoint2;
 
-						finalPoint1.x = clippedVertices[n].x / clippedVertices[n].w;
-						finalPoint1.y = clippedVertices[n].y / clippedVertices[n].w;
+						finalPoint1.x = triangle.vertices[n + 0].x / triangle.vertices[n + 0].w;
+						finalPoint1.y = triangle.vertices[n + 0].y / triangle.vertices[n + 0].w;
 
-						finalPoint2.x = clippedVertices[n + 1].x / clippedVertices[n + 1].w;
-						finalPoint2.y = clippedVertices[n + 1].y / clippedVertices[n + 1].w;
+						finalPoint2.x = triangle.vertices[n + 1].x / triangle.vertices[n + 1].w;
+						finalPoint2.y = triangle.vertices[n + 1].y / triangle.vertices[n + 1].w;
 
 						finalPoint1.x = 0.5f * (finalPoint1.x + 1.0f) * (m_FrameBuffer->Width - 1);
 						finalPoint1.y = ((finalPoint1.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
@@ -368,8 +391,8 @@ namespace a3 {
 						finalPoint2.x = 0.5f * (finalPoint2.x + 1.0f) * (m_FrameBuffer->Width - 1);
 						finalPoint2.y = ((finalPoint2.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
 
-						f32 w1 = 1.0f / clippedVertices[n].w;
-						f32 w2 = 1.0f / clippedVertices[n + 1].w;
+						f32 w1 = 1.0f / triangle.vertices[n + 0].w;
+						f32 w2 = 1.0f / triangle.vertices[n + 1].w;
 
 						if (type == a3::RenderTriangle)
 						{
@@ -387,13 +410,13 @@ namespace a3 {
 						else
 						{
 
-							v2 finalUV1;
-							v2 finalUV2;
-							finalUV1.u = clippedTextureCoords[n].u / clippedVertices[n].w;
-							finalUV2.u = clippedTextureCoords[n + 1].u / clippedVertices[n + 1].w;
-							finalUV1.v = clippedTextureCoords[n].v / clippedVertices[n].w;
-							finalUV2.v = clippedTextureCoords[n + 1].v / clippedVertices[n + 1].w;
-							TextureTriangle((i32)finalPoint0.x, (i32)finalPoint0.y, finalUV0, w0, (i32)finalPoint1.x, (i32)finalPoint1.y, finalUV1, w1, (i32)finalPoint2.x, (i32)finalPoint2.y, finalUV2, w2);
+							//v2 finalUV1;
+							//v2 finalUV2;
+							//finalUV1.u = clippedTextureCoords[n].u / clippedVertices[n].w;
+							//finalUV2.u = clippedTextureCoords[n + 1].u / clippedVertices[n + 1].w;
+							//finalUV1.v = clippedTextureCoords[n].v / clippedVertices[n].w;
+							//finalUV2.v = clippedTextureCoords[n + 1].v / clippedVertices[n + 1].w;
+							//TextureTriangle((i32)finalPoint0.x, (i32)finalPoint0.y, finalUV0, w0, (i32)finalPoint1.x, (i32)finalPoint1.y, finalUV1, w1, (i32)finalPoint2.x, (i32)finalPoint2.y, finalUV2, w2);
 						}
 
 						if (m_DrawNormals)
@@ -403,44 +426,6 @@ namespace a3 {
 						}
 					}
 				}
-
-
-				/*if (nVertices > 0)
-				{
-					v2 finalPoi320;
-					finalPoi320.x = clippedVertices[0].x / clippedVertices[0].w;
-					finalPoi320.y = clippedVertices[0].y / clippedVertices[0].w;
-					finalPoi320.u = clippedTextureCoords[0].u / clippedVertices[0].w;
-					finalPoi320.v = clippedTextureCoords[0].v / clippedVertices[0].w;
-
-					finalPoi320.x = 0.5f * (finalPoi320.x + 1.0f) * (m_FrameBuffer->Width - 1);
-					finalPoi320.y = ((finalPoi320.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
-
-					for (i32 n = 1; n < nVertices - 1; ++n)
-					{
-						v2 finalPoi321;
-						v2 finalPoi322;
-
-						finalPoi321.x = clippedVertices[n].x / clippedVertices[n].w;
-						finalPoi321.y = clippedVertices[n].y / clippedVertices[n].w;
-						finalPoi321.u = clippedTextureCoords[n].x / clippedVertices[n].w;
-						finalPoi321.v = clippedTextureCoords[n].y / clippedVertices[n].w;
-
-						finalPoi322.x = clippedVertices[n + 1].x / clippedVertices[n + 1].w;
-						finalPoi322.y = clippedVertices[n + 1].y / clippedVertices[n + 1].w;
-						finalPoi322.u = clippedTextureCoords[n].x / clippedVertices[n].w;
-						finalPoi322.v = clippedTextureCoords[n].y / clippedVertices[n].w;
-
-						finalPoi321.x = 0.5f * (finalPoi321.x + 1.0f) * (m_FrameBuffer->Width - 1);
-						finalPoi321.y = ((finalPoi321.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
-
-						finalPoi322.x = 0.5f * (finalPoi322.x + 1.0f) * (m_FrameBuffer->Width - 1);
-						finalPoi322.y = ((finalPoi322.y + 1.0f) * 0.5f) * (m_FrameBuffer->Height - 1);
-
-						a3::DrawTriangle(m_FrameBuffer, finalPoi320, finalPoi321, finalPoi322, a3::color::White);
-					}
-				}*/
-
 
 			}
 		}
@@ -724,212 +709,6 @@ namespace a3 {
 			}
 		}
 	}
-
-	//void swapchain::FillTriangle(v2 p0, v2 p1, v2 p2, const v3& fillColor, f32 w0, f32 w1, f32 w2)
-	//{
-	//	a3::image* img = m_FrameBuffer;
-	//	f32* depthBuffer = m_DepthBuffer;
-	//	auto processTopFlatPart = [&img, &fillColor, &depthBuffer](v2* p0, v2* p1, v2* p2, f32 w0, f32 w1, f32 w2)
-	//	{
-	//		if (p2->x > p1->x) a3::Swap(&p2, &p1);
-
-	//		f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
-	//		f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
-	//		i32 vstep = 2 * (i32)(p1->y - p0->y + 0.5f);
-
-	//		f32 y = p0->y;
-	//		for (i32 i = 0; i < vstep; ++i)
-	//		{
-	//			f32 x0 = m0 * (y - p2->y) + p2->x;
-	//			f32 x1 = m1 * (y - p1->y) + p1->x;
-	//			// NOTE(Zero):
-	//			// Here 1 is added to the step to balance the 0.5f reduction in x
-	//			// 0.5f is reduced from x because we sample from the center of the pixel
-	//			i32 hstep = 2 * (i32)(x1 - x0 + 0.5f);
-	//			f32 x = x0 - 0.5f;
-	//			for (i32 j = 0; j < hstep; ++j)
-	//			{
-	//				a3::SetPixelColor(img, x, y, fillColor);
-	//				x += 0.5f;
-	//			}
-	//			y += 0.5f;
-	//		}
-	//	};
-
-	//	auto processBottomFlatPart = [&img, &fillColor](v2* p0, v2* p1, v2* p2, f32 w0, f32 w1, f32 w2)
-	//	{
-	//		if (p2->x > p1->x) a3::Swap(&p2, &p1);
-
-	//		f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
-	//		f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
-	//		i32 vstep = 2 * (i32)(p0->y - p1->y + 0.5f);
-
-	//		f32 y = p1->y;
-	//		for (i32 i = 0; i < vstep; ++i)
-	//		{
-	//			f32 x0 = m0 * (y - p2->y) + p2->x;
-	//			f32 x1 = m1 * (y - p1->y) + p1->x;
-	//			// NOTE(Zero):
-	//			// Here 1 is added to the step to balance the 0.5f reduction in x
-	//			// 0.5f is reduced from x because we sample from the center of the pixel
-	//			i32 hstep = 2 * (i32)(x1 - x0 + 0.5f);
-	//			f32 x = x0 - 0.5f;
-	//			for (i32 j = 0; j < hstep; ++j)
-	//			{
-	//				a3::SetPixelColor(img, x, y, fillColor);
-	//				x += 0.5f;
-	//			}
-	//			y += 0.5f;
-	//		}
-	//	};
-
-	//	if (p0.y > p1.y) a3::Swap(&p0, &p1);
-	//	if (p0.y > p2.y) a3::Swap(&p0, &p2);
-	//	if (p1.y > p2.y) a3::Swap(&p1, &p2);
-
-	//	if (FAbsf(p1.y - p2.y) < epsilon_f32) // Top
-	//	{
-	//		processTopFlatPart(&p0, &p1, &p2);
-	//	}
-	//	else if (FAbsf(p1.y - p0.y) < epsilon_f32) // Bottom
-	//	{
-	//		processBottomFlatPart(&p2, &p1, &p0);
-	//	}
-	//	else // Split i32o 2 flat parts
-	//	{
-	//		f32 blend = (p1.y - p0.y) / (p2.y - p0.y);
-	//		v2 pm = (1.0f - blend) * p0 + blend * p2;
-	//		//processTopFlatPart(&p0, &p1, &pm); // top-flat
-	//		processBottomFlatPart(&p2, &p1, &pm); // bottom-flat
-	//	}
-
-	//}
-
-	//void swapchain::MapTextureTriangle(v2 p0, v2 p1, v2 p2, v2 t0, v2 t1, v2 t2, f32 w0, f32 w1, f32 w2)
-	//{
-	//	a3::image* img = m_FrameBuffer;
-	//	a3::image* texture = m_Texture;
-	//	f32* depthBuffer = m_DepthBuffer;
-	//	auto processTopFlatPart = [&img, &texture](v2* p0, v2* p1, v2* p2, v2* t0, v2* t1, v2* t2, f32 w0, f32 w1, f32 w2)
-	//	{
-	//		if (p2->x > p1->x)
-	//		{
-	//			a3::Swap(&p2, &p1);
-	//			a3::Swap(&t2, &t1);
-	//		}
-
-	//		f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
-	//		f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
-	//		i32 vstep = 2 * (i32)(p1->y - p0->y + 0.5f);
-
-	//		v2 duvVert0 = (*t1 - *t0) * (1.0f / vstep);
-	//		v2 duvVert1 = (*t2 - *t0) * (1.0f / vstep);
-	//		f32 dw = (w2 - w0)*(1 / vstep);
-
-	//		f32 y = p0->y;
-	//		v2 startUV = *t0;
-	//		v2 endUV = *t1;
-	//		f32 sw = w0;
-	//		for (i32 i = 0; i < vstep; ++i)
-	//		{
-	//			f32 x0 = m0 * (y - p2->y) + p2->x;
-	//			f32 x1 = m1 * (y - p1->y) + p1->x;
-
-	//			// NOTE(Zero):
-	//			// Here 1 is added to the step to balance the 0.5f reduction in x
-	//			// 0.5f is reduced from x because we sample from the center of the pixel
-	//			i32 hstep = 2 * (i32)(x1 - x0 + 0.5f);
-	//			f32 x = x0 - 0.5f;
-	//			v2 uv = startUV;
-	//			v2 duvHor = (endUV - startUV)*(1.0f / hstep);
-	//			f32 dwx = ()
-	//			for (i32 j = 0; j < hstep; ++j)
-	//			{
-	//				a3::SetPixelColor(img, x, y, a3::SamplePixelColor(texture, uv));
-	//				x += 0.5f;
-	//				uv += duvHor;
-	//			}
-	//			y += 0.5f;
-	//			startUV += duvVert0;
-	//			endUV += duvVert1;
-	//		}
-	//	};
-
-	//	auto processBottomFlatPart = [&img, &texture](v2* p0, v2* p1, v2* p2, v2* t0, v2* t1, v2* t2, f32 w0, f32 w1, f32 w2)
-	//	{
-	//		if (p2->x > p1->x)
-	//		{
-	//			a3::Swap(&p2, &p1);
-	//			a3::Swap(&t2, &t1);
-	//		}
-
-	//		f32 m0 = (p0->x - p2->x) / (p0->y - p2->y);
-	//		f32 m1 = (p0->x - p1->x) / (p0->y - p1->y);
-	//		i32 vstep = 2 * (i32)(p0->y - p1->y + 0.5f);
-
-	//		v2 duvVert0 = (*t1 - *t0) * (1.0f / vstep);
-	//		v2 duvVert1 = (*t2 - *t0) * (1.0f / vstep);
-
-	//		f32 y = p1->y;
-	//		v2 startUV = *t0;
-	//		v2 endUV = *t1;
-	//		for (i32 i = 0; i < vstep; ++i)
-	//		{
-	//			f32 x0 = m0 * (y - p2->y) + p2->x;
-	//			f32 x1 = m1 * (y - p1->y) + p1->x;
-	//			// NOTE(Zero):
-	//			// Here 1 is added to the step to balance the 0.5f reduction in x
-	//			// 0.5f is reduced from x because we sample from the center of the pixel
-	//			i32 hstep = 2 * (i32)(x1 - x0 + 0.5f);
-	//			f32 x = x0 - 0.5f;
-	//			v2 uv = startUV;
-	//			v2 duvHor = (endUV - startUV)*(1.0f / hstep);
-	//			for (i32 j = 0; j < hstep; ++j)
-	//			{
-	//				a3::SetPixelColor(img, x, y, a3::SamplePixelColor(texture, uv));
-	//				x += 0.5f;
-	//				uv += duvHor;
-	//			}
-	//			y += 0.5f;
-	//			startUV += duvVert0;
-	//			endUV += duvVert1;
-	//		}
-	//	};
-
-	//	if (p0.y > p1.y)
-	//	{
-	//		a3::Swap(&p0, &p1);
-	//		a3::Swap(&t0, &t1);
-	//	}
-	//	if (p0.y > p2.y)
-	//	{
-	//		a3::Swap(&p0, &p2);
-	//		a3::Swap(&t0, &t2);
-	//	}
-	//	if (p1.y > p2.y)
-	//	{
-	//		a3::Swap(&p1, &p2);
-	//		a3::Swap(&t1, &t2);
-	//	}
-
-	//	if (FAbsf(p1.y - p2.y) < epsilon_f32) // Top
-	//	{
-	//		processTopFlatPart(&p0, &p1, &p2, &t0, &t1, &t2);
-	//	}
-	//	else if (FAbsf(p1.y - p0.y) < epsilon_f32) // Bottom
-	//	{
-	//		processBottomFlatPart(&p2, &p1, &p0, &t2, &t1, &t0);
-	//	}
-	//	else // Split i32o 2 flat parts
-	//	{
-	//		f32 blend = (p1.y - p0.y) / (p2.y - p0.y);
-	//		v2 pm = (1.0f - blend) * p0 + blend * p2;
-	//		v2 tm = (1.0f - blend) * t0 + blend * t2;
-	//		processTopFlatPart(&p0, &p1, &pm, &t0, &t1, &tm); // top-flat
-	//		processBottomFlatPart(&p2, &p1, &pm, &t0, &t1, &tm); // bottom-flat
-	//	}
-
-	//}
 
 }
 
