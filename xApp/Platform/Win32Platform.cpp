@@ -338,7 +338,6 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 		wTitle = a3New utf16[size];
 		MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, size);
 		pOpenDialog->SetTitle(wTitle);
-		a3Delete[] wTitle;
 
 		if (type == a3::FileTypePNG)
 		{
@@ -360,6 +359,7 @@ utf8 * a3_platform::LoadFromDialogue(s8 title, a3::file_type type) const
 		}
 
 		hr = pOpenDialog->Show(Win32GetUserData()->windowHandle);
+		a3Delete[] wTitle;
 		utf8* resultPath = A3NULL;
 		if (SUCCEEDED(hr))
 		{
@@ -402,7 +402,6 @@ utf8 * a3_platform::SaveFromDialogue(s8 title, a3::file_type type) const
 		wTitle = a3New utf16[size];
 		MultiByteToWideChar(CP_UTF8, 0, title, -1, wTitle, size);
 		pSaveDialog->SetTitle(wTitle);
-		a3Delete[] wTitle;
 
 		if (type == a3::FileTypePNG)
 		{
@@ -415,6 +414,7 @@ utf8 * a3_platform::SaveFromDialogue(s8 title, a3::file_type type) const
 		}
 
 		hr = pSaveDialog->Show(Win32GetUserData()->windowHandle);
+		a3Delete[] wTitle;
 		utf8* resultPath = A3NULL;
 		if (SUCCEEDED(hr))
 		{
@@ -436,7 +436,7 @@ utf8 * a3_platform::SaveFromDialogue(s8 title, a3::file_type type) const
 					{
 						resultPath = a3Recalloc(resultPath, MAX_PATH + 3, utf8);
 					}
-					*(u32*)&resultPath[v] = type;
+					*((u32*)&resultPath[v - 1]) = a3SwapEndian32(type);
 					CoTaskMemFree(wFilePath);
 				}
 				pShellItem->Release();
@@ -1260,19 +1260,29 @@ i32 a3Main()
 
 		if (uiContext.Button(a3::Hash("save"), opdim, "Save Frame"))
 		{
-			u64 size = a3::QueryEncodedImageSize(frameBuffer3D.Width, frameBuffer3D.Height, frameBuffer3D.Channels, 4, frameBuffer3D.Pixels);
-			a3::file_content fc;
-			fc.Buffer = a3Malloc(size, u8);
-			fc.Size = size;
-			a3::EncodeImageToBuffer(fc.Buffer, frameBuffer3D.Width, frameBuffer3D.Height, frameBuffer3D.Channels, 4, frameBuffer3D.Pixels);
-			utf8* file = a3::Platform.SaveFromDialogue("Save Frame", a3::FileTypePNG);
-			a3::Platform.ReplaceFileContent(file, fc);
+			//u64 size = a3::QueryEncodedImageSize(frameBuffer3D.Width, frameBuffer3D.Height, frameBuffer3D.Channels, 4, frameBuffer3D.Pixels);
+			//a3::file_content fc;
+			//fc.Buffer = a3Malloc(size, u8);
+			//fc.Size = size;
+			//a3::EncodeImageToBuffer(fc.Buffer, frameBuffer3D.Width, frameBuffer3D.Height, frameBuffer3D.Channels, 4, frameBuffer3D.Pixels);
+			utf8* file = a3::Platform.SaveFromDialogue("Save Frame", a3::file_type::FileTypePNG);
+			a3::WriteImageToFile(file, frameBuffer3D.Pixels, frameBuffer3D.Width, frameBuffer3D.Height, frameBuffer3D.Channels, 4);
+			//a3::Platform.ReplaceFileContent(file, fc);
 			a3::Platform.FreeDialogueData(file);
-			a3Free(fc.Buffer);
+			//a3Free(fc.Buffer);
 		}
 		if (uiContext.Button(a3::Hash("saveray"), opdim, "Save Ray Traced"))
 		{
-
+			//u64 size = a3::QueryEncodedImageSize(rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, 4, rayTraceBuffer.Pixels);
+			//a3::file_content fc;
+			//fc.Buffer = a3Malloc(size, u8);
+			//fc.Size = size;
+			//a3::EncodeImageToBuffer(fc.Buffer, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, 4, rayTraceBuffer.Pixels);
+			utf8* file = a3::Platform.SaveFromDialogue("Save Frame", a3::file_type::FileTypePNG);
+			a3::WriteImageToFile(file, rayTraceBuffer.Pixels, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, 4);
+			//a3::Platform.ReplaceFileContent(file, fc);
+			a3::Platform.FreeDialogueData(file);
+			//a3Free(fc.Buffer);
 		}
 		if (uiContext.Button(a3::Hash("camera"), opdim, "Recenter Camera"))
 		{

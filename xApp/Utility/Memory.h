@@ -1,6 +1,6 @@
 #pragma once
 #include "Common/Core.h"
-
+#include "Platform/Platform.h"
 //
 // DECLARATIONS
 //
@@ -191,13 +191,10 @@ namespace a3 {
 
 	inline void* MemoryMove(void* dst, const void* src, u64 size)
 	{
-		u8* pd = (u8*)dst;
-		u8* sp = (u8*)src;
-		for (u64 i = 0; i < size; ++i)
-		{
-			*pd = *sp;
-			pd++; sp++;
-		}
+		u8* mdl = a3Malloc(size, u8);
+		MemoryCopy(mdl, src, size);
+		MemoryCopy(dst, mdl, size);
+		a3Free(mdl);
 		return dst;
 	}
 

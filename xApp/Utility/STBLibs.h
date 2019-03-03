@@ -53,6 +53,6 @@
 #define STBIW_REALLOC(p, s)		a3Realloc(p, s, void)
 #define STBIW_FREE(p)			a3Free(p)
 #define STBIW_MEMMOVE			a3::MemoryMove
-#define STBI_WRITE_NO_STDIO
+//#define STBI_WRITE_NO_STDIO
 #include "External/STBImageWrite.h"
 

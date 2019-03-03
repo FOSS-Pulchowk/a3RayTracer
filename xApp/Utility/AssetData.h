@@ -112,6 +112,7 @@ namespace a3 {
 	image DecodeImageFromBuffer(void* imgeBuffer, i32 length, void* destination);
 	u64 QueryEncodedImageSize(i32 w, i32 h, i32 channels, i32 bytesPerPixel, void* pixels);
 	u64 EncodeImageToBuffer(void* buffer, i32 width, i32 height, i32 channels, i32 bytesPerPixel, void* pixels);
+	b32 WriteImageToFile(s8 file, void* buffer, i32 width, i32 height, i32 channels, i32 bytesPerPixel);
 
 	u64 QueryDecodedFontSize(void* buffer, i32 length, f32 scale);
 	void QueryMaxFontDimension(void * buffer, i32 length, f32 scale, i32* x, i32* y);
@@ -204,13 +205,35 @@ u64 a3::EncodeImageToBuffer(void * destination, i32 width, i32 height, i32 chann
 	if (channels == 1)
 		stride = width;
 	else if (channels == 3) // TODO(Zero): Test for images with 3 channels
-		stride = 4 * ((width * bytesPerPixel + 3) / 4);
+		stride = 4 * ((width * bytesPerPixel + 3) / 4) * sizeof(u32);
 	else if (channels == 4)
-		stride = width;
+		stride = width * sizeof(u32);
 	else
 		return false; // NOTE(Zero): Ouput only for 1, 3 and 4 channel images
 
 	return stbi_write_png_to_func(a3_STBWriteBufferCallback, destination, width, height, channels, pixels, stride);
+}
+
+b32 a3::WriteImageToFile(s8 file, void * buffer, i32 width, i32 height, i32 channels, i32 bytesPerPixel)
+{
+	stbi_flip_vertically_on_write(1);
+	// NOTE(Zero): Stride for images should align to multiple of 4 or 8
+	// This is done for SSE optimizations and such
+	// Stride reference : https://en.wikipedia.org/wiki/Stride_of_an_array
+	// Here the stride is for pitch of the image and not for the pixel
+	// Byte alignment didn't work for the single channel image
+	// `bytesPerPixel` is only use by images with 3 channel, it's not mistake
+	i32 stride;
+	if (channels == 1)
+		stride = width;
+	else if (channels == 3) // TODO(Zero): Test for images with 3 channels
+		stride = 4 * ((width * bytesPerPixel + 3) / 4) * sizeof(u32);
+	else if (channels == 4)
+		stride = width * sizeof(u32);
+	else
+		return false; // NOTE(Zero): Ouput only for 1, 3 and 4 channel images
+
+	return stbi_write_png(file, width, height, channels, buffer, stride);
 }
 
 static inline void a3_CalculateFontBitmapMaxDimension(stbtt_fontinfo& info, f32 scale, i32* w, i32* h)

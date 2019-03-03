@@ -165,7 +165,7 @@ namespace a3 {
 
 	void RayTrace(image* frameBuffer, mesh* meshObj, const m4x4& view, a3::image* texture, i32* major, i32* minor)
 	{
-		f32 aspectRatio = (f32)frameBuffer->Width / (f32)frameBuffer->Height;
+		f32 aspectRatio = (f32)frameBuffer->Height / (f32)frameBuffer->Width;
 		v3 origin = v3{ 0,0,0 } *view;
 
 		for (i32 j = 0; j < frameBuffer->Height; j++)
