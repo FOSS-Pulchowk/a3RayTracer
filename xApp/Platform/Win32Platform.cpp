@@ -1121,25 +1121,13 @@ i32 a3Main()
 			camera.RotateOrientation(-angle * deltaTime, transform::WorldRight);
 		}
 
-		m4x4 model;
-
-		if (userData->inputSystem.Keys[a3::KeyRaytrace].Down && !s_RayThreadRunning)
-		{
-			a3::FillImageBuffer(&rayTraceBuffer, a3::color::White);
-
-			rayTracingData->frameBuffer = &rayTraceBuffer;
-			rayTracingData->meshObj = a3::Asset.Get<a3::mesh>(a3::Mesh);
-			rayTracingData->texture = 0;
-			rayTracingData->view = camera.CalculateModelM4X4() * m4x4::PerspectiveR(a3ToDegrees(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
-
-			CreateThread(0, 0, RayTracingThreadFunction, rayTracingData, 0, 0);
-		}
-
 		if (s_ShouldRenderToTexture)
 		{
 			s_ShouldRenderToTexture = false;
 			a3::Asset.LoadTexture2DFromPixels(a3::RayTraceBuffer, rayTraceBuffer.Pixels, rayTraceBuffer.Width, rayTraceBuffer.Height, rayTraceBuffer.Channels, a3::FilterLinear, a3::WrapClampToEdge);
 		}
+
+		m4x4 model;
 		swapChain.SetCamera(camera.CalculateModelM4X4());
 		swapChain.SetDrawNormals(showNormals);
 		swapChain.Clear(a3::color::LightSlateGray);
@@ -1260,12 +1248,31 @@ i32 a3Main()
 		}
 		if (uiContext.Button(a3::Hash("ray"), opdim, "Ray Trace"))
 		{
+			a3::FillImageBuffer(&rayTraceBuffer, a3::color::White);
+
+			rayTracingData->frameBuffer = &rayTraceBuffer;
+			rayTracingData->meshObj = a3::Asset.Get<a3::mesh>(a3::Mesh);
+			rayTracingData->texture = 0;
+			rayTracingData->view = camera.CalculateModelM4X4() * m4x4::PerspectiveR(a3ToDegrees(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
+
+			CreateThread(0, 0, RayTracingThreadFunction, rayTracingData, 0, 0);
 		}
+
 		if (uiContext.Button(a3::Hash("save"), opdim, "Save Frame"))
 		{
+			u64 size = a3::QueryEncodedImageSize(frameBuffer3D.Width, frameBuffer3D.Height, frameBuffer3D.Channels, 4, frameBuffer3D.Pixels);
+			a3::file_content fc;
+			fc.Buffer = a3Malloc(size, u8);
+			fc.Size = size;
+			a3::EncodeImageToBuffer(fc.Buffer, frameBuffer3D.Width, frameBuffer3D.Height, frameBuffer3D.Channels, 4, frameBuffer3D.Pixels);
+			utf8* file = a3::Platform.SaveFromDialogue("Save Frame", a3::FileTypePNG);
+			a3::Platform.ReplaceFileContent(file, fc);
+			a3::Platform.FreeDialogueData(file);
+			a3Free(fc.Buffer);
 		}
 		if (uiContext.Button(a3::Hash("saveray"), opdim, "Save Ray Traced"))
 		{
+
 		}
 		if (uiContext.Button(a3::Hash("camera"), opdim, "Recenter Camera"))
 		{
