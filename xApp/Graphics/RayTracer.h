@@ -49,7 +49,7 @@ namespace a3 {
 	}
 
 
-	b32 i32ersect(mesh* meshObj, const v3 &orig, const v3 &dir, f32 *tNear, u32 *triIndex, v2 *uv)
+	b32 RayIntersectMesh(mesh* meshObj, const v3 &orig, const v3 &dir, f32 *tNear, u32 *triIndex, v2 *uv)
 	{
 		b32 isect = false;
 		u32 numTris = meshObj->NumOfTriangles;
@@ -80,7 +80,7 @@ namespace a3 {
 		u32 indexTriangle;
 		v2 uvTriangle;
 		b32 trace = false;
-		if (i32ersect(meshObj, orig, dir, &tNearTriangle, &indexTriangle, &uvTriangle) && tNearTriangle < *tNear)
+		if (RayIntersectMesh(meshObj, orig, dir, &tNearTriangle, &indexTriangle, &uvTriangle) && tNearTriangle < *tNear)
 		{
 			*tNear = tNearTriangle;
 			*index = indexTriangle;

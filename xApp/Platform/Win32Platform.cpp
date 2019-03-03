@@ -1252,7 +1252,7 @@ i32 a3Main()
 
 			rayTracingData->frameBuffer = &rayTraceBuffer;
 			rayTracingData->meshObj = a3::Asset.Get<a3::mesh>(a3::Mesh);
-			rayTracingData->texture = 0;
+			rayTracingData->texture = loadedTexture;
 			rayTracingData->view = camera.CalculateModelM4X4() * m4x4::PerspectiveR(a3ToDegrees(60.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 
 			CreateThread(0, 0, RayTracingThreadFunction, rayTracingData, 0, 0);
