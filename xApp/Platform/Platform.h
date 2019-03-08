@@ -1,5 +1,6 @@
 #pragma once
 #include "Common/Core.h"
+#include "Utility/String.h"
 
 // NOTE(Zero):
 // This file contains declaration for all platform common stuffs
@@ -16,32 +17,41 @@ namespace a3 {
 	{
 		LogTypeStatus, LogTypeWarn, LogTypeError, LogTypeTrace
 	};
-	/*
-		* NOTE(Zero): Current list of supported data types
-		* char, string(s8 or char*)
-		* i32(32 bit integers or smaller)
-		* u32(32 bit unsigned integers or smaller)
-		* f32(float) while f64(double) are converted into floats when displayed
-		* v2, v3, v4
-	*/
-#if 0
-	// USAGE(Zero) @ 12/30/2018 20:44
-	// Don't use this function directly unless you have a good reason to
-	//	and you know what you are doing
-	// The format specifiers work the following way:
-	xLog("Simple status message"); // display as is, break line is placed automatically at the end
-	xLogError("Error message, code = {i}", 55); // displays `Error message, code = 55`
-	// for hexadecimal display 'x' in place of 'i'
-	// similarly 'o' for octal and 'b' for binary
-	// 'u' is used for unsigned integer
-	// 'f' for floats and doubles
-	// 'c' for character and 's' for string
-	// 'v2', 'v3' and 'v4' can be used for resp vectors, example:
-	xLogWarn("This vec {v2} may cause errors!", { 5, 6, 7 });
-#endif
 }
-void a3_Log(s8 file, u32 line, a3::log_type type, s8 format, ...);
 
+#if defined(A3DEBUG) || defined(A3INTERNAL)
+
+#define A3_MAXLOGMSGSIZE 1024
+
+extern void a3_WriteConsole(const utf8* buffer, u32 length);
+extern void a3_LogPrefix(const utf8* file, u32 line, a3::log_type type, utf8* buffer, u32* position);
+
+inline void a3_Log(const utf8* file, u32 line, a3::log_type type, const utf8* msg)
+{
+	utf8 buffer[A3_MAXLOGMSGSIZE];
+	u32 position = 0;
+
+	a3_LogPrefix(file, line, type, buffer, &position);
+	position += a3::StringPrintFormatted(&buffer[position], A3_MAXLOGMSGSIZE - position, msg);
+	position += a3::StringPrintFormatted(&buffer[position], A3_MAXLOGMSGSIZE - position, "\n\n");
+
+	a3_WriteConsole(buffer, position);
+}
+
+template <typename ...Args>
+inline void a3_Log(const utf8* file, u32 line, a3::log_type type, const utf8* format, Args&& ...args)
+{
+	utf8 buffer[A3_MAXLOGMSGSIZE];
+	u32 position = 0;
+
+	a3_LogPrefix(file, line, type, buffer, &position);
+	position += a3::StringPrintFormatted(&buffer[position], A3_MAXLOGMSGSIZE - position, format, args...);
+	position += a3::StringPrintFormatted(&buffer[position], A3_MAXLOGMSGSIZE - position, "\n\n");
+
+	a3_WriteConsole(buffer, position);
+}
+
+#endif
 
 //
 // CONTAINS: Build macros

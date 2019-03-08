@@ -75,7 +75,7 @@ static u64 s_PersistantHeapFreed;
 #define a3InternalHeapAllocation(x) x;\
 if(ptr) { \
     if(size > a3MegaBytes(1)) \
-    a3LogWarn("Large Heap Allocation of {u} bytes at {s}:{i}", size, file, line); \
+    a3LogWarn("Large Heap Allocation of % bytes at %:%", size, file, line); \
     s_TotalHeapAllocated += size;\
     u64* loc = (u64*)ptr; \
     *loc = size; \
@@ -86,7 +86,7 @@ a3LogWarn("Nullptr returned by heap allocation");
 #define a3InternalHeapReAllocation(x) x;\
 if(ptr) { \
     if(size > a3MegaBytes(1)) \
-    a3LogWarn("Large Heap Re Allocation of {u} bytes at {s}:{i}", size, file, line); \
+    a3LogWarn("Large Heap Re Allocation of % bytes at %:%", size, file, line); \
     s_TotalHeapAllocated += (size - *(u64*)ptr);\
     u64* loc = (u64*)ptr; \
     *loc = size; \
@@ -101,7 +101,7 @@ if(result) { \
 #define a3InternalPersistantHeapAllocation(x) x;\
 if(ptr) { \
     if(size > a3MegaBytes(1)) \
-    a3LogWarn("Large Heap Allocation of {u} bytes at {s}:{i}", size, file, size); \
+    a3LogWarn("Large Heap Allocation of % bytes at %:%", size, file, size); \
     s_PersistantHeapAllocated += size;\
     u64* loc = (u64*)ptr; \
     *loc = size; \
@@ -112,7 +112,7 @@ a3LogWarn("Nullptr returned by heap allocation");
 #define a3InternalPersistantHeapReAllocation(x) x;\
 if(ptr) { \
     if(size > a3MegaBytes(1)) \
-    a3LogWarn("Large Heap Re Allocation of {u} bytes at {s}:{i}", size, file, size); \
+    a3LogWarn("Large Heap Re Allocation of % bytes at %:%", size, file, size); \
     s_PersistantHeapAllocated += (size - *(u64*)ptr);\
     u64* loc = (u64*)ptr; \
     *loc = size; \
@@ -703,7 +703,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			a3Log("Window minimized");
 		}
-		a3Log("Window resized to {i} X {i}", LOWORD(lParam), HIWORD(lParam));
+		a3Log("Window resized to % X %", LOWORD(lParam), HIWORD(lParam));
 		userData.inputSystem.WindowWidth = LOWORD(lParam);
 		userData.inputSystem.WindowHeight = HIWORD(lParam);
 		HDC dc = GetDC(hWnd);
@@ -979,7 +979,7 @@ i32 a3Main()
 		a3LogError("Window could not be created!");
 		return 1;
 	}
-	a3Log("Window of resolution {i} X {i} created.", A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT);
+	a3Log("Window of resolution % X % created.", A3_WINDOW_WIDTH, A3_WINDOW_HEIGHT);
 
 	HRESULT hr = CoInitializeEx(0, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 

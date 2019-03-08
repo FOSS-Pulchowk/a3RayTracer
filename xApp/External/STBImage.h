@@ -851,7 +851,7 @@ STBIDEF const char *stbi_failure_reason(void)
 
 static int stbi__err(const char *str)
 {
-	a3LogError("STBI Error: {s}", str);
+	a3LogError("STBI Error: %", str);
 	stbi__g_failure_reason = str;
 	return 0;
 }

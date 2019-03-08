@@ -60,7 +60,7 @@ inline void GLLoad(HWND hWnd)
 	gl_version glVersion;
 	g_OpenGLLibrary = LoadLibraryA("opengl32.dll");
 	a3Assert(GladLoadGLLoader(GLFunctionLoader, &glVersion));
-	a3Log("OpenGL Context created. Loaded OpenGL Version: {i}.{i}", glVersion.major, glVersion.minor);
+	a3Log("OpenGL Context created. Loaded OpenGL Version: %.%", glVersion.major, glVersion.minor);
 	FreeLibrary(g_OpenGLLibrary);
 	g_OpenGLLibrary = 0;
 	wglMakeCurrent(hDummyDC, 0);

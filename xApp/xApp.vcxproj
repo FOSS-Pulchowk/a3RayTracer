@@ -270,12 +270,10 @@
     <ClInclude Include="Platform\HardwarePlatform.h" />
     <ClInclude Include="Utility\Algorithm.h" />
     <ClInclude Include="Utility\DArray.h" />
-    <ClInclude Include="a3raytrace.h" />
     <ClInclude Include="Common\Core.h" />
     <ClInclude Include="External\STBImage.h" />
     <ClInclude Include="External\STBImageWrite.h" />
     <ClInclude Include="External\STBTrueType.h" />
-    <ClInclude Include="Components.h" />
     <ClInclude Include="Math\Color.h" />
     <ClInclude Include="Platform\Assets.h" />
     <ClInclude Include="Platform\GLSL\GLSLShaders.h" />
@@ -286,7 +284,6 @@
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Math\Matrix4.h" />
     <ClInclude Include="Math\Quaterniod.h" />
-    <ClInclude Include="a3Interface.h" />
     <ClInclude Include="Utility\AssetManager.h" />
     <ClInclude Include="Platform\GlRenderer.h" />
     <ClInclude Include="Platform\GL\Glad.h" />

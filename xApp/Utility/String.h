@@ -6,18 +6,30 @@
 //
 
 namespace a3 {
-
-	inline i32 WriteU32ToBuffer(utf8* buffer, u32 length, u32 number, u32 base);
-	inline i32 WriteF32ToBuffer(utf8* buffer, u32 length, f32 number);
-
-	inline u32 ParseU32(s8 buffer, utf8 end = 0);
-	inline i32 ParseI32(s8 buffer, utf8 end = 0);
-	inline f32 ParseF32(s8 buffer, utf8 end = 0);
-
-	inline u64 GetStringLength(s8 s);
-
-	inline u32 Hash(s8 s);
-
+    
+    inline i32 ParseI32(const utf8* buffer);
+    inline u32 ParseU32(const utf8* buffer);
+    inline f32 ParseF32(const utf8* buffer);
+    inline f64 ParseF64(const utf8* buffer);
+    
+    inline u64 GetUtf8Length(const utf8* s);
+    
+    inline i32 StringPrint(utf8* buffer, u64 length, i32 value);
+    inline i32 StringPrint(utf8* buffer, u64 length, u32 value);
+    inline i32 StringPrint(utf8* buffer, u64 length, u64 value);
+    inline i32 StringPrint(utf8* buffer, u64 length, f32 value);
+    inline i32 StringPrint(utf8* buffer, u64 length, f64 value);
+    inline i32 StringPrint(utf8* buffer, u64 length, const utf8* value);
+    inline i32 StringPrint(utf8* buffer, u64 length, utf8 value);
+    inline i32 StringPrint(utf8* buffer, u64 length, v2 v);
+    inline i32 StringPrint(utf8* buffer, u64 length, v3 v);
+    inline i32 StringPrint(utf8* buffer, u64 length, v4 v);
+    inline i32 StringPrintFormatted(utf8* buffer, u64 length, const utf8* value);
+    template <typename Type, typename ...Args>
+        inline i32 StringPrintFormatted(utf8* buffer, u64 length, const utf8* format, Type value, Args... args);
+    
+    inline u32 Hash(const utf8* s);
+    
 }
 
 
@@ -25,147 +37,31 @@ namespace a3 {
 // IMPLEMENTATION
 //
 
-inline i32 a3::WriteU32ToBuffer(utf8* buffer, u32 length, u32 number, u32 base)
-{
-	a3Assert(length > 0);
-	a3Assert(base == 2 || base == 8 || base == 16 || base == 10);
-	if (number == 0)
-	{
-		buffer[0] = '0';
-		buffer[1] = 0;
-		return 1;
-	}
 
-	i32 bufferIndex = 0;
-	while (number != 0)
-	{
-		u64 rem = number % base;
-		buffer[bufferIndex++] = (utf8)((rem > 9) ? (rem - 10) + 'a' : rem + '0');
-		if (bufferIndex == length) return -bufferIndex;
-		number = number / base;
-	}
-	if (bufferIndex == length) return -bufferIndex;
-	i32 start = 0;
-	i32 end = bufferIndex - 1;
-	while (start < end)
-	{
-		utf8 temp = buffer[start];
-		buffer[start] = buffer[end];
-		buffer[end] = temp;
-		start++;
-		end--;
-	}
-	buffer[bufferIndex] = 0;
-	return bufferIndex;
+#include <stdio.h>
+#include <stdlib.h>
+
+inline i32 a3::ParseI32(const utf8* buffer)
+{
+    return atoi(buffer);
 }
 
-inline i32 a3::WriteF32ToBuffer(utf8* buffer, u32 length, f32 number)
+inline u32 a3::ParseU32(const utf8* buffer)
 {
-	a3Assert(length > 0);
-	u32 num = *((u32*)(&number));
-
-	u32 sign = num >> 31;
-	u32 exp = ((num >> 23) & 0xff) - 127;
-	u32 man = num & ((1 << 23) - 1);
-	man |= 1 << 23;
-
-	i32 bufferIndex = 0;
-	if (sign)
-		buffer[bufferIndex++] = '-';
-
-	if (bufferIndex == length) return -bufferIndex;
-	i32 result = WriteU32ToBuffer(buffer + bufferIndex, length - bufferIndex, man >> (23 - exp), 10);
-	if (result <= 0) return result;
-	bufferIndex += result;
-
-	buffer[bufferIndex++] = '.';
-	if (bufferIndex == length) return -bufferIndex;
-
-	u32 frac = man & ((1 << (23 - exp)) - 1);
-	u32 base = 1 << (23 - exp);
-	i32 c = 0;
-
-	if (!frac)
-	{
-		buffer[bufferIndex++] = '0';
-		if (bufferIndex == length) return -bufferIndex;
-	}
-
-	while (frac != 0 && c++ < 6)
-	{
-		frac *= 10;
-		result = WriteU32ToBuffer(buffer + bufferIndex, length - bufferIndex, (u32)(frac / base), 10);
-		if (result <= 0) return result;
-		bufferIndex += result;
-		frac %= base;
-	}
-	if (bufferIndex == length) return -bufferIndex;
-	buffer[bufferIndex] = 0;
-
-	return bufferIndex;
+    return atol(buffer);
 }
 
-u32 a3::ParseU32(s8 buffer, utf8 end)
+inline f32 a3::ParseF32(const utf8* buffer)
 {
-	u32 result = 0;
-
-	utf8* s = (utf8*)buffer;
-	while (*s != end)
-	{
-		if (*s > 47 && *s < 58)
-			result = result * 10 + (*s - 48);
-		else
-			break;
-		++s;
-	}
-	return result;
+    return (f32)atof(buffer);
 }
 
-i32 a3::ParseI32(s8 buffer, utf8 end)
+inline f64 a3::ParseF64(const utf8* buffer)
 {
-	i32 neg = 1;
-	if (buffer[0] == '-') neg *= -1;
-	return neg * (i32)ParseU32(buffer, end);
+    return atof(buffer);
 }
 
-f32 a3::ParseF32(s8 buffer, utf8 end)
-{
-	b32 period = false;
-	f32 negative = 1.0f;
-	f32 result = 0.0f;
-	f32 divisor = 1.0f;
-	f32 dividend = 0.0f;
-	utf8* s = (utf8*)buffer;
-	while (*s != end && *s != 'f' && *s != 'F')
-	{
-		if (*s == '.')
-		{
-			period = true;
-		}
-		else if (*s == '-')
-		{
-			negative = -1.0f;
-		}
-		else if (*s > 47 && *s < 58)
-		{
-			if (period)
-			{
-				dividend = dividend * 10.0f + (f32)(*s - 48);
-				divisor *= 10.0f;
-			}
-			else
-				result = result * 10.0f + (f32)(*s - 48);
-		}
-		else
-		{
-			break;
-		}
-		++s;
-	}
-	return negative * (result + dividend / divisor);
-}
-
-inline u64 a3::GetStringLength(s8 s)
+inline u64 a3::GetUtf8Length(const utf8* s)
 {
 	u64 len = 0;
 	for (utf8* c = (utf8*)s; *c != 0; ++c)
@@ -173,7 +69,116 @@ inline u64 a3::GetStringLength(s8 s)
 	return (len + 1);
 }
 
-inline u32 a3::Hash(s8 s)
+
+inline i32 a3::StringPrint(utf8* buffer, u64 length, i32 value)
+{
+    return snprintf(buffer, length, "%d", value);
+}
+
+inline i32 a3::StringPrint(utf8* buffer, u64 length, u32 value)
+{
+    return snprintf(buffer, length, "%u", value);
+}
+
+inline i32 a3::StringPrint(utf8* buffer, u64 length, u64 value)
+{
+    return snprintf(buffer, length, "%I64u", value);
+}
+
+inline i32 a3::StringPrint(utf8* buffer, u64 length, f32 value)
+{
+    return snprintf(buffer, length, "%f", value);
+}
+
+inline i32 a3::StringPrint(utf8* buffer, u64 length, f64 value)
+{
+    return snprintf(buffer, length, "%f", value);
+}
+
+inline i32 a3::StringPrint(utf8* buffer, u64 length, const utf8* value)
+{
+    return snprintf(buffer, length, "%s", value);
+}
+
+inline i32 a3::StringPrint(utf8* buffer, u64 length, utf8 value)
+{
+    return snprintf(buffer, length, "%c", value);
+}
+
+inline i32 a3::StringPrint(utf8* buffer, u64 length, v2 v)
+{
+    i32 written = snprintf(buffer, length, "(");
+    written += snprintf(buffer, length, "%f", v.x);
+    written += snprintf(buffer, length, ", ");
+    written += snprintf(buffer, length, "%f", v.y);
+    written += snprintf(buffer, length, ")");
+    return written;
+}
+
+inline i32 a3::StringPrint(utf8* buffer, u64 length, v3 v)
+{
+    i32 written = snprintf(buffer, length, "(");
+    written += snprintf(buffer, length, "%f", v.x);
+    written += snprintf(buffer, length, ", ");
+    written += snprintf(buffer, length, "%f", v.y);
+    written += snprintf(buffer, length, ", ");
+    written += snprintf(buffer, length, "%f", v.z);
+    written += snprintf(buffer, length, ")");
+    return written;
+}
+
+inline i32 a3::StringPrint(utf8* buffer, u64 length, v4 v)
+{
+    i32 written = snprintf(buffer, length, "(");
+    written += snprintf(buffer, length, "%f", v.x);
+    written += snprintf(buffer, length, ", ");
+    written += snprintf(buffer, length, "%f", v.y);
+    written += snprintf(buffer, length, ", ");
+    written += snprintf(buffer, length, "%f", v.z);
+    written += snprintf(buffer, length, ", ");
+    written += snprintf(buffer, length, "%f", v.w);
+    written += snprintf(buffer, length, ")");
+    return written;
+}
+
+inline i32 a3::StringPrintFormatted(utf8* buffer, u64 length, const utf8* value)
+{
+    return snprintf(buffer, length, "%s", value);
+}
+
+template <typename Type, typename ...Args>
+inline i32 a3::StringPrintFormatted(utf8* buffer, u64 length, const utf8* format, Type value, Args... args)
+{
+    utf8* traverser = (utf8*)format;
+    i32 written = 0;
+    for (; *traverser != 0; traverser++ ) 
+    {
+        if (*traverser == '%' ) 
+        {
+            written += StringPrint(&buffer[written], length, value);
+            written += StringPrintFormatted(&buffer[written], length, 
+                                            traverser + 1,
+                                            args...);
+            if(written == length)
+                buffer[written-1] = 0;
+            else
+                buffer[written] = 0;
+            return written;
+        }
+        
+        buffer[written] = *traverser;
+        written++;
+        if(written == length)
+        {
+            buffer[written-1] = 0;
+            return written;
+        }
+    }
+    buffer[written] = 0;
+    return written;
+}
+
+inline u32 a3::Hash(const utf8* s)
 {
 	u32 hash = 0;
 	i32 c;

@@ -85,7 +85,7 @@ namespace a3
 	}
 
 	dstring::dstring(s8 cstr) :
-		m_Length(a3::GetStringLength(cstr)),
+		m_Length(a3::GetUtf8Length(cstr)),
 		m_Data(a3Malloc(m_Length, utf8))
 	{
 		a3::MemoryCopy(m_Data, cstr, m_Length);
@@ -131,10 +131,10 @@ namespace a3
 
 	dstring& dstring::operator=(s8 cstr)
 	{
-		m_Length = a3::GetStringLength(cstr) + 1;
+		m_Length = a3::GetUtf8Length(cstr) + 1;
 		m_Data = a3Realloc(m_Data, m_Length, utf8);
 		a3::MemoryCopy(m_Data, cstr, m_Length);
-		m_Length = a3::GetStringLength(cstr) + 1;
+		m_Length = a3::GetUtf8Length(cstr) + 1;
 		return *this;
 	}
 
@@ -205,7 +205,7 @@ namespace a3
 
 	bool operator==(dstring & one, s8 other)
 	{
-		u64 len = a3::GetStringLength(other);
+		u64 len = a3::GetUtf8Length(other);
 		if (len != one.m_Length) return false;
 		for (u64 i = 0; i < len; ++i)
 		{
@@ -241,7 +241,7 @@ namespace a3
 	dstring operator+(dstring & lhs, s8 rhs)
 	{
 		dstring temp;
-		u64 len = a3::GetStringLength(rhs);
+		u64 len = a3::GetUtf8Length(rhs);
 		temp.New(lhs.m_Length + len - 1);
 		a3::MemoryCopy(temp.m_Data, lhs.m_Data, lhs.m_Length * sizeof(utf8));
 		a3::MemoryCopy(&temp.m_Data[lhs.m_Length - 1], rhs, len * sizeof(utf8));
@@ -251,7 +251,7 @@ namespace a3
 	dstring operator+(s8 rhs, dstring & lhs)
 	{
 		dstring temp;
-		u64 len = a3::GetStringLength(rhs);
+		u64 len = a3::GetUtf8Length(rhs);
 		temp.New(lhs.m_Length + len - 1);
 		a3::MemoryCopy(&temp.m_Data, rhs, len * sizeof(utf8));
 		a3::MemoryCopy(&temp.m_Data[len - 1], lhs.m_Data, lhs.m_Length * sizeof(utf8));
@@ -268,7 +268,7 @@ namespace a3
 
 	dstring & dstring::operator+=(s8 other)
 	{
-		u64 len = a3::GetStringLength(other);
+		u64 len = a3::GetUtf8Length(other);
 		m_Data = a3Realloc(m_Data, (m_Length + len - 1), utf8);
 		a3::MemoryCopy(&m_Data[m_Length - 1], other, len * sizeof(utf8));
 		m_Length = m_Length + len - 1;

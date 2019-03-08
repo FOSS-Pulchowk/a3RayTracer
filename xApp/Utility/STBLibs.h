@@ -34,7 +34,7 @@
 #define STBTT_cos(x)			Cosf(x)
 #define STBTT_acos(x)			ArcCosf(x)
 #define STBTT_fabs(x)			FAbsf(x)
-#define STBTT_strlen(x)			a3::GetStringLength(x)
+#define STBTT_strlen(x)			a3::GetUtf8Length(x)
 #define STBTT_memcpy			a3::MemoryCopy
 #define STBTT_memset			a3::MemorySet
 #define STBTT_MALLOC(sz)		a3Malloc(sz)

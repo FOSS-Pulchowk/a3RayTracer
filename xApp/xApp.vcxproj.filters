@@ -80,9 +80,6 @@
     <ClInclude Include="Platform\GlRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="a3Interface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Utility\Memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -93,12 +90,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Math\Color.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Components.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="a3raytrace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utility\DString.h">
